@@ -1,0 +1,8 @@
+{
+  "name": "shahidirfan/harborcache",
+  "description": "WordPress object caching with Redis, scoped invalidation and local analytics.",
+  "type": "wordpress-plugin",
+  "license": "GPL-3.0-only",
+  "require": { "php": ">=7.4" },
+  "extra": { "installer-name": "harborcache" }
+}

@@ -1,0 +1,53 @@
+{
+  "version": "1.1.2",
+  "capturedAt": "2026-10-11T17:31:36.539Z",
+  "environment": "Local WordPress fixture, Windows/PHP/SQLite/Redis. Chart history includes explicitly seeded demonstration samples. No customer data or production performance claims.",
+  "javascriptErrors": [],
+  "files": [
+    {
+      "file": "screenshot-1.png",
+      "view": "overview",
+      "viewport": 1440
+    },
+    {
+      "file": "screenshot-2.png",
+      "view": "analytics",
+      "viewport": 1440
+    },
+    {
+      "file": "screenshot-3.png",
+      "view": "connection",
+      "viewport": 1440
+    },
+    {
+      "file": "screenshot-4.png",
+      "view": "groups",
+      "viewport": 1440
+    },
+    {
+      "file": "screenshot-5.png",
+      "view": "tools",
+      "viewport": 1440
+    },
+    {
+      "file": "screenshot-6.png",
+      "view": "diagnostics",
+      "viewport": 1440
+    },
+    {
+      "file": "screenshot-7.png",
+      "view": "dashboard widget",
+      "viewport": 1440
+    },
+    {
+      "file": "screenshot-mobile.png",
+      "view": "connection",
+      "viewport": 375
+    },
+    {
+      "file": "screenshot-widget-mobile.png",
+      "view": "dashboard widget",
+      "viewport": 375
+    }
+  ]
+}

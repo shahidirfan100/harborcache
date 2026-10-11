@@ -1,0 +1,88 @@
+{
+  "version": "1.1.2",
+  "date": "2026-10-10",
+  "checks": {
+    "passed": 1213,
+    "failed": 0,
+    "byCategory": {
+      "predis_cache": 79,
+      "predis_hardening": 34,
+      "predis_features": 30,
+      "credis_cache": 79,
+      "credis_hardening": 34,
+      "credis_features": 30,
+      "cluster_cache": 79,
+      "cluster_hardening": 34,
+      "cluster_features": 30,
+      "lifecycle": 14,
+      "uninstall": 2,
+      "replication": 17,
+      "sentinel": 17,
+      "cluster-replicas": 26,
+      "factory": 14,
+      "no-persist": 10,
+      "native_adapter_contract": 13,
+      "consolidated": 43,
+      "instrumentationAndFailures": 17,
+      "credisProbes": 3,
+      "clusterProbes": 3,
+      "widgetBudgets": 12,
+      "readabilityAndReconnect": 31,
+      "charts": 24,
+      "newControls": 11,
+      "freshInstall": 5,
+      "cli": 9,
+      "memoization": 11,
+      "nativePipelineFilters": 3,
+      "realOpenTelemetryExport": 6,
+      "stabilizationFailures": 30,
+      "responsiveDashboard": 159,
+      "mixedVersionUpgrade": 2,
+      "realPhpRedis_standalone_cache": 79,
+      "realPhpRedis_standalone_hardening": 34,
+      "realPhpRedis_standalone_features": 30,
+      "realPhpRedis_cluster_cache": 79,
+      "realPhpRedis_cluster_hardening": 34,
+      "realPhpRedis_cluster_features": 30,
+      "realPhpRedis_replication": 8,
+      "realPhpRedis_sentinel": 8
+    },
+    "php74Syntax": {
+      "php": "7.4.33",
+      "files": 580,
+      "errors": []
+    },
+    "pluginCheck": {
+      "errors": 0,
+      "warnings": 0,
+      "experimental": true,
+      "initializedPerformanceChecks": 5,
+      "toolNotice": "WP-CLI dependencies emit PHP 8.5 deprecations; no plugin findings."
+    },
+    "readme": {
+      "version": "1.1.2",
+      "sha256": "c7a4e75b2632e0cd3777a500cf64dfacd5acbe7079b122f66e1e5732a99209dc",
+      "errors": false,
+      "warnings": false,
+      "optional_donation_note": true
+    }
+  },
+  "originalPackage": {
+    "files": 610,
+    "bytes": 727879,
+    "sha256": "d3dcabe15942525de460d92943f8044d72e8977827d743d656c85f1da2a45ed3",
+    "sourceInstalledExtractedMatch": true,
+    "ownedFixtureDropinMatch": true,
+    "verifiedCRC": true
+  },
+  "limitations": [
+    "Linux/MySQL and every advertised PHP runtime need real acceptance. PHP 7.4 syntax is not runtime certification.",
+    "Per-option algorithm and primary pinning passed real Predis primary/replica tests; native Relay invalidation/adaptive concurrency remains unverified.",
+    "Topology reset is fixed; controlled native promotion/partition recovery still requires a suitable staging environment.",
+    "TLS/ACL/socket, real codecs, New Relic agent behavior/duplicate instrumentation and production collectors remain deployment gates.",
+    "True multisite/application flows, long-running load and production PHP/Redis CPU remain unverified.",
+    "Windows benchmark CPU excludes Redis server CPU and does not predict production throughput.",
+    "WordPress.org Plugin Check/readme validation do not grant directory approval or trademark clearance.",
+    "No package was uploaded to autoscareer.com; its latest verified live version remains 1.1.1."
+  ]
+}
