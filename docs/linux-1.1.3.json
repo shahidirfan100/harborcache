@@ -1,0 +1,161 @@
+{
+  "run": 38213789404,
+  "commit": "7f43458ba64c39b5a7f5786c9862648f606f3424",
+  "passedChecksByJob": {
+    "linux-performance-applications": 144,
+    "linux-php-7.4-redis-7-wp-6.6": 1061,
+    "linux-php-7.4-redis-7-wp-latest": 1061,
+    "linux-php-8.2-redis-7-wp-latest": 1061,
+    "linux-php-8.3-redis-6-wp-latest": 1061,
+    "linux-php-8.3-redis-7-wp-latest": 1061,
+    "linux-php-8.3-redis-8-wp-latest": 1061,
+    "linux-php-8.4-redis-7-wp-latest": 1061,
+    "linux-php-8.5-redis-7-wp-latest": 1061
+  },
+  "totalPassedChecks": 8632,
+  "benchmark": {
+    "free": {
+      "rounds": 7,
+      "timings": {
+        "runtime_100": {
+          "p50_ms": 0.047048,
+          "p95_ms": 0.063569,
+          "p99_ms": 0.073718
+        },
+        "redis_20": {
+          "p50_ms": 2.855657,
+          "p95_ms": 3.244694,
+          "p99_ms": 3.44604
+        },
+        "bulk_100": {
+          "p50_ms": 0.439562,
+          "p95_ms": 0.489105,
+          "p99_ms": 0.613056
+        },
+        "writes_20": {
+          "p50_ms": 2.609186,
+          "p95_ms": 3.063766,
+          "p99_ms": 3.385898
+        },
+        "misses_20": {
+          "p50_ms": 2.512508,
+          "p95_ms": 2.972226,
+          "p99_ms": 3.041575
+        },
+        "cold_20": {
+          "p50_ms": 2.688866,
+          "p95_ms": 3.105494,
+          "p99_ms": 3.270163
+        },
+        "large_16k": {
+          "p50_ms": 0.348602,
+          "p95_ms": 0.366776,
+          "p99_ms": 0.392574
+        }
+      },
+      "php_cpu_ms": 185.08500000000004,
+      "redis_cpu_ms": 164.8090000000002,
+      "php_peak_bytes": 35651584,
+      "redis_rss_bytes": 17805312,
+      "redis_commands": 4252
+    },
+    "baseline": {
+      "rounds": 7,
+      "timings": {
+        "runtime_100": {
+          "p50_ms": 0.059621,
+          "p95_ms": 0.077826,
+          "p99_ms": 0.089578
+        },
+        "redis_20": {
+          "p50_ms": 2.863523,
+          "p95_ms": 3.459578,
+          "p99_ms": 3.647249
+        },
+        "bulk_100": {
+          "p50_ms": 0.499223,
+          "p95_ms": 0.591195,
+          "p99_ms": 0.701791
+        },
+        "writes_20": {
+          "p50_ms": 3.261836,
+          "p95_ms": 3.57918,
+          "p99_ms": 3.777139
+        },
+        "misses_20": {
+          "p50_ms": 2.671833,
+          "p95_ms": 3.287915,
+          "p99_ms": 3.486556
+        },
+        "cold_20": {
+          "p50_ms": 2.786247,
+          "p95_ms": 3.310338,
+          "p99_ms": 3.474134
+        },
+        "large_16k": {
+          "p50_ms": 0.369962,
+          "p95_ms": 0.400215,
+          "p99_ms": 0.434844
+        }
+      },
+      "php_cpu_ms": 231.403,
+      "redis_cpu_ms": 173.00100000000018,
+      "php_peak_bytes": 37748736,
+      "redis_rss_bytes": 18067456,
+      "redis_commands": 4258
+    },
+    "harbor": {
+      "rounds": 7,
+      "timings": {
+        "runtime_100": {
+          "p50_ms": 0.060673,
+          "p95_ms": 0.086021,
+          "p99_ms": 0.103333
+        },
+        "redis_20": {
+          "p50_ms": 3.011566,
+          "p95_ms": 3.390938,
+          "p99_ms": 3.568882
+        },
+        "bulk_100": {
+          "p50_ms": 0.494936,
+          "p95_ms": 0.568453,
+          "p99_ms": 0.720607
+        },
+        "writes_20": {
+          "p50_ms": 2.953339,
+          "p95_ms": 3.510952,
+          "p99_ms": 3.637488
+        },
+        "misses_20": {
+          "p50_ms": 2.570154,
+          "p95_ms": 3.137344,
+          "p99_ms": 3.165868
+        },
+        "cold_20": {
+          "p50_ms": 2.765273,
+          "p95_ms": 3.298555,
+          "p99_ms": 3.408689
+        },
+        "large_16k": {
+          "p50_ms": 0.335457,
+          "p95_ms": 0.372686,
+          "p99_ms": 0.429793
+        }
+      },
+      "php_cpu_ms": 214.719,
+      "redis_cpu_ms": 169.0710000000002,
+      "php_peak_bytes": 37748736,
+      "redis_rss_bytes": 18329600,
+      "redis_commands": 4258
+    }
+  },
+  "http": {
+    "requests": 160,
+    "concurrency": 8,
+    "p50_ms": 195.767,
+    "p95_ms": 259.03700000000003,
+    "p99_ms": 273.867,
+    "restoredRequests": 160
+  }
+}

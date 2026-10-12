@@ -1,0 +1,5890 @@
+{
+  "version": "1.1.3",
+  "date": "2026-10-12",
+  "local": {
+    "passed": 1225,
+    "failed": 0,
+    "categories": {
+      "predis_cache": 79,
+      "predis_hardening": 34,
+      "predis_features": 30,
+      "credis_cache": 79,
+      "credis_hardening": 34,
+      "credis_features": 30,
+      "cluster_cache": 79,
+      "cluster_hardening": 34,
+      "cluster_features": 30,
+      "lifecycle": 14,
+      "uninstall": 2,
+      "replication": 17,
+      "sentinel": 17,
+      "cluster-replicas": 26,
+      "factory": 14,
+      "no-persist": 10,
+      "native_adapter_contract": 13,
+      "consolidated": 43,
+      "instrumentationAndFailures": 17,
+      "credisProbes": 3,
+      "clusterProbes": 3,
+      "widgetBudgets": 12,
+      "readabilityAndReconnect": 31,
+      "charts": 24,
+      "newControls": 11,
+      "freshInstall": 5,
+      "cli": 9,
+      "memoization": 11,
+      "nativePipelineFilters": 3,
+      "realOpenTelemetryExport": 6,
+      "stabilizationFailures": 30,
+      "responsiveDashboard": 159,
+      "mixedVersionUpgrade": 2,
+      "optimizationAndCounterBoundaries": 12,
+      "realPhpRedis_standalone_cache": 79,
+      "realPhpRedis_standalone_hardening": 34,
+      "realPhpRedis_standalone_features": 30,
+      "realPhpRedis_cluster_cache": 79,
+      "realPhpRedis_cluster_hardening": 34,
+      "realPhpRedis_cluster_features": 30,
+      "realPhpRedis_replication": 8,
+      "realPhpRedis_sentinel": 8
+    },
+    "results": {
+      "predis_cache": [
+        {
+          "test": "Advanced cache drop-in loaded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Real Redis connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Write type 0",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 0",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 1",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 1",
+          "pass": true,
+          "details": [
+            "NULL",
+            "NULL"
+          ]
+        },
+        {
+          "test": "Write type 2",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 2",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 3",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 3",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 4",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 4",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 5",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 5",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 6",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 6",
+          "pass": true,
+          "details": [
+            "double",
+            "double"
+          ]
+        },
+        {
+          "test": "Write type 7",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 7",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 8",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 8",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 9",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 9",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 10",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 10",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 11",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 11",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 12",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 12",
+          "pass": true,
+          "details": [
+            "array",
+            "array"
+          ]
+        },
+        {
+          "test": "Write type 13",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 13",
+          "pass": true,
+          "details": [
+            "object",
+            "object"
+          ]
+        },
+        {
+          "test": "Missing value found flag",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Empty key is rejected",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add creates absent key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add refuses existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace refuses missing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment integer atomically",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Decrement clamps to zero",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment missing returns false",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string remains string",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string increment",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment preserves expiration",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk set results",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk get types and misses",
+          "pass": true,
+          "details": {
+            "one": 1,
+            "two": [
+              2
+            ],
+            "nil": null,
+            "false": false,
+            "absent": false
+          }
+        },
+        {
+          "test": "Bulk add preserves existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk delete",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Object read is cloned",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent values available in request",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent and wildcard groups absent in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation crosses instances",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush preserves foreign data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "TTL expires in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Query TTL bounded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions hash write",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions read types",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions stored as hash",
+          "pass": true,
+          "details": "hash"
+        },
+        {
+          "test": "Split alloptions add refuses existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions empty hash roundtrip",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress option API with split alloptions",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress post API caches data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Anonymous plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Administrator plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route latency",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route commands",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route slowlog",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route options",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Diagnostic options omit credentials and endpoints",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders overview",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders tools",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders diagnostics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Analytics persists across namespace flush",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "First analytics sample receives retention expiry",
+          "pass": true,
+          "details": null
+        }
+      ],
+      "predis_hardening": [
+        {
+          "test": "Counter is exact above 2^53",
+          "pass": true
+        },
+        {
+          "test": "Large counter decrement is exact",
+          "pass": true
+        },
+        {
+          "test": "Counter overflow is refused without mutation",
+          "pass": true
+        },
+        {
+          "test": "Signed counter arithmetic",
+          "pass": true
+        },
+        {
+          "test": "Invalid counter keys rejected",
+          "pass": true
+        },
+        {
+          "test": "Concurrent unrelated option changes both survive",
+          "pass": true
+        },
+        {
+          "test": "Stale option snapshot cannot resurrect unrelated deleted field",
+          "pass": true
+        },
+        {
+          "test": "Split options replace preserves missing semantics",
+          "pass": true
+        },
+        {
+          "test": "Missing hash is repopulated from complete snapshot",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 3",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 4",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 5",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 6",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 7",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 8",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 9",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 3",
+          "pass": true
+        },
+        {
+          "test": "Diagnostics omit socket path and endpoint credentials",
+          "pass": true
+        },
+        {
+          "test": "Site action defaults to current site",
+          "pass": true
+        },
+        {
+          "test": "Site flush preserves unrelated keys",
+          "pass": true
+        },
+        {
+          "test": "Corrupt single value becomes a miss with found=false",
+          "pass": true
+        },
+        {
+          "test": "Corrupt cache entry removed",
+          "pass": true
+        },
+        {
+          "test": "Bulk corruption does not lose healthy results",
+          "pass": true
+        },
+        {
+          "test": "Corrupt reads keep healthy connection active",
+          "pass": true
+        },
+        {
+          "test": "Bulk unserializable value cannot crash request",
+          "pass": true
+        },
+        {
+          "test": "Invalid bulk read argument is rejected",
+          "pass": true
+        },
+        {
+          "test": "Metadata outage cannot escape key preparation",
+          "pass": true
+        },
+        {
+          "test": "Runtime caching remains usable after metadata outage",
+          "pass": true
+        }
+      ],
+      "predis_features": [
+        {
+          "test": "Async flush rotates namespace immediately",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup queue exists",
+          "pass": true
+        },
+        {
+          "test": "Bounded cleanup finishes across all nodes",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup physically removes invalidated data",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup preserves new generation and foreign keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: scan",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: full",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: full",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Malformed cleanup cannot target foreign data",
+          "pass": true
+        },
+        {
+          "test": "Forged guard cannot delete a live generation",
+          "pass": true
+        },
+        {
+          "test": "Shared server omits unrelated capacity totals",
+          "pass": true
+        },
+        {
+          "test": "Dedicated server reports primary capacity",
+          "pass": true
+        },
+        {
+          "test": "Safe read retries recover after a transient failure",
+          "pass": true
+        },
+        {
+          "test": "Ambiguous writes never replay",
+          "pass": true
+        },
+        {
+          "test": "Retries stop at configured bound",
+          "pass": true
+        },
+        {
+          "test": "Tracer observes inherited get/set/delete and bulk execution",
+          "pass": true
+        },
+        {
+          "test": "Recorded commands include inherited engine and omit data",
+          "pass": true
+        },
+        {
+          "test": "PSR-style logger receives selected log levels",
+          "pass": true
+        },
+        {
+          "test": "Strict ownership mismatch invalidates conflicting namespace",
+          "pass": true
+        },
+        {
+          "test": "Cleanup cron handler registered",
+          "pass": true
+        }
+      ],
+      "credis_cache": [
+        {
+          "test": "Advanced cache drop-in loaded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Real Redis connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Write type 0",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 0",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 1",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 1",
+          "pass": true,
+          "details": [
+            "NULL",
+            "NULL"
+          ]
+        },
+        {
+          "test": "Write type 2",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 2",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 3",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 3",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 4",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 4",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 5",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 5",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 6",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 6",
+          "pass": true,
+          "details": [
+            "double",
+            "double"
+          ]
+        },
+        {
+          "test": "Write type 7",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 7",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 8",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 8",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 9",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 9",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 10",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 10",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 11",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 11",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 12",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 12",
+          "pass": true,
+          "details": [
+            "array",
+            "array"
+          ]
+        },
+        {
+          "test": "Write type 13",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 13",
+          "pass": true,
+          "details": [
+            "object",
+            "object"
+          ]
+        },
+        {
+          "test": "Missing value found flag",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Empty key is rejected",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add creates absent key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add refuses existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace refuses missing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment integer atomically",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Decrement clamps to zero",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment missing returns false",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string remains string",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string increment",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment preserves expiration",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk set results",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk get types and misses",
+          "pass": true,
+          "details": {
+            "one": 1,
+            "two": [
+              2
+            ],
+            "nil": null,
+            "false": false,
+            "absent": false
+          }
+        },
+        {
+          "test": "Bulk add preserves existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk delete",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Object read is cloned",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent values available in request",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent and wildcard groups absent in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation crosses instances",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush preserves foreign data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "TTL expires in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Query TTL bounded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions hash write",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions read types",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions stored as hash",
+          "pass": true,
+          "details": "hash"
+        },
+        {
+          "test": "Split alloptions add refuses existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions empty hash roundtrip",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress option API with split alloptions",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress post API caches data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Anonymous plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Administrator plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route latency",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route commands",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route slowlog",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route options",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Diagnostic options omit credentials and endpoints",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders overview",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders tools",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders diagnostics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Analytics persists across namespace flush",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "First analytics sample receives retention expiry",
+          "pass": true,
+          "details": null
+        }
+      ],
+      "credis_hardening": [
+        {
+          "test": "Counter is exact above 2^53",
+          "pass": true
+        },
+        {
+          "test": "Large counter decrement is exact",
+          "pass": true
+        },
+        {
+          "test": "Counter overflow is refused without mutation",
+          "pass": true
+        },
+        {
+          "test": "Signed counter arithmetic",
+          "pass": true
+        },
+        {
+          "test": "Invalid counter keys rejected",
+          "pass": true
+        },
+        {
+          "test": "Concurrent unrelated option changes both survive",
+          "pass": true
+        },
+        {
+          "test": "Stale option snapshot cannot resurrect unrelated deleted field",
+          "pass": true
+        },
+        {
+          "test": "Split options replace preserves missing semantics",
+          "pass": true
+        },
+        {
+          "test": "Missing hash is repopulated from complete snapshot",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 3",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 4",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 5",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 6",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 7",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 8",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 9",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 3",
+          "pass": true
+        },
+        {
+          "test": "Diagnostics omit socket path and endpoint credentials",
+          "pass": true
+        },
+        {
+          "test": "Site action defaults to current site",
+          "pass": true
+        },
+        {
+          "test": "Site flush preserves unrelated keys",
+          "pass": true
+        },
+        {
+          "test": "Corrupt single value becomes a miss with found=false",
+          "pass": true
+        },
+        {
+          "test": "Corrupt cache entry removed",
+          "pass": true
+        },
+        {
+          "test": "Bulk corruption does not lose healthy results",
+          "pass": true
+        },
+        {
+          "test": "Corrupt reads keep healthy connection active",
+          "pass": true
+        },
+        {
+          "test": "Bulk unserializable value cannot crash request",
+          "pass": true
+        },
+        {
+          "test": "Invalid bulk read argument is rejected",
+          "pass": true
+        },
+        {
+          "test": "Metadata outage cannot escape key preparation",
+          "pass": true
+        },
+        {
+          "test": "Runtime caching remains usable after metadata outage",
+          "pass": true
+        }
+      ],
+      "credis_features": [
+        {
+          "test": "Async flush rotates namespace immediately",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup queue exists",
+          "pass": true
+        },
+        {
+          "test": "Bounded cleanup finishes across all nodes",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup physically removes invalidated data",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup preserves new generation and foreign keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: scan",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: full",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: full",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Malformed cleanup cannot target foreign data",
+          "pass": true
+        },
+        {
+          "test": "Forged guard cannot delete a live generation",
+          "pass": true
+        },
+        {
+          "test": "Shared server omits unrelated capacity totals",
+          "pass": true
+        },
+        {
+          "test": "Dedicated server reports primary capacity",
+          "pass": true
+        },
+        {
+          "test": "Safe read retries recover after a transient failure",
+          "pass": true
+        },
+        {
+          "test": "Ambiguous writes never replay",
+          "pass": true
+        },
+        {
+          "test": "Retries stop at configured bound",
+          "pass": true
+        },
+        {
+          "test": "Tracer observes inherited get/set/delete and bulk execution",
+          "pass": true
+        },
+        {
+          "test": "Recorded commands include inherited engine and omit data",
+          "pass": true
+        },
+        {
+          "test": "PSR-style logger receives selected log levels",
+          "pass": true
+        },
+        {
+          "test": "Strict ownership mismatch invalidates conflicting namespace",
+          "pass": true
+        },
+        {
+          "test": "Cleanup cron handler registered",
+          "pass": true
+        }
+      ],
+      "cluster_cache": [
+        {
+          "test": "Advanced cache drop-in loaded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Real Redis connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Write type 0",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 0",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 1",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 1",
+          "pass": true,
+          "details": [
+            "NULL",
+            "NULL"
+          ]
+        },
+        {
+          "test": "Write type 2",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 2",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 3",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 3",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 4",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 4",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 5",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 5",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 6",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 6",
+          "pass": true,
+          "details": [
+            "double",
+            "double"
+          ]
+        },
+        {
+          "test": "Write type 7",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 7",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 8",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 8",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 9",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 9",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 10",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 10",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 11",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 11",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 12",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 12",
+          "pass": true,
+          "details": [
+            "array",
+            "array"
+          ]
+        },
+        {
+          "test": "Write type 13",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 13",
+          "pass": true,
+          "details": [
+            "object",
+            "object"
+          ]
+        },
+        {
+          "test": "Missing value found flag",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Empty key is rejected",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add creates absent key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add refuses existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace refuses missing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment integer atomically",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Decrement clamps to zero",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment missing returns false",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string remains string",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string increment",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment preserves expiration",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk set results",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk get types and misses",
+          "pass": true,
+          "details": {
+            "one": 1,
+            "two": [
+              2
+            ],
+            "nil": null,
+            "false": false,
+            "absent": false
+          }
+        },
+        {
+          "test": "Bulk add preserves existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk delete",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Object read is cloned",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent values available in request",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent and wildcard groups absent in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation crosses instances",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush preserves foreign data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "TTL expires in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Query TTL bounded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions hash write",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions read types",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions stored as hash",
+          "pass": true,
+          "details": "hash"
+        },
+        {
+          "test": "Split alloptions add refuses existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions empty hash roundtrip",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress option API with split alloptions",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress post API caches data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Anonymous plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Administrator plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route latency",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route commands",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route slowlog",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route options",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Diagnostic options omit credentials and endpoints",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders overview",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders tools",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders diagnostics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Analytics persists across namespace flush",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "First analytics sample receives retention expiry",
+          "pass": true,
+          "details": null
+        }
+      ],
+      "cluster_hardening": [
+        {
+          "test": "Counter is exact above 2^53",
+          "pass": true
+        },
+        {
+          "test": "Large counter decrement is exact",
+          "pass": true
+        },
+        {
+          "test": "Counter overflow is refused without mutation",
+          "pass": true
+        },
+        {
+          "test": "Signed counter arithmetic",
+          "pass": true
+        },
+        {
+          "test": "Invalid counter keys rejected",
+          "pass": true
+        },
+        {
+          "test": "Concurrent unrelated option changes both survive",
+          "pass": true
+        },
+        {
+          "test": "Stale option snapshot cannot resurrect unrelated deleted field",
+          "pass": true
+        },
+        {
+          "test": "Split options replace preserves missing semantics",
+          "pass": true
+        },
+        {
+          "test": "Missing hash is repopulated from complete snapshot",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 3",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 4",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 5",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 6",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 7",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 8",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 9",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 3",
+          "pass": true
+        },
+        {
+          "test": "Diagnostics omit socket path and endpoint credentials",
+          "pass": true
+        },
+        {
+          "test": "Site action defaults to current site",
+          "pass": true
+        },
+        {
+          "test": "Site flush preserves unrelated keys",
+          "pass": true
+        },
+        {
+          "test": "Corrupt single value becomes a miss with found=false",
+          "pass": true
+        },
+        {
+          "test": "Corrupt cache entry removed",
+          "pass": true
+        },
+        {
+          "test": "Bulk corruption does not lose healthy results",
+          "pass": true
+        },
+        {
+          "test": "Corrupt reads keep healthy connection active",
+          "pass": true
+        },
+        {
+          "test": "Bulk unserializable value cannot crash request",
+          "pass": true
+        },
+        {
+          "test": "Invalid bulk read argument is rejected",
+          "pass": true
+        },
+        {
+          "test": "Metadata outage cannot escape key preparation",
+          "pass": true
+        },
+        {
+          "test": "Runtime caching remains usable after metadata outage",
+          "pass": true
+        }
+      ],
+      "cluster_features": [
+        {
+          "test": "Async flush rotates namespace immediately",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup queue exists",
+          "pass": true
+        },
+        {
+          "test": "Bounded cleanup finishes across all nodes",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup physically removes invalidated data",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup preserves new generation and foreign keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: scan",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: full",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: full",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Malformed cleanup cannot target foreign data",
+          "pass": true
+        },
+        {
+          "test": "Forged guard cannot delete a live generation",
+          "pass": true
+        },
+        {
+          "test": "Shared server omits unrelated capacity totals",
+          "pass": true
+        },
+        {
+          "test": "Dedicated server reports primary capacity",
+          "pass": true
+        },
+        {
+          "test": "Safe read retries recover after a transient failure",
+          "pass": true
+        },
+        {
+          "test": "Ambiguous writes never replay",
+          "pass": true
+        },
+        {
+          "test": "Retries stop at configured bound",
+          "pass": true
+        },
+        {
+          "test": "Tracer observes inherited get/set/delete and bulk execution",
+          "pass": true
+        },
+        {
+          "test": "Recorded commands include inherited engine and omit data",
+          "pass": true
+        },
+        {
+          "test": "PSR-style logger receives selected log levels",
+          "pass": true
+        },
+        {
+          "test": "Strict ownership mismatch invalidates conflicting namespace",
+          "pass": true
+        },
+        {
+          "test": "Cleanup cron handler registered",
+          "pass": true
+        }
+      ],
+      "lifecycle": [
+        {
+          "test": "Refuse foreign drop-in replacement",
+          "pass": true
+        },
+        {
+          "test": "Refuse foreign drop-in deletion",
+          "pass": true
+        },
+        {
+          "test": "Foreign file preserved exactly",
+          "pass": true
+        },
+        {
+          "test": "Owned drop-in disabled",
+          "pass": true
+        },
+        {
+          "test": "Disable preserves foreign Redis data",
+          "pass": true
+        },
+        {
+          "test": "Owned drop-in re-enabled",
+          "pass": true
+        },
+        {
+          "test": "Owned drop-in refreshed",
+          "pass": true
+        },
+        {
+          "test": "Editor cannot manage cache",
+          "pass": true
+        },
+        {
+          "test": "Obsolete AJAX cache endpoint is not registered",
+          "pass": true
+        },
+        {
+          "test": "Legacy transient-deletion hook retired",
+          "pass": true
+        },
+        {
+          "test": "Removed REST mutation returns 404 for editor",
+          "pass": true
+        },
+        {
+          "test": "Removed REST mutation returns 404 for administrator",
+          "pass": true
+        },
+        {
+          "test": "Invalid port rejected",
+          "pass": true
+        },
+        {
+          "test": "Invalid settings do not alter file",
+          "pass": true
+        }
+      ],
+      "uninstall": [
+        {
+          "test": "Uninstall removes owned drop-in and saved credentials",
+          "pass": true
+        },
+        {
+          "test": "Uninstall preserves foreign files",
+          "pass": true
+        }
+      ],
+      "replication": [
+        {
+          "test": "Connected with replication",
+          "pass": true
+        },
+        {
+          "test": "Own writes are read from primary",
+          "pass": true
+        },
+        {
+          "test": "Independent request reads replicated value",
+          "pass": true
+        },
+        {
+          "test": "Read uses a real replica",
+          "pass": true
+        },
+        {
+          "test": "Read routing strategy distribute",
+          "pass": true
+        },
+        {
+          "test": "Read routing strategy concentrate",
+          "pass": true
+        },
+        {
+          "test": "Replica connection can invalidate a group on primary",
+          "pass": true
+        },
+        {
+          "test": "Bulk write and read-your-writes with replicas",
+          "pass": true
+        },
+        {
+          "test": "Analytics measurement limit enforced",
+          "pass": true
+        },
+        {
+          "test": "Analytics read returns only metrics objects",
+          "pass": true
+        },
+        {
+          "test": "Analytics flush persistence preference honored",
+          "pass": true
+        },
+        {
+          "test": "Optional footnote contains only aggregate hit counts",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry provider adapter executes operation",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry adapter closes failed spans",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        }
+      ],
+      "sentinel": [
+        {
+          "test": "Connected with sentinel",
+          "pass": true
+        },
+        {
+          "test": "Own writes are read from primary",
+          "pass": true
+        },
+        {
+          "test": "Independent request reads replicated value",
+          "pass": true
+        },
+        {
+          "test": "Read uses a real replica",
+          "pass": true
+        },
+        {
+          "test": "Read routing strategy distribute",
+          "pass": true
+        },
+        {
+          "test": "Read routing strategy concentrate",
+          "pass": true
+        },
+        {
+          "test": "Replica connection can invalidate a group on primary",
+          "pass": true
+        },
+        {
+          "test": "Bulk write and read-your-writes with replicas",
+          "pass": true
+        },
+        {
+          "test": "Analytics measurement limit enforced",
+          "pass": true
+        },
+        {
+          "test": "Analytics read returns only metrics objects",
+          "pass": true
+        },
+        {
+          "test": "Analytics flush persistence preference honored",
+          "pass": true
+        },
+        {
+          "test": "Optional footnote contains only aggregate hit counts",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry provider adapter executes operation",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry adapter closes failed spans",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        }
+      ],
+      "cluster-replicas": [
+        {
+          "test": "Connected with cluster-replicas",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 0",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 1",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 2",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 3",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 4",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 5",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 6",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 7",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 8",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 9",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 10",
+          "pass": true
+        },
+        {
+          "test": "Cluster replica value 11",
+          "pass": true
+        },
+        {
+          "test": "Cluster read distribution uses actual replicas",
+          "pass": true
+        },
+        {
+          "test": "Cluster routing strategy none",
+          "pass": true
+        },
+        {
+          "test": "Cluster routing strategy error",
+          "pass": true
+        },
+        {
+          "test": "Cluster routing strategy distribute",
+          "pass": true
+        },
+        {
+          "test": "Analytics measurement limit enforced",
+          "pass": true
+        },
+        {
+          "test": "Analytics read returns only metrics objects",
+          "pass": true
+        },
+        {
+          "test": "Analytics flush persistence preference honored",
+          "pass": true
+        },
+        {
+          "test": "Optional footnote contains only aggregate hit counts",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry provider adapter executes operation",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry adapter closes failed spans",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        }
+      ],
+      "factory": [
+        {
+          "test": "Connected with factory",
+          "pass": true
+        },
+        {
+          "test": "Custom connector invoked",
+          "pass": true
+        },
+        {
+          "test": "Custom cache factory invoked",
+          "pass": true
+        },
+        {
+          "test": "Custom implementation supports cache API",
+          "pass": true
+        },
+        {
+          "test": "WordPress retains update visibility",
+          "pass": true
+        },
+        {
+          "test": "Analytics measurement limit enforced",
+          "pass": true
+        },
+        {
+          "test": "Analytics read returns only metrics objects",
+          "pass": true
+        },
+        {
+          "test": "Analytics flush persistence preference honored",
+          "pass": true
+        },
+        {
+          "test": "Optional footnote contains only aggregate hit counts",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry provider adapter executes operation",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry adapter closes failed spans",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        }
+      ],
+      "no-persist": [
+        {
+          "test": "Connected with no-persist",
+          "pass": true
+        },
+        {
+          "test": "Analytics measurement limit enforced",
+          "pass": true
+        },
+        {
+          "test": "Analytics read returns only metrics objects",
+          "pass": true
+        },
+        {
+          "test": "Analytics flush persistence preference honored",
+          "pass": true
+        },
+        {
+          "test": "Optional footnote contains only aggregate hit counts",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry provider adapter executes operation",
+          "pass": true
+        },
+        {
+          "test": "OpenTelemetry adapter closes failed spans",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed advanced setting",
+          "pass": true
+        }
+      ],
+      "native_adapter_contract": [
+        {
+          "test": "Relay Cluster constructor receives seeds, timeouts and persistent flag",
+          "pass": true
+        },
+        {
+          "test": "Relay Cluster constructor receives ACL and verified TLS context",
+          "pass": true
+        },
+        {
+          "test": "Native write replay disabled",
+          "pass": true
+        },
+        {
+          "test": "Relay cache and invalidation options applied",
+          "pass": true
+        },
+        {
+          "test": "Relay allowed and ignored patterns applied",
+          "pass": true
+        },
+        {
+          "test": "Relay adaptive policy mapped to native names",
+          "pass": true
+        },
+        {
+          "test": "Relay availability zone applied",
+          "pass": true
+        },
+        {
+          "test": "Relay listeners invalidate request runtime cache",
+          "pass": true
+        },
+        {
+          "test": "Native cluster read strategy applied during read",
+          "pass": true
+        },
+        {
+          "test": "Native cluster returns metadata reads to primary",
+          "pass": true
+        },
+        {
+          "test": "Native own-write reads stay on primary",
+          "pass": true
+        },
+        {
+          "test": "Modern Relay distribution and failover options applied",
+          "pass": true
+        },
+        {
+          "test": "Native read failures restore primary routing",
+          "pass": true
+        }
+      ],
+      "consolidated": [
+        {
+          "test": "Consolidated version connected",
+          "pass": true
+        },
+        {
+          "test": "No plugin REST routes for GET",
+          "pass": true
+        },
+        {
+          "test": "No plugin REST routes for POST",
+          "pass": true
+        },
+        {
+          "test": "No plugin REST routes for PUT",
+          "pass": true
+        },
+        {
+          "test": "No plugin REST routes for DELETE",
+          "pass": true
+        },
+        {
+          "test": "Optional helper functions absent; WordPress core functions remain",
+          "pass": true
+        },
+        {
+          "test": "Dedicated management capability honored",
+          "pass": true
+        },
+        {
+          "test": "Normal administrator management restored",
+          "pass": true
+        },
+        {
+          "test": "Current drop-in content detected",
+          "pass": true
+        },
+        {
+          "test": "Stale drop-in accurately detected",
+          "pass": true
+        },
+        {
+          "test": "Owned stale drop-in automatically refreshed",
+          "pass": true
+        },
+        {
+          "test": "Successful update removes stale notice",
+          "pass": true
+        },
+        {
+          "test": "Automatic update preserves foreign drop-in",
+          "pass": true
+        },
+        {
+          "test": "Obsolete upstream notice hooks removed",
+          "pass": true
+        },
+        {
+          "test": "Cached configuration remains consistent across repeated reads",
+          "pass": true
+        },
+        {
+          "test": "Unknown configuration keys still rejected",
+          "pass": true
+        },
+        {
+          "test": "Weighted ratio, median and p95 calculated from real sample values",
+          "pass": true
+        },
+        {
+          "test": "Interval summaries preserve sample and command totals",
+          "pass": true
+        },
+        {
+          "test": "CSV exports only numeric metrics and UTC timestamps",
+          "pass": true
+        },
+        {
+          "test": "Time window allowlist rejects unbounded input",
+          "pass": true
+        },
+        {
+          "test": "On-demand group scan counts only current group generation",
+          "pass": true
+        },
+        {
+          "test": "Group memory computed when Redis supports MEMORY USAGE",
+          "pass": true
+        },
+        {
+          "test": "Group scan excludes invalidated generations",
+          "pass": true
+        },
+        {
+          "test": "Invalid inspection scope refused",
+          "pass": true
+        },
+        {
+          "test": "Node latency checks real connected server",
+          "pass": true
+        },
+        {
+          "test": "Node diagnostics redact endpoints",
+          "pass": true
+        },
+        {
+          "test": "Relay diagnostics honestly unavailable with Predis",
+          "pass": true
+        },
+        {
+          "test": "Operational health gets eviction policy without CONFIG",
+          "pass": true
+        },
+        {
+          "test": "Shared-server health omits aggregate memory",
+          "pass": true
+        },
+        {
+          "test": "Relay option string layout writes",
+          "pass": true
+        },
+        {
+          "test": "Relay manifest is a string, not a hash",
+          "pass": true
+        },
+        {
+          "test": "Relay options preserve typed values",
+          "pass": true
+        },
+        {
+          "test": "Relay add refuses an existing manifest",
+          "pass": true
+        },
+        {
+          "test": "Relay concurrent edits to different fields survive",
+          "pass": true
+        },
+        {
+          "test": "Relay empty alloptions roundtrip",
+          "pass": true
+        },
+        {
+          "test": "Relay replace refuses missing alloptions",
+          "pass": true
+        },
+        {
+          "test": "Query recycling has no work by default",
+          "pass": true
+        },
+        {
+          "test": "Query recycling reaches the registered query group",
+          "pass": true
+        },
+        {
+          "test": "Query recycling preserves non-query groups",
+          "pass": true
+        },
+        {
+          "test": "Query namespace cleanup queue can be processed",
+          "pass": true
+        },
+        {
+          "test": "Failure mode strict",
+          "pass": true
+        },
+        {
+          "test": "Failure mode debug",
+          "pass": true
+        },
+        {
+          "test": "Failure mode silent",
+          "pass": true
+        }
+      ],
+      "instrumentationAndFailures": [
+        {
+          "test": "New Relic callback exactly once: success",
+          "pass": true
+        },
+        {
+          "test": "New Relic callback exactly once: before",
+          "pass": true
+        },
+        {
+          "test": "New Relic callback exactly once: skip",
+          "pass": true
+        },
+        {
+          "test": "New Relic callback exactly once: after",
+          "pass": true
+        },
+        {
+          "test": "New Relic callback exactly once: command-error",
+          "pass": true
+        },
+        {
+          "test": "New Relic excludes arguments and credentials",
+          "pass": true
+        },
+        {
+          "test": "Runtime flush_scope honors silent",
+          "pass": true
+        },
+        {
+          "test": "Runtime flush_group honors silent",
+          "pass": true
+        },
+        {
+          "test": "Runtime increment honors silent",
+          "pass": true
+        },
+        {
+          "test": "Runtime flush_scope honors strict",
+          "pass": true
+        },
+        {
+          "test": "Runtime flush_group honors strict",
+          "pass": true
+        },
+        {
+          "test": "Runtime increment honors strict",
+          "pass": true
+        },
+        {
+          "test": "Runtime flush_scope honors debug",
+          "pass": true
+        },
+        {
+          "test": "Runtime flush_group honors debug",
+          "pass": true
+        },
+        {
+          "test": "Runtime increment honors debug",
+          "pass": true
+        },
+        {
+          "test": "Query maintenance remains bounded per call",
+          "pass": true
+        },
+        {
+          "test": "MU loader custom path does not bootstrap twice",
+          "pass": true
+        }
+      ],
+      "credisProbes": [
+        {
+          "test": "credis explicit node probes succeed",
+          "pass": true
+        },
+        {
+          "test": "credis group probe respects cap and marks partial",
+          "pass": true
+        },
+        {
+          "test": "credis query maintenance supports SSCAN",
+          "pass": true
+        }
+      ],
+      "clusterProbes": [
+        {
+          "test": "cluster explicit node probes succeed",
+          "pass": true
+        },
+        {
+          "test": "cluster group probe respects cap and marks partial",
+          "pass": true
+        },
+        {
+          "test": "cluster query maintenance supports SSCAN",
+          "pass": true
+        }
+      ],
+      "widgetBudgets": [
+        {
+          "test": "Stable version is loaded",
+          "pass": true
+        },
+        {
+          "test": "Administrator dashboard widget registered",
+          "pass": true
+        },
+        {
+          "test": "Widget renders current request statistics and empty state",
+          "pass": true
+        },
+        {
+          "test": "Bounded analytics returns exactly 100 recent records from 1200",
+          "pass": true
+        },
+        {
+          "test": "Bounded analytics selects newest records in chronological order",
+          "pass": true
+        },
+        {
+          "test": "Existing unbounded analytics API preserves full retention history",
+          "pass": true
+        },
+        {
+          "test": "Widget displays weighted sample ratio and average Redis time",
+          "pass": true
+        },
+        {
+          "test": "Widget exposes no keys, Redis endpoint or password",
+          "pass": true
+        },
+        {
+          "test": "Editor cannot render privileged widget",
+          "pass": true
+        },
+        {
+          "test": "Widget handles absent cache without a fatal or fabricated stats",
+          "pass": true
+        },
+        {
+          "test": "10000 warm runtime reads add no Redis commands",
+          "pass": true
+        },
+        {
+          "test": "Connection discovery server response is smaller than full INFO",
+          "pass": true
+        }
+      ],
+      "readabilityAndReconnect": [
+        {
+          "test": "Disconnect beside status at 360",
+          "pass": true
+        },
+        {
+          "test": "Connection control dimensions match at 360",
+          "pass": true
+        },
+        {
+          "test": "Widget body text at least 14px at 360",
+          "pass": true
+        },
+        {
+          "test": "Rendered chart axis at least 13px at 360",
+          "pass": true
+        },
+        {
+          "test": "Axis text remains inside graph at 360",
+          "pass": true
+        },
+        {
+          "test": "Widget has no horizontal overflow at 360",
+          "pass": true
+        },
+        {
+          "test": "Disconnect beside status at 768",
+          "pass": true
+        },
+        {
+          "test": "Connection control dimensions match at 768",
+          "pass": true
+        },
+        {
+          "test": "Widget body text at least 14px at 768",
+          "pass": true
+        },
+        {
+          "test": "Rendered chart axis at least 13px at 768",
+          "pass": true
+        },
+        {
+          "test": "Axis text remains inside graph at 768",
+          "pass": true
+        },
+        {
+          "test": "Widget has no horizontal overflow at 768",
+          "pass": true
+        },
+        {
+          "test": "Disconnect beside status at 1440",
+          "pass": true
+        },
+        {
+          "test": "Connection control dimensions match at 1440",
+          "pass": true
+        },
+        {
+          "test": "Widget body text at least 14px at 1440",
+          "pass": true
+        },
+        {
+          "test": "Rendered chart axis at least 13px at 1440",
+          "pass": true
+        },
+        {
+          "test": "Axis text remains inside graph at 1440",
+          "pass": true
+        },
+        {
+          "test": "Widget has no horizontal overflow at 1440",
+          "pass": true
+        },
+        {
+          "test": "Test option cached before disconnect",
+          "pass": true
+        },
+        {
+          "test": "Disconnect rejects invalid nonce",
+          "pass": true
+        },
+        {
+          "test": "Disconnect removes owned drop-in",
+          "pass": true
+        },
+        {
+          "test": "Plugin header provides Connect while disconnected",
+          "pass": true
+        },
+        {
+          "test": "Disconnected WordPress uses runtime object cache",
+          "pass": true
+        },
+        {
+          "test": "Widget provides Connect while disconnected",
+          "pass": true
+        },
+        {
+          "test": "Header status and action dimensions match",
+          "pass": true
+        },
+        {
+          "test": "Reconnect restores connected status",
+          "pass": true
+        },
+        {
+          "test": "Reconnect starts a new namespace",
+          "pass": true
+        },
+        {
+          "test": "Reconnect reads option updated while disconnected",
+          "pass": true
+        },
+        {
+          "test": "Reconnect preserves unrelated Redis data",
+          "pass": true
+        },
+        {
+          "test": "Connection settings unchanged",
+          "pass": true
+        },
+        {
+          "test": "Plugin header fits mobile",
+          "pass": true
+        }
+      ],
+      "charts": [
+        {
+          "test": "Chart time selects correctly at 360",
+          "pass": true
+        },
+        {
+          "test": "Chart bytes selects correctly at 360",
+          "pass": true
+        },
+        {
+          "test": "Chart ratio selects correctly at 360",
+          "pass": true
+        },
+        {
+          "test": "Chart calls selects correctly at 360",
+          "pass": true
+        },
+        {
+          "test": "Chart fits widget at 360",
+          "pass": true
+        },
+        {
+          "test": "Current request details expand at 360",
+          "pass": true
+        },
+        {
+          "test": "Chart time selects correctly at 768",
+          "pass": true
+        },
+        {
+          "test": "Chart bytes selects correctly at 768",
+          "pass": true
+        },
+        {
+          "test": "Chart ratio selects correctly at 768",
+          "pass": true
+        },
+        {
+          "test": "Chart calls selects correctly at 768",
+          "pass": true
+        },
+        {
+          "test": "Chart fits widget at 768",
+          "pass": true
+        },
+        {
+          "test": "Current request details expand at 768",
+          "pass": true
+        },
+        {
+          "test": "Chart time selects correctly at 1440",
+          "pass": true
+        },
+        {
+          "test": "Chart bytes selects correctly at 1440",
+          "pass": true
+        },
+        {
+          "test": "Chart ratio selects correctly at 1440",
+          "pass": true
+        },
+        {
+          "test": "Chart calls selects correctly at 1440",
+          "pass": true
+        },
+        {
+          "test": "Chart fits widget at 1440",
+          "pass": true
+        },
+        {
+          "test": "Current request details expand at 1440",
+          "pass": true
+        },
+        {
+          "test": "Chart supports keyboard metric selection",
+          "pass": true
+        },
+        {
+          "test": "Metric switching sends no network requests",
+          "pass": true
+        },
+        {
+          "test": "Graph exposes sample time and value tooltips",
+          "pass": true
+        },
+        {
+          "test": "Overview displays the same chart",
+          "pass": true
+        },
+        {
+          "test": "Footer contains only plugin version",
+          "pass": true
+        },
+        {
+          "test": "No chart JavaScript errors",
+          "pass": true
+        }
+      ],
+      "newControls": [
+        {
+          "test": "Analytics time window applies",
+          "pass": true
+        },
+        {
+          "test": "Analytics shows measured median and p95",
+          "pass": true
+        },
+        {
+          "test": "Authorized analytics CSV downloads",
+          "pass": true
+        },
+        {
+          "test": "CSV refuses invalid nonce",
+          "pass": true
+        },
+        {
+          "test": "Group inspection returns bounded report",
+          "pass": true
+        },
+        {
+          "test": "Node probe returns connected server",
+          "pass": true
+        },
+        {
+          "test": "Unavailable Relay reported accurately",
+          "pass": true
+        },
+        {
+          "test": "Current drop-in has no obsolete warning",
+          "pass": true
+        },
+        {
+          "test": "Admin-bar flush submits protected POST",
+          "pass": true
+        },
+        {
+          "test": "Plugin makes no REST requests",
+          "pass": true
+        },
+        {
+          "test": "New controls have no JavaScript errors",
+          "pass": true
+        }
+      ],
+      "freshInstall": [
+        {
+          "test": "Fresh process begins without a cache drop-in",
+          "pass": true
+        },
+        {
+          "test": "Codec is available before first enable",
+          "pass": true
+        },
+        {
+          "test": "Installer discovers only the main activatable plugin",
+          "pass": true
+        },
+        {
+          "test": "First enable connects and installs owned drop-in",
+          "pass": true
+        },
+        {
+          "test": "Next process loads connected cache after first enable",
+          "pass": true
+        }
+      ],
+      "cli": [
+        {
+          "test": "CLI analytics",
+          "pass": true
+        },
+        {
+          "test": "CLI digest",
+          "pass": true
+        },
+        {
+          "test": "CLI aggregate",
+          "pass": true
+        },
+        {
+          "test": "CLI watch",
+          "pass": true
+        },
+        {
+          "test": "CLI latency",
+          "pass": true
+        },
+        {
+          "test": "CLI health",
+          "pass": true
+        },
+        {
+          "test": "CLI relay",
+          "pass": true
+        },
+        {
+          "test": "CLI groups",
+          "pass": true
+        },
+        {
+          "test": "CLI queries",
+          "pass": true
+        }
+      ],
+      "memoization": [
+        {
+          "test": "Repeated derived keys remain identical",
+          "pass": true
+        },
+        {
+          "test": "Memoized null retains found flag",
+          "pass": true
+        },
+        {
+          "test": "Runtime value remains request-local until forced",
+          "pass": true
+        },
+        {
+          "test": "Fast runtime object reads are cloned",
+          "pass": true
+        },
+        {
+          "test": "Group rotation clears memoized keys and values",
+          "pass": true
+        },
+        {
+          "test": "Site rotation clears memoized prefixes",
+          "pass": true
+        },
+        {
+          "test": "Root rotation clears memoized prefixes",
+          "pass": true
+        },
+        {
+          "test": "Layout changes invalidate cached key format",
+          "pass": true
+        },
+        {
+          "test": "Derived key memo is bounded at 1024 entries",
+          "pass": true
+        },
+        {
+          "test": "Prefix memo is bounded at 256 contexts",
+          "pass": true
+        },
+        {
+          "test": "Disabled instrumentation calls operation exactly once",
+          "pass": true
+        }
+      ],
+      "nativePipelineFilters": [
+        {
+          "test": "Native set_multiple isolates Redis commands from expiration filters",
+          "pass": true
+        },
+        {
+          "test": "Native add_multiple isolates Redis commands from expiration filters",
+          "pass": true
+        },
+        {
+          "test": "Nested filter writes persist independently",
+          "pass": true
+        }
+      ],
+      "realOpenTelemetryExport": [
+        {
+          "test": "Real OpenTelemetry SDK completes cache operations and export",
+          "pass": true
+        },
+        {
+          "test": "OTLP HTTP receiver gets ended Redis operation spans",
+          "pass": true
+        },
+        {
+          "test": "Exporter sends to the OTLP trace endpoint",
+          "pass": true
+        },
+        {
+          "test": "Exported spans omit cached keys, values and error details",
+          "pass": true
+        },
+        {
+          "test": "Failing Redis operation exports error status",
+          "pass": true
+        },
+        {
+          "test": "Redis spans contain bounded datastore metadata",
+          "pass": true
+        }
+      ],
+      "stabilizationFailures": [
+        {
+          "test": "1.1.3 connected",
+          "pass": true
+        },
+        {
+          "test": "Remote replacement verifies new content",
+          "pass": true
+        },
+        {
+          "test": "Successful replacement removes backup and lock",
+          "pass": true
+        },
+        {
+          "test": "Previous destination restored after fail_move",
+          "pass": true
+        },
+        {
+          "test": "Previous destination restored after throw_move",
+          "pass": true
+        },
+        {
+          "test": "Truncated staged file rejected without touching old file",
+          "pass": true
+        },
+        {
+          "test": "Failed rollback retains verified backup",
+          "pass": true
+        },
+        {
+          "test": "Interrupted replacement recovers missing destination",
+          "pass": true
+        },
+        {
+          "test": "Concurrent remote update refused",
+          "pass": true
+        },
+        {
+          "test": "Foreign destination refused inside lock",
+          "pass": true
+        },
+        {
+          "test": "Foreign destination cannot be removed",
+          "pass": true
+        },
+        {
+          "test": "Concurrent direct update refused without deleting destination",
+          "pass": true
+        },
+        {
+          "test": "Actual direct filesystem installs verified content",
+          "pass": true
+        },
+        {
+          "test": "Direct removal deletes owned file",
+          "pass": true
+        },
+        {
+          "test": "Bulk runtime false and null remain hits without Redis calls",
+          "pass": true
+        },
+        {
+          "test": "Forced false is a persistent store hit",
+          "pass": true
+        },
+        {
+          "test": "Persistent miss counted independently",
+          "pass": true
+        },
+        {
+          "test": "Per-option initial write",
+          "pass": true
+        },
+        {
+          "test": "Per-option patch write",
+          "pass": true
+        },
+        {
+          "test": "Unchanged field survives original TTL with refreshed manifest",
+          "pass": true
+        },
+        {
+          "test": "Per-option forced read after write uses primary not replica",
+          "pass": true
+        },
+        {
+          "test": "Evicted unchanged field invalidates manifest instead of leaving broken reference",
+          "pass": true
+        },
+        {
+          "test": "Lua tracks every option field",
+          "pass": true
+        },
+        {
+          "test": "Multi-key delete pins all keys",
+          "pass": true
+        },
+        {
+          "test": "Topology reset clears slot map while preserving write set",
+          "pass": true
+        },
+        {
+          "test": "Abandoned job is visible as in-flight",
+          "pass": true
+        },
+        {
+          "test": "Expired lease recovered and cleanup completes",
+          "pass": true
+        },
+        {
+          "test": "Queued reclamation schedules worker on demand",
+          "pass": true
+        },
+        {
+          "test": "Empty cleanup queue retires idle cron",
+          "pass": true
+        },
+        {
+          "test": "Malformed and out-of-range telemetry skipped",
+          "pass": true
+        }
+      ],
+      "responsiveDashboard": [
+        {
+          "test": "WordPress notice remains outside identity and connection row",
+          "pass": true
+        },
+        {
+          "test": "overview no page overflow at 320",
+          "pass": true
+        },
+        {
+          "test": "overview single native heading outside header at 320",
+          "pass": true
+        },
+        {
+          "test": "overview consistent heading sizes at 320",
+          "pass": true
+        },
+        {
+          "test": "overview readable body and controls at 320",
+          "pass": true
+        },
+        {
+          "test": "overview matching connection controls at 320",
+          "pass": true
+        },
+        {
+          "test": "Combined and store metrics explained at 320",
+          "pass": true
+        },
+        {
+          "test": "Keyboard chart tab works at 320",
+          "pass": true
+        },
+        {
+          "test": "Chart axis is 14 rendered pixels at 320",
+          "pass": true
+        },
+        {
+          "test": "Chart has accessible table and sample age at 320",
+          "pass": true
+        },
+        {
+          "test": "connection no page overflow at 320",
+          "pass": true
+        },
+        {
+          "test": "connection single native heading outside header at 320",
+          "pass": true
+        },
+        {
+          "test": "connection consistent heading sizes at 320",
+          "pass": true
+        },
+        {
+          "test": "connection readable body and controls at 320",
+          "pass": true
+        },
+        {
+          "test": "connection matching connection controls at 320",
+          "pass": true
+        },
+        {
+          "test": "Settings headings and input heights at 320",
+          "pass": true
+        },
+        {
+          "test": "Sampling fields share aligned columns at 320",
+          "pass": true
+        },
+        {
+          "test": "Unavailable Relay is explained at 320",
+          "pass": true,
+          "details": {
+            "disabled": true,
+            "text": "relay: extension unavailable"
+          }
+        },
+        {
+          "test": "analytics no page overflow at 320",
+          "pass": true
+        },
+        {
+          "test": "analytics single native heading outside header at 320",
+          "pass": true
+        },
+        {
+          "test": "analytics consistent heading sizes at 320",
+          "pass": true
+        },
+        {
+          "test": "analytics readable body and controls at 320",
+          "pass": true
+        },
+        {
+          "test": "analytics matching connection controls at 320",
+          "pass": true
+        },
+        {
+          "test": "groups no page overflow at 320",
+          "pass": true
+        },
+        {
+          "test": "groups single native heading outside header at 320",
+          "pass": true
+        },
+        {
+          "test": "groups consistent heading sizes at 320",
+          "pass": true
+        },
+        {
+          "test": "groups readable body and controls at 320",
+          "pass": true
+        },
+        {
+          "test": "groups matching connection controls at 320",
+          "pass": true
+        },
+        {
+          "test": "tools no page overflow at 320",
+          "pass": true
+        },
+        {
+          "test": "tools single native heading outside header at 320",
+          "pass": true
+        },
+        {
+          "test": "tools consistent heading sizes at 320",
+          "pass": true
+        },
+        {
+          "test": "tools readable body and controls at 320",
+          "pass": true
+        },
+        {
+          "test": "tools matching connection controls at 320",
+          "pass": true
+        },
+        {
+          "test": "diagnostics no page overflow at 320",
+          "pass": true
+        },
+        {
+          "test": "diagnostics single native heading outside header at 320",
+          "pass": true
+        },
+        {
+          "test": "diagnostics consistent heading sizes at 320",
+          "pass": true
+        },
+        {
+          "test": "diagnostics readable body and controls at 320",
+          "pass": true
+        },
+        {
+          "test": "diagnostics matching connection controls at 320",
+          "pass": true
+        },
+        {
+          "test": "Dashboard widget fits at 320",
+          "pass": true
+        },
+        {
+          "test": "Widget text at least 14px at 320",
+          "pass": true
+        },
+        {
+          "test": "overview no page overflow at 375",
+          "pass": true
+        },
+        {
+          "test": "overview single native heading outside header at 375",
+          "pass": true
+        },
+        {
+          "test": "overview consistent heading sizes at 375",
+          "pass": true
+        },
+        {
+          "test": "overview readable body and controls at 375",
+          "pass": true
+        },
+        {
+          "test": "overview matching connection controls at 375",
+          "pass": true
+        },
+        {
+          "test": "Combined and store metrics explained at 375",
+          "pass": true
+        },
+        {
+          "test": "Keyboard chart tab works at 375",
+          "pass": true
+        },
+        {
+          "test": "Chart axis is 14 rendered pixels at 375",
+          "pass": true
+        },
+        {
+          "test": "Chart has accessible table and sample age at 375",
+          "pass": true
+        },
+        {
+          "test": "connection no page overflow at 375",
+          "pass": true
+        },
+        {
+          "test": "connection single native heading outside header at 375",
+          "pass": true
+        },
+        {
+          "test": "connection consistent heading sizes at 375",
+          "pass": true
+        },
+        {
+          "test": "connection readable body and controls at 375",
+          "pass": true
+        },
+        {
+          "test": "connection matching connection controls at 375",
+          "pass": true
+        },
+        {
+          "test": "Settings headings and input heights at 375",
+          "pass": true
+        },
+        {
+          "test": "Sampling fields share aligned columns at 375",
+          "pass": true
+        },
+        {
+          "test": "Unavailable Relay is explained at 375",
+          "pass": true,
+          "details": {
+            "disabled": true,
+            "text": "relay: extension unavailable"
+          }
+        },
+        {
+          "test": "analytics no page overflow at 375",
+          "pass": true
+        },
+        {
+          "test": "analytics single native heading outside header at 375",
+          "pass": true
+        },
+        {
+          "test": "analytics consistent heading sizes at 375",
+          "pass": true
+        },
+        {
+          "test": "analytics readable body and controls at 375",
+          "pass": true
+        },
+        {
+          "test": "analytics matching connection controls at 375",
+          "pass": true
+        },
+        {
+          "test": "groups no page overflow at 375",
+          "pass": true
+        },
+        {
+          "test": "groups single native heading outside header at 375",
+          "pass": true
+        },
+        {
+          "test": "groups consistent heading sizes at 375",
+          "pass": true
+        },
+        {
+          "test": "groups readable body and controls at 375",
+          "pass": true
+        },
+        {
+          "test": "groups matching connection controls at 375",
+          "pass": true
+        },
+        {
+          "test": "tools no page overflow at 375",
+          "pass": true
+        },
+        {
+          "test": "tools single native heading outside header at 375",
+          "pass": true
+        },
+        {
+          "test": "tools consistent heading sizes at 375",
+          "pass": true
+        },
+        {
+          "test": "tools readable body and controls at 375",
+          "pass": true
+        },
+        {
+          "test": "tools matching connection controls at 375",
+          "pass": true
+        },
+        {
+          "test": "diagnostics no page overflow at 375",
+          "pass": true
+        },
+        {
+          "test": "diagnostics single native heading outside header at 375",
+          "pass": true
+        },
+        {
+          "test": "diagnostics consistent heading sizes at 375",
+          "pass": true
+        },
+        {
+          "test": "diagnostics readable body and controls at 375",
+          "pass": true
+        },
+        {
+          "test": "diagnostics matching connection controls at 375",
+          "pass": true
+        },
+        {
+          "test": "Dashboard widget fits at 375",
+          "pass": true
+        },
+        {
+          "test": "Widget text at least 14px at 375",
+          "pass": true
+        },
+        {
+          "test": "overview no page overflow at 768",
+          "pass": true
+        },
+        {
+          "test": "overview single native heading outside header at 768",
+          "pass": true
+        },
+        {
+          "test": "overview consistent heading sizes at 768",
+          "pass": true
+        },
+        {
+          "test": "overview readable body and controls at 768",
+          "pass": true
+        },
+        {
+          "test": "overview matching connection controls at 768",
+          "pass": true
+        },
+        {
+          "test": "Combined and store metrics explained at 768",
+          "pass": true
+        },
+        {
+          "test": "Keyboard chart tab works at 768",
+          "pass": true
+        },
+        {
+          "test": "Chart axis is 14 rendered pixels at 768",
+          "pass": true
+        },
+        {
+          "test": "Chart has accessible table and sample age at 768",
+          "pass": true
+        },
+        {
+          "test": "connection no page overflow at 768",
+          "pass": true
+        },
+        {
+          "test": "connection single native heading outside header at 768",
+          "pass": true
+        },
+        {
+          "test": "connection consistent heading sizes at 768",
+          "pass": true
+        },
+        {
+          "test": "connection readable body and controls at 768",
+          "pass": true
+        },
+        {
+          "test": "connection matching connection controls at 768",
+          "pass": true
+        },
+        {
+          "test": "Settings headings and input heights at 768",
+          "pass": true
+        },
+        {
+          "test": "Sampling fields share aligned columns at 768",
+          "pass": true
+        },
+        {
+          "test": "Unavailable Relay is explained at 768",
+          "pass": true,
+          "details": {
+            "disabled": true,
+            "text": "relay: extension unavailable"
+          }
+        },
+        {
+          "test": "analytics no page overflow at 768",
+          "pass": true
+        },
+        {
+          "test": "analytics single native heading outside header at 768",
+          "pass": true
+        },
+        {
+          "test": "analytics consistent heading sizes at 768",
+          "pass": true
+        },
+        {
+          "test": "analytics readable body and controls at 768",
+          "pass": true
+        },
+        {
+          "test": "analytics matching connection controls at 768",
+          "pass": true
+        },
+        {
+          "test": "groups no page overflow at 768",
+          "pass": true
+        },
+        {
+          "test": "groups single native heading outside header at 768",
+          "pass": true
+        },
+        {
+          "test": "groups consistent heading sizes at 768",
+          "pass": true
+        },
+        {
+          "test": "groups readable body and controls at 768",
+          "pass": true
+        },
+        {
+          "test": "groups matching connection controls at 768",
+          "pass": true
+        },
+        {
+          "test": "tools no page overflow at 768",
+          "pass": true
+        },
+        {
+          "test": "tools single native heading outside header at 768",
+          "pass": true
+        },
+        {
+          "test": "tools consistent heading sizes at 768",
+          "pass": true
+        },
+        {
+          "test": "tools readable body and controls at 768",
+          "pass": true
+        },
+        {
+          "test": "tools matching connection controls at 768",
+          "pass": true
+        },
+        {
+          "test": "diagnostics no page overflow at 768",
+          "pass": true
+        },
+        {
+          "test": "diagnostics single native heading outside header at 768",
+          "pass": true
+        },
+        {
+          "test": "diagnostics consistent heading sizes at 768",
+          "pass": true
+        },
+        {
+          "test": "diagnostics readable body and controls at 768",
+          "pass": true
+        },
+        {
+          "test": "diagnostics matching connection controls at 768",
+          "pass": true
+        },
+        {
+          "test": "Dashboard widget fits at 768",
+          "pass": true
+        },
+        {
+          "test": "Widget text at least 14px at 768",
+          "pass": true
+        },
+        {
+          "test": "overview no page overflow at 1440",
+          "pass": true
+        },
+        {
+          "test": "overview single native heading outside header at 1440",
+          "pass": true
+        },
+        {
+          "test": "overview consistent heading sizes at 1440",
+          "pass": true
+        },
+        {
+          "test": "overview readable body and controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "overview matching connection controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "Combined and store metrics explained at 1440",
+          "pass": true
+        },
+        {
+          "test": "Keyboard chart tab works at 1440",
+          "pass": true
+        },
+        {
+          "test": "Chart axis is 14 rendered pixels at 1440",
+          "pass": true
+        },
+        {
+          "test": "Chart has accessible table and sample age at 1440",
+          "pass": true
+        },
+        {
+          "test": "connection no page overflow at 1440",
+          "pass": true
+        },
+        {
+          "test": "connection single native heading outside header at 1440",
+          "pass": true
+        },
+        {
+          "test": "connection consistent heading sizes at 1440",
+          "pass": true
+        },
+        {
+          "test": "connection readable body and controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "connection matching connection controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "Settings headings and input heights at 1440",
+          "pass": true
+        },
+        {
+          "test": "Sampling fields share aligned columns at 1440",
+          "pass": true
+        },
+        {
+          "test": "Unavailable Relay is explained at 1440",
+          "pass": true,
+          "details": {
+            "disabled": true,
+            "text": "relay: extension unavailable"
+          }
+        },
+        {
+          "test": "analytics no page overflow at 1440",
+          "pass": true
+        },
+        {
+          "test": "analytics single native heading outside header at 1440",
+          "pass": true
+        },
+        {
+          "test": "analytics consistent heading sizes at 1440",
+          "pass": true
+        },
+        {
+          "test": "analytics readable body and controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "analytics matching connection controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "groups no page overflow at 1440",
+          "pass": true
+        },
+        {
+          "test": "groups single native heading outside header at 1440",
+          "pass": true
+        },
+        {
+          "test": "groups consistent heading sizes at 1440",
+          "pass": true
+        },
+        {
+          "test": "groups readable body and controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "groups matching connection controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "tools no page overflow at 1440",
+          "pass": true
+        },
+        {
+          "test": "tools single native heading outside header at 1440",
+          "pass": true
+        },
+        {
+          "test": "tools consistent heading sizes at 1440",
+          "pass": true
+        },
+        {
+          "test": "tools readable body and controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "tools matching connection controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "diagnostics no page overflow at 1440",
+          "pass": true
+        },
+        {
+          "test": "diagnostics single native heading outside header at 1440",
+          "pass": true
+        },
+        {
+          "test": "diagnostics consistent heading sizes at 1440",
+          "pass": true
+        },
+        {
+          "test": "diagnostics readable body and controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "diagnostics matching connection controls at 1440",
+          "pass": true
+        },
+        {
+          "test": "Dashboard widget fits at 1440",
+          "pass": true
+        },
+        {
+          "test": "Widget text at least 14px at 1440",
+          "pass": true
+        },
+        {
+          "test": "Grouped settings save through protected form",
+          "pass": true
+        },
+        {
+          "test": "No JavaScript exceptions",
+          "pass": true,
+          "details": []
+        }
+      ],
+      "mixedVersionUpgrade": [
+        {
+          "test": "Old owned drop-in loads new module without missing counter properties",
+          "pass": true
+        },
+        {
+          "test": "Authorized automatic refresh replaces 1.1.2 drop-in with verified 1.1.3 contents",
+          "pass": true
+        }
+      ],
+      "optimizationAndCounterBoundaries": [
+        {
+          "test": "Unknown group is cacheable",
+          "pass": true
+        },
+        {
+          "test": "Late wildcard registration invalidates memo",
+          "pass": true
+        },
+        {
+          "test": "Regex metacharacters remain literal",
+          "pass": true
+        },
+        {
+          "test": "Ignored wildcard never persists",
+          "pass": true
+        },
+        {
+          "test": "Ignored group memo bounded",
+          "pass": true
+        },
+        {
+          "test": "Late exact group registration",
+          "pass": true
+        },
+        {
+          "test": "Tracing enabled after fast path is observed",
+          "pass": true
+        },
+        {
+          "test": "Command recording enabled after fast path",
+          "pass": true
+        },
+        {
+          "test": "Disabled recording does not append",
+          "pass": true
+        },
+        {
+          "test": "Missing persistent counter returns false",
+          "pass": true
+        },
+        {
+          "test": "Overflow returns false and preserves maximum",
+          "pass": true
+        },
+        {
+          "test": "Successful zero counter remains integer zero",
+          "pass": true
+        }
+      ],
+      "realPhpRedis_standalone_cache": [
+        {
+          "test": "Advanced cache drop-in loaded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Real Redis connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Write type 0",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 0",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 1",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 1",
+          "pass": true,
+          "details": [
+            "NULL",
+            "NULL"
+          ]
+        },
+        {
+          "test": "Write type 2",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 2",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 3",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 3",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 4",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 4",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 5",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 5",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 6",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 6",
+          "pass": true,
+          "details": [
+            "double",
+            "double"
+          ]
+        },
+        {
+          "test": "Write type 7",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 7",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 8",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 8",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 9",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 9",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 10",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 10",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 11",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 11",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 12",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 12",
+          "pass": true,
+          "details": [
+            "array",
+            "array"
+          ]
+        },
+        {
+          "test": "Write type 13",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 13",
+          "pass": true,
+          "details": [
+            "object",
+            "object"
+          ]
+        },
+        {
+          "test": "Missing value found flag",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Empty key is rejected",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add creates absent key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add refuses existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace refuses missing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment integer atomically",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Decrement clamps to zero",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment missing returns false",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string remains string",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string increment",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment preserves expiration",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk set results",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk get types and misses",
+          "pass": true,
+          "details": {
+            "one": 1,
+            "two": [
+              2
+            ],
+            "nil": null,
+            "false": false,
+            "absent": false
+          }
+        },
+        {
+          "test": "Bulk add preserves existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk delete",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Object read is cloned",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent values available in request",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent and wildcard groups absent in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation crosses instances",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush preserves foreign data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "TTL expires in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Query TTL bounded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions hash write",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions read types",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions stored as hash",
+          "pass": true,
+          "details": "hash"
+        },
+        {
+          "test": "Split alloptions add refuses existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions empty hash roundtrip",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress option API with split alloptions",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress post API caches data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Anonymous plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Administrator plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route latency",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route commands",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route slowlog",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route options",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Diagnostic options omit credentials and endpoints",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders overview",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders tools",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders diagnostics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Analytics persists across namespace flush",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "First analytics sample receives retention expiry",
+          "pass": true,
+          "details": null
+        }
+      ],
+      "realPhpRedis_standalone_hardening": [
+        {
+          "test": "Counter is exact above 2^53",
+          "pass": true
+        },
+        {
+          "test": "Large counter decrement is exact",
+          "pass": true
+        },
+        {
+          "test": "Counter overflow is refused without mutation",
+          "pass": true
+        },
+        {
+          "test": "Signed counter arithmetic",
+          "pass": true
+        },
+        {
+          "test": "Invalid counter keys rejected",
+          "pass": true
+        },
+        {
+          "test": "Concurrent unrelated option changes both survive",
+          "pass": true
+        },
+        {
+          "test": "Stale option snapshot cannot resurrect unrelated deleted field",
+          "pass": true
+        },
+        {
+          "test": "Split options replace preserves missing semantics",
+          "pass": true
+        },
+        {
+          "test": "Missing hash is repopulated from complete snapshot",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 3",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 4",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 5",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 6",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 7",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 8",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 9",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 3",
+          "pass": true
+        },
+        {
+          "test": "Diagnostics omit socket path and endpoint credentials",
+          "pass": true
+        },
+        {
+          "test": "Site action defaults to current site",
+          "pass": true
+        },
+        {
+          "test": "Site flush preserves unrelated keys",
+          "pass": true
+        },
+        {
+          "test": "Corrupt single value becomes a miss with found=false",
+          "pass": true
+        },
+        {
+          "test": "Corrupt cache entry removed",
+          "pass": true
+        },
+        {
+          "test": "Bulk corruption does not lose healthy results",
+          "pass": true
+        },
+        {
+          "test": "Corrupt reads keep healthy connection active",
+          "pass": true
+        },
+        {
+          "test": "Bulk unserializable value cannot crash request",
+          "pass": true
+        },
+        {
+          "test": "Invalid bulk read argument is rejected",
+          "pass": true
+        },
+        {
+          "test": "Metadata outage cannot escape key preparation",
+          "pass": true
+        },
+        {
+          "test": "Runtime caching remains usable after metadata outage",
+          "pass": true
+        }
+      ],
+      "realPhpRedis_standalone_features": [
+        {
+          "test": "Async flush rotates namespace immediately",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup queue exists",
+          "pass": true
+        },
+        {
+          "test": "Bounded cleanup finishes across all nodes",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup physically removes invalidated data",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup preserves new generation and foreign keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: scan",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: full",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: full",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Malformed cleanup cannot target foreign data",
+          "pass": true
+        },
+        {
+          "test": "Forged guard cannot delete a live generation",
+          "pass": true
+        },
+        {
+          "test": "Shared server omits unrelated capacity totals",
+          "pass": true
+        },
+        {
+          "test": "Dedicated server reports primary capacity",
+          "pass": true
+        },
+        {
+          "test": "Safe read retries recover after a transient failure",
+          "pass": true
+        },
+        {
+          "test": "Ambiguous writes never replay",
+          "pass": true
+        },
+        {
+          "test": "Retries stop at configured bound",
+          "pass": true
+        },
+        {
+          "test": "Tracer observes inherited get/set/delete and bulk execution",
+          "pass": true
+        },
+        {
+          "test": "Recorded commands include inherited engine and omit data",
+          "pass": true
+        },
+        {
+          "test": "PSR-style logger receives selected log levels",
+          "pass": true
+        },
+        {
+          "test": "Strict ownership mismatch invalidates conflicting namespace",
+          "pass": true
+        },
+        {
+          "test": "Cleanup cron handler registered",
+          "pass": true
+        }
+      ],
+      "realPhpRedis_cluster_cache": [
+        {
+          "test": "Advanced cache drop-in loaded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Real Redis connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Write type 0",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 0",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 1",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 1",
+          "pass": true,
+          "details": [
+            "NULL",
+            "NULL"
+          ]
+        },
+        {
+          "test": "Write type 2",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 2",
+          "pass": true,
+          "details": [
+            "boolean",
+            "boolean"
+          ]
+        },
+        {
+          "test": "Write type 3",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 3",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 4",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 4",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 5",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 5",
+          "pass": true,
+          "details": [
+            "integer",
+            "integer"
+          ]
+        },
+        {
+          "test": "Write type 6",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 6",
+          "pass": true,
+          "details": [
+            "double",
+            "double"
+          ]
+        },
+        {
+          "test": "Write type 7",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 7",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 8",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 8",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 9",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 9",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 10",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 10",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 11",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 11",
+          "pass": true,
+          "details": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "test": "Write type 12",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 12",
+          "pass": true,
+          "details": [
+            "array",
+            "array"
+          ]
+        },
+        {
+          "test": "Write type 13",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Type and found survive Redis 13",
+          "pass": true,
+          "details": [
+            "object",
+            "object"
+          ]
+        },
+        {
+          "test": "Missing value found flag",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Empty key is rejected",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add creates absent key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Add refuses existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace refuses missing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Replace existing key",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment integer atomically",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Decrement clamps to zero",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment missing returns false",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string remains string",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Numeric string increment",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Increment preserves expiration",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk set results",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk get types and misses",
+          "pass": true,
+          "details": {
+            "one": 1,
+            "two": [
+              2
+            ],
+            "nil": null,
+            "false": false,
+            "absent": false
+          }
+        },
+        {
+          "test": "Bulk add preserves existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Bulk delete",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Object read is cloned",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent values available in request",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Nonpersistent and wildcard groups absent in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation succeeds",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Group invalidation crosses instances",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Namespace flush preserves foreign data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "TTL expires in Redis",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Query TTL bounded",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions hash write",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions read types",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions stored as hash",
+          "pass": true,
+          "details": "hash"
+        },
+        {
+          "test": "Split alloptions add refuses existing",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Split alloptions empty hash roundtrip",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress option API with split alloptions",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "WordPress post API caches data",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Anonymous plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Administrator plugin REST route is absent",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route latency",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route commands",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route slowlog",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Removed REST route options",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Diagnostic options omit credentials and endpoints",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders overview",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders connection",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders analytics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders groups",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders tools",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Dashboard renders diagnostics",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "Analytics persists across namespace flush",
+          "pass": true,
+          "details": null
+        },
+        {
+          "test": "First analytics sample receives retention expiry",
+          "pass": true,
+          "details": null
+        }
+      ],
+      "realPhpRedis_cluster_hardening": [
+        {
+          "test": "Counter is exact above 2^53",
+          "pass": true
+        },
+        {
+          "test": "Large counter decrement is exact",
+          "pass": true
+        },
+        {
+          "test": "Counter overflow is refused without mutation",
+          "pass": true
+        },
+        {
+          "test": "Signed counter arithmetic",
+          "pass": true
+        },
+        {
+          "test": "Invalid counter keys rejected",
+          "pass": true
+        },
+        {
+          "test": "Concurrent unrelated option changes both survive",
+          "pass": true
+        },
+        {
+          "test": "Stale option snapshot cannot resurrect unrelated deleted field",
+          "pass": true
+        },
+        {
+          "test": "Split options replace preserves missing semantics",
+          "pass": true
+        },
+        {
+          "test": "Missing hash is repopulated from complete snapshot",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 3",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 4",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 5",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 6",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 7",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 8",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed configuration 9",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 0",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 1",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 2",
+          "pass": true
+        },
+        {
+          "test": "Reject malformed form 3",
+          "pass": true
+        },
+        {
+          "test": "Diagnostics omit socket path and endpoint credentials",
+          "pass": true
+        },
+        {
+          "test": "Site action defaults to current site",
+          "pass": true
+        },
+        {
+          "test": "Site flush preserves unrelated keys",
+          "pass": true
+        },
+        {
+          "test": "Corrupt single value becomes a miss with found=false",
+          "pass": true
+        },
+        {
+          "test": "Corrupt cache entry removed",
+          "pass": true
+        },
+        {
+          "test": "Bulk corruption does not lose healthy results",
+          "pass": true
+        },
+        {
+          "test": "Corrupt reads keep healthy connection active",
+          "pass": true
+        },
+        {
+          "test": "Bulk unserializable value cannot crash request",
+          "pass": true
+        },
+        {
+          "test": "Invalid bulk read argument is rejected",
+          "pass": true
+        },
+        {
+          "test": "Metadata outage cannot escape key preparation",
+          "pass": true
+        },
+        {
+          "test": "Runtime caching remains usable after metadata outage",
+          "pass": true
+        }
+      ],
+      "realPhpRedis_cluster_features": [
+        {
+          "test": "Async flush rotates namespace immediately",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup queue exists",
+          "pass": true
+        },
+        {
+          "test": "Bounded cleanup finishes across all nodes",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup physically removes invalidated data",
+          "pass": true
+        },
+        {
+          "test": "Background cleanup preserves new generation and foreign keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: atomic",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: scan",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: keys",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: incremental",
+          "pass": true
+        },
+        {
+          "test": "Group flush strategy works: full",
+          "pass": true
+        },
+        {
+          "test": "Group data reclaimed: full",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: scan",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: keys",
+          "pass": true
+        },
+        {
+          "test": "Wildcard strategy works: incremental",
+          "pass": true
+        },
+        {
+          "test": "Malformed cleanup cannot target foreign data",
+          "pass": true
+        },
+        {
+          "test": "Forged guard cannot delete a live generation",
+          "pass": true
+        },
+        {
+          "test": "Shared server omits unrelated capacity totals",
+          "pass": true
+        },
+        {
+          "test": "Dedicated server reports primary capacity",
+          "pass": true
+        },
+        {
+          "test": "Safe read retries recover after a transient failure",
+          "pass": true
+        },
+        {
+          "test": "Ambiguous writes never replay",
+          "pass": true
+        },
+        {
+          "test": "Retries stop at configured bound",
+          "pass": true
+        },
+        {
+          "test": "Tracer observes inherited get/set/delete and bulk execution",
+          "pass": true
+        },
+        {
+          "test": "Recorded commands include inherited engine and omit data",
+          "pass": true
+        },
+        {
+          "test": "PSR-style logger receives selected log levels",
+          "pass": true
+        },
+        {
+          "test": "Strict ownership mismatch invalidates conflicting namespace",
+          "pass": true
+        },
+        {
+          "test": "Cleanup cron handler registered",
+          "pass": true
+        }
+      ],
+      "realPhpRedis_replication": [
+        {
+          "test": "Native replication connects to a real primary",
+          "pass": true
+        },
+        {
+          "test": "Own writes are read from primary",
+          "pass": true
+        },
+        {
+          "test": "Fresh native reader routes to replica",
+          "pass": true
+        },
+        {
+          "test": "Native bulk values preserve types",
+          "pass": true
+        },
+        {
+          "test": "Native namespace metadata and data use the primary",
+          "pass": true
+        },
+        {
+          "test": "Native node diagnostics include primary and replica",
+          "pass": true
+        },
+        {
+          "test": "Native drop-in diagnostics redact endpoints",
+          "pass": true
+        },
+        {
+          "test": "Native group invalidation remains coherent",
+          "pass": true
+        }
+      ],
+      "realPhpRedis_sentinel": [
+        {
+          "test": "Native sentinel connects to a real primary",
+          "pass": true
+        },
+        {
+          "test": "Own writes are read from primary",
+          "pass": true
+        },
+        {
+          "test": "Fresh native reader routes to replica",
+          "pass": true
+        },
+        {
+          "test": "Native bulk values preserve types",
+          "pass": true
+        },
+        {
+          "test": "Native namespace metadata and data use the primary",
+          "pass": true
+        },
+        {
+          "test": "Native node diagnostics include primary and replica",
+          "pass": true
+        },
+        {
+          "test": "Native drop-in diagnostics redact endpoints",
+          "pass": true
+        },
+        {
+          "test": "Native group invalidation remains coherent",
+          "pass": true
+        }
+      ]
+    }
+  },
+  "linux": {
+    "run": 38213789404,
+    "commit": "7f43458ba64c39b5a7f5786c9862648f606f3424",
+    "passedChecksByJob": {
+      "linux-performance-applications": 144,
+      "linux-php-7.4-redis-7-wp-6.6": 1061,
+      "linux-php-7.4-redis-7-wp-latest": 1061,
+      "linux-php-8.2-redis-7-wp-latest": 1061,
+      "linux-php-8.3-redis-6-wp-latest": 1061,
+      "linux-php-8.3-redis-7-wp-latest": 1061,
+      "linux-php-8.3-redis-8-wp-latest": 1061,
+      "linux-php-8.4-redis-7-wp-latest": 1061,
+      "linux-php-8.5-redis-7-wp-latest": 1061
+    },
+    "totalPassedChecks": 8632,
+    "benchmark": {
+      "free": {
+        "rounds": 7,
+        "timings": {
+          "runtime_100": {
+            "p50_ms": 0.047048,
+            "p95_ms": 0.063569,
+            "p99_ms": 0.073718
+          },
+          "redis_20": {
+            "p50_ms": 2.855657,
+            "p95_ms": 3.244694,
+            "p99_ms": 3.44604
+          },
+          "bulk_100": {
+            "p50_ms": 0.439562,
+            "p95_ms": 0.489105,
+            "p99_ms": 0.613056
+          },
+          "writes_20": {
+            "p50_ms": 2.609186,
+            "p95_ms": 3.063766,
+            "p99_ms": 3.385898
+          },
+          "misses_20": {
+            "p50_ms": 2.512508,
+            "p95_ms": 2.972226,
+            "p99_ms": 3.041575
+          },
+          "cold_20": {
+            "p50_ms": 2.688866,
+            "p95_ms": 3.105494,
+            "p99_ms": 3.270163
+          },
+          "large_16k": {
+            "p50_ms": 0.348602,
+            "p95_ms": 0.366776,
+            "p99_ms": 0.392574
+          }
+        },
+        "php_cpu_ms": 185.08500000000004,
+        "redis_cpu_ms": 164.8090000000002,
+        "php_peak_bytes": 35651584,
+        "redis_rss_bytes": 17805312,
+        "redis_commands": 4252
+      },
+      "baseline": {
+        "rounds": 7,
+        "timings": {
+          "runtime_100": {
+            "p50_ms": 0.059621,
+            "p95_ms": 0.077826,
+            "p99_ms": 0.089578
+          },
+          "redis_20": {
+            "p50_ms": 2.863523,
+            "p95_ms": 3.459578,
+            "p99_ms": 3.647249
+          },
+          "bulk_100": {
+            "p50_ms": 0.499223,
+            "p95_ms": 0.591195,
+            "p99_ms": 0.701791
+          },
+          "writes_20": {
+            "p50_ms": 3.261836,
+            "p95_ms": 3.57918,
+            "p99_ms": 3.777139
+          },
+          "misses_20": {
+            "p50_ms": 2.671833,
+            "p95_ms": 3.287915,
+            "p99_ms": 3.486556
+          },
+          "cold_20": {
+            "p50_ms": 2.786247,
+            "p95_ms": 3.310338,
+            "p99_ms": 3.474134
+          },
+          "large_16k": {
+            "p50_ms": 0.369962,
+            "p95_ms": 0.400215,
+            "p99_ms": 0.434844
+          }
+        },
+        "php_cpu_ms": 231.403,
+        "redis_cpu_ms": 173.00100000000018,
+        "php_peak_bytes": 37748736,
+        "redis_rss_bytes": 18067456,
+        "redis_commands": 4258
+      },
+      "harbor": {
+        "rounds": 7,
+        "timings": {
+          "runtime_100": {
+            "p50_ms": 0.060673,
+            "p95_ms": 0.086021,
+            "p99_ms": 0.103333
+          },
+          "redis_20": {
+            "p50_ms": 3.011566,
+            "p95_ms": 3.390938,
+            "p99_ms": 3.568882
+          },
+          "bulk_100": {
+            "p50_ms": 0.494936,
+            "p95_ms": 0.568453,
+            "p99_ms": 0.720607
+          },
+          "writes_20": {
+            "p50_ms": 2.953339,
+            "p95_ms": 3.510952,
+            "p99_ms": 3.637488
+          },
+          "misses_20": {
+            "p50_ms": 2.570154,
+            "p95_ms": 3.137344,
+            "p99_ms": 3.165868
+          },
+          "cold_20": {
+            "p50_ms": 2.765273,
+            "p95_ms": 3.298555,
+            "p99_ms": 3.408689
+          },
+          "large_16k": {
+            "p50_ms": 0.335457,
+            "p95_ms": 0.372686,
+            "p99_ms": 0.429793
+          }
+        },
+        "php_cpu_ms": 214.719,
+        "redis_cpu_ms": 169.0710000000002,
+        "php_peak_bytes": 37748736,
+        "redis_rss_bytes": 18329600,
+        "redis_commands": 4258
+      }
+    },
+    "http": {
+      "requests": 160,
+      "concurrency": 8,
+      "p50_ms": 195.767,
+      "p95_ms": 259.03700000000003,
+      "p99_ms": 273.867,
+      "restoredRequests": 160
+    }
+  },
+  "package": {
+    "files": 610,
+    "bytes": 685730,
+    "sha256": "7c7ce2dc187c2dc1f7175a8de4b0ea21ba68a077bb9908ccc0a2ba31ecf79803",
+    "verifiedCRC": true,
+    "sourceInstalledExtractedRepositoryParity": true,
+    "ownedDropinParity": true
+  },
+  "readme": {
+    "version": "1.1.3",
+    "sha256": "8733a13fc2f21ea19e183673b3ea5e89061acd534734fc31657e175f498d72ee",
+    "errors": false,
+    "warnings": false,
+    "optional_donation_note": true
+  },
+  "pluginCheck": {
+    "errors": 0,
+    "warnings": 0,
+    "experimental": true,
+    "initializedPerformanceChecks": 5,
+    "toolNotice": "WP-CLI dependencies emit PHP 8.5 deprecations; no plugin findings."
+  },
+  "limitations": [
+    "Short CLI/FPM acceptance does not establish sustained production latency, CPU capacity or memory growth.",
+    "Native Relay topology/partition/failover and long-running shared-FPM invalidation remain deployment gates.",
+    "New Relic real account/agent and intended production OpenTelemetry collector delivery remain unverified.",
+    "WordPress.org approval and complete Object Cache Pro parity are not claimed.",
+    "No update, outage or synthetic load was performed on autoscareer.com."
+  ]
+}

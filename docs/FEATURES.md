@@ -10,7 +10,7 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. 
 | Reclamation | Immediate namespace rotation plus optional queued reclamation. Bounded SCAN batches, explicit KEYS mode, UNLINK on supported servers, per-primary cluster cleanup, generation guards and cron/manual/CLI workers. |
 | Flush strategies | Group atomic/scan/keys/incremental/full and wildcard scan/keys/incremental tested. Full invalidates this installation, never FLUSHDB/FLUSHALL. SCAN/KEYS do one bounded deletion batch and queue remaining work. KEYS itself can block Redis; avoid it on large deployments. |
 | Expiration | Finite maximum TTL and a separate limit for query groups. Old query generations expire; there is no separate hourly stale-query discovery sweep. |
-| Split alloptions | Redis hash with atomic changed-field patches. Concurrent edits to different fields survive and stale snapshots do not restore unrelated deletions. Same-field conflicts are last-writer-wins. Finite TTL applies; Relay uses separate option strings and an atomic manifest. Real Relay concurrent invalidation remains unverified. |
+| Split alloptions | Redis hash with atomic changed-field patches. Concurrent edits to different fields survive and stale snapshots do not restore unrelated deletions. Same-field conflicts are last-writer-wins. Finite TTL applies; Relay uses separate option strings and an atomic manifest. Real Relay 0.50.2 standalone CLI tests cover independent and concurrent option patches; adaptive/topology and long-running shared FPM acceptance are separate gates. |
 | Prefetch | Bounded per-route/user manifests, refreshed each request and replayed using bulk reads. Excluded/nonpersistent groups respected. |
 | Retries | Bounded safe-read retries with none/constant/exponential/jitter backoff. Ambiguous writes are not replayed. Predis replicated writes use an explicit primary connection. |
 | Replication | Real primary/replica tests for distribute, replica-only and concentrate reads. Reads of keys written in the same request stay on the primary. Other replica reads can observe replication lag. |
@@ -20,8 +20,8 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. 
 | Logging | Callable, class or PSR-style object logger with level filtering and redacted failure context. Logger failures do not break caching. |
 | Tracing | Core cache operations and batches pass through instrumentation. Callable wrappers and OpenTelemetry provider/span lifecycle have contract tests. New Relic emits optional custom command events. Real OpenTelemetry SDK/OTLP HTTP export has local receiver evidence; real New Relic agent export remains untested. |
 | Extension points | Custom connector callable and cache subclass/factory exercised against Redis. These are HarborCache APIs, not compatibility with Pro's interfaces. |
-| Native clients | PhpRedis and Relay connection paths; Relay Cluster constructor, cache/invalidation patterns, adaptive policy, listeners and native routing have API-contract fixtures. Real PhpRedis 6.3.0 standalone, cluster, replicas and Sentinel were validated on Windows with Redis 5. Relay still has contract fixtures only. |
-| Values | PHP serialization live-tested. igbinary/LZF/LZ4/Zstandard adapters reject missing codec functions. Live codec-extension testing remains required. |
+| Native clients | PhpRedis and Relay connection paths; Relay Cluster constructor, cache/invalidation patterns, adaptive policy, listeners and native routing have API-contract fixtures. Real PhpRedis 6.3.0 standalone, cluster, replicas and Sentinel were validated on Windows with Redis 5. Real Relay 0.50.2 standalone values, counters, forced reads, option patches and concurrent processes passed on Linux. Native Relay topology/failover remains a separate gate. |
+| Values | PHP serialization live-tested. igbinary/LZF/LZ4/Zstandard adapters reject missing codec functions. Real Linux extension roundtrips passed for PHP/igbinary serialization with none/LZF/LZ4/Zstandard compression. |
 | Administration | Six responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
 | Shared servers | Shared mode hides memory/key totals which would include other applications; dedicated mode sums primary memory and selected-database key counts. Server command statistics are explicitly labeled. |
 | Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging and recoverable replacement, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
@@ -34,7 +34,7 @@ Each listed key is validated and connected to behavior. Unknown keys are rejecte
 | --- | --- |
 | client, host, port, database, username, password, prefix | Connection selection, ACL/password parameters and hashed installation namespace. |
 | timeout, read_timeout, retry_interval, retries, backoff | Connection/read limits and bounded safe-read recovery. |
-| persistent | Client persistent connection support; requires native deployment verification. |
+| persistent | Client persistent connection support; verified with native PhpRedis in the Linux CLI matrix; pool capacity and long-running PHP-FPM behavior need deployment measurements. |
 | maxttl, queryttl | Finite object/query lifetime. |
 | shared, strict | Capacity presentation and prefix ownership protection. |
 | async_flush, group_flush, network_flush, pattern_flush | Scoped invalidation and reclamation policies described above. |
@@ -55,7 +55,7 @@ HarborCache adds scheme/path, gc_batch_size, gc_budget_ms, failure_mode, auto_up
 
 ## Remaining production acceptance gates
 
-Live tests used WordPress 7.1.3, PHP 8.5.10, SQLite integration, Predis/Credis and local Redis 5.0.14.1. PHP 7.4 syntax parsing is separate from runtime compatibility. Native Relay, Linux PhpRedis, Redis 6/7+, TLS/ACL/socket connections, codec extensions, MySQL, a real multisite network and application integrations such as WooCommerce/Jetpack/Yoast/WP Rocket/Batcache still need deployment tests.
+Linux CI now tests MySQL 8.0, WordPress 6.6/7.1.3 and eight selected PHP/Redis combinations, with real PhpRedis, codec extensions, TLS/ACL/socket, concurrent workers, Redis restart recovery, WooCommerce and multisite. Real Relay 0.50.2 standalone passed with default/adaptive policies. Short PHP-FPM HTTP requests and restart passed. Local Windows tests additionally cover native topology and responsive administration. Sustained traffic, native Relay shared-FPM/topology/failover, production tracing and wider site-specific application workflows remain gates; see ACCEPTANCE.md.
 
 Query Monitor and Debug Bar are optional integrations; the validation report identifies the actual versions and tests performed. Command instrumentation does not include every connection handshake/authentication command. New Relic native datastore instrumentation is implemented with an exactly-once callback guard, with a custom-event fallback for older agents. The included MU loader and Composer metadata support project deployments; no public Packagist listing is claimed. Local comparative benchmark results are provided with the release. No 100% coverage, premium service or exact Pro API compatibility is claimed.
 
@@ -71,7 +71,7 @@ The WordPress dashboard widget shows current-request hits, misses, ratio, comman
 
 Request-cached validated configuration, five-minute analytics rollups, median/p95 request Redis time, allowlisted windows and CSV export, on-demand bounded group count/memory inspection, explicit per-node pings, Relay adaptive diagnostics, failure modes and an operations capability filter are implemented. Owned drop-in content checks repair the obsolete update action and preserve foreign files. Connection controls share dimensions and typography.
 
-Group inspection reports physical Redis keys and may be partial after 500 keys, 20 scan pages or a cooperative 200 ms budget. Node checks run only on demand. Query maintenance is opt-in bounded group recycling; it can expire valid query entries and does not replicate Pro selective stale-query discovery. Native PhpRedis Sentinel/replication is locally exercised; Relay native topology still needs real-extension testing. Native Relay, codec and telemetry agent runtime acceptance remain open. Optional REST and helper APIs are deliberately excluded.
+Group inspection reports physical Redis keys and may be partial after 500 keys, 20 scan pages or a cooperative 200 ms budget. Node checks run only on demand. Query maintenance is opt-in bounded group recycling; it can expire valid query entries and does not replicate Pro selective stale-query discovery. Native PhpRedis Sentinel/replication is locally exercised; Relay native topology still needs real-extension testing. Standalone native Relay and codec evidence was added in 1.1.3; native Relay topology and production telemetry agent acceptance remain open. Optional REST and helper APIs are deliberately excluded.
 
 ## Version 1.1.1 evidence
 
@@ -80,4 +80,8 @@ Bounded key memoization, runtime-hit acceleration, inactive tracing bypass and s
 
 ## Version 1.1.2 stabilization
 
-Verified drop-in staging/locking/recovery, coordinated per-option expiry and all-key primary pinning, reconnect discovery resets, leased cleanup with bounded deletion batches, notice-safe dashboard headings, grouped settings, consistent 44px controls, fixed chart-label scaling, separate runtime/store counters, malformed-sample rejection and reduced idle administration work. See RELEASE-1.1.2.md for behavior and remaining native/Linux acceptance gates.
+Verified drop-in staging/locking/recovery, coordinated per-option expiry and all-key primary pinning, reconnect discovery resets, leased cleanup with bounded deletion batches, notice-safe dashboard headings, grouped settings, consistent 44px controls, fixed chart-label scaling, separate runtime/store counters, malformed-sample rejection and reduced idle administration work. These stabilization fixes are retained in 1.1.3. See RELEASE-1.1.3.md and ACCEPTANCE.md for current evidence and remaining gates.
+
+## Version 1.1.3
+
+Bounded wildcard matching, inactive command bypass, explicit counter status replies and forced Relay cache bypass preserve existing namespaces. Linux runtime/transport/codec/application acceptance and reproducible CPU/memory/latency comparisons are published with this release. Free Redis Object Cache still wins several measured basic workloads; no universal performance leadership is claimed.

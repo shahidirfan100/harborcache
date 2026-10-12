@@ -1,47 +1,38 @@
 # Deployment acceptance and next releases
 
-## Version 1.1.2 stabilization
+## Version 1.1.3
 
-This release fixes the critical review's update, TTL, write tracking, topology reset, cleanup durability and dashboard findings. It preserves key namespace bytes. It does not claim complete Pro parity, Linux/runtime certification or lower production server CPU. See RELEASE-1.1.2.md for supported behavior and remaining gates.
+The Linux acceptance workflow is checked into .github/workflows/acceptance.yml in the GitHub repository; tests are excluded from the installable ZIP. It creates disposable MySQL and Redis services. The previous limitation of having no Linux staging environment has been addressed with GitHub-hosted Linux runners. These are isolated acceptance tests, not measurements of autoscareer.com.
 
-## Existing integration evidence
+| Gate | Recorded evidence |
+| --- | --- |
+| Linux/MySQL runtimes | Ubuntu 24.04, MySQL 8.0, WordPress 7.1.3; PHP 7.4 and 8.2–8.5 with Redis 7; PHP 8.3 additionally with Redis 6 and 8. WordPress 6.6 also passed with PHP 7.4/Redis 7. Eight selected combinations, not the full cross-product. |
+| Clients and codecs | Real Predis, Credis and PhpRedis; PHP/igbinary serialization paired with none/LZF/LZ4/Zstandard compression. Each native codec must actually load; missing extensions cannot count as passed. |
+| Transports | Predis/PhpRedis ACL credentials, trusted TLS, rejection of an untrusted certificate and Unix socket. |
+| Concurrency and recovery | Four PHP processes increment one counter; independent option fields updated across a barrier; real Redis stop/start, fresh-worker recovery, activation/deactivation/reactivation and cron. |
+| Applications | Real WooCommerce product/cart/checkout/order update/stock reduction and restoration; real multisite local/global groups, separate options and selected-site invalidation. These are API-level integration flows, not browser payment-gateway tests. |
+| Performance | Seven rotating Linux runs compare Redis Object Cache 3.0.0, packaged HarborCache 1.1.2 and current HarborCache with identical sequential work. Batch p50/p95/p99, PHP/Redis CPU, memory, command counts and optional analytics recording are retained. They do not predict production traffic. |
+| Local regression and interface | Windows WordPress/SQLite/PHP 8.5/Redis tests cover cache types, counters, bulk operations, cleanup, primary/replica/Sentinel/cluster behavior, lifecycle, failed file operations, guarded controls, first-request upgrade and responsive dashboard layouts. |
 
-The local suite exercises WordPress 7.1.3, PHP 8.5.10, SQLite and Redis 5.0.14.1 on Windows. Predis, Credis and real PhpRedis 6.3.0 are exercised. PhpRedis tests cover standalone values, counters, invalidation, cleanup, bulk operations, cluster, replicated reads and Sentinel discovery. Native pipeline tests include expiration filters that issue independent Redis commands. PHP 7.4 parsing confirms syntax only, not runtime compatibility.
+Real Relay 0.50.2 passed 65 checks both with its default cache policy and a configured adaptive policy, including concurrent option patches and explicit forced-read bypass checks. PHP-FPM served 160 successful requests at concurrency eight and preserved the shared counter across an FPM restart. These are short standalone CLI/HTTP checks, not sustained load or native Relay shared-FPM/topology certification. The final validation report retains the measurements. Native Relay topology/adaptive failover, production tracing delivery and sustained workload certification must not be inferred from standalone CLI or short HTTP tests.
 
-OpenTelemetry SDK 1.15.0 with OTLP exporter 1.4.0 sends ended spans over HTTP to a local receiver. Cache operations, batch spans, datastore attributes, error status and omission of cached keys/values are checked. This is real SDK/exporter evidence; it is not evidence of a production collector, remote observability account or zero-code agent deployment. SDK/exporter dependencies belong to the host application and are not bundled or loaded by default in HarborCache. Follow the [official exporter setup](https://opentelemetry.io/docs/languages/php/exporters/).
+## Remaining gates, in order
 
-A fresh read-only audit observed autoscareer.com connected on HarborCache 1.1.1, Predis 2.4.1, PHP 8.2.34 and Redis 7.0.15. This does not validate the 1.1.2 ZIP or measure server CPU. No live settings were changed or new package uploaded.
+1. Measure sustained normal traffic on an isolated copy of the actual site: PHP-FPM CPU/RSS, Redis CPU/RSS, tail latency, cache churn, large options and analytics on/off. Short runner tests cannot establish long-running memory stability or capacity.
+2. Exercise real Relay adaptive behavior, cluster/replica/Sentinel promotion and partition recovery with concurrent readers/writers. Preserve primary metadata and same-request read-after-write behavior. Real standalone extension evidence is distinct from native topology certification.
+3. Verify New Relic with a real configured agent/account and OpenTelemetry against the intended production collector, including duplicate-instrumentation checks. Local real SDK/OTLP HTTP delivery has passed; account delivery cannot be tested without that integration.
+4. Expand application coverage to the site's payment gateway, queues, cron, publishing plugins and deployment/rollback process. Legacy WP_REDIS_SHARDS/RedisArray paths are inherited but not certified with HarborCache's generation namespace; use the documented standalone/replication/Sentinel/cluster configurations.
+5. Complete WordPress.org submission/review and verified update distribution. Plugin Check, GPL notices and readme validation support submission; they do not grant directory approval or trademark clearance.
 
-## Required Linux matrix
+## Version plan
 
-No Linux staging runtime was available for this release. The following gates remain open; do not represent them as passed:
-
-| Dimension | Cases | Evidence required |
+| Version | Work | Acceptance gate |
 | --- | --- | --- |
-| Database/runtime | MySQL; PHP 8.2, 8.3, 8.4, 8.5; minimum PHP 7.4 if that deployment is required | Activation, settings, upgrade, drop-in refresh, options/posts, CLI and uninstall against the packaged ZIP |
-| Redis | Redis 6, 7 and later supported versions; TCP, verified TLS, ACL and Unix socket | Typed roundtrips, expiration, rejection of invalid certificate/credentials and shared namespace isolation |
-| Native clients/codecs | PhpRedis; igbinary, LZF, LZ4 and Zstandard where their extensions are available | Actual extension roundtrips, absent-extension errors, large values and memory profiles |
-| Recovery | Redis unavailable at boot and mid-request; Sentinel promotion; cluster replica failover | Runtime fallback, fresh-request recovery, no ambiguous-write replay and primary-only metadata |
-| Concurrency | Readers/writers, option updates and invalidation across PHP workers | No cross-installation leakage, typed values and same-request read-after-write behavior; replica lag explicitly permitted |
-| Performance | Supplied Redis Cache 3.0.0, HarborCache 1.1.0 and 1.1.1 under identical traffic | Rotating run order, wall latency distributions, PHP CPU, Redis CPU and memory; cold/warm caches and analytics on/off |
-| Applications | Real multisite and the site's checkout, queues, cron and publishing workflows | Functional smoke checks, latency and rollback evidence |
+| 1.1.3 | Measured cache-path improvements, native counter/forced-read correctness and Linux/MySQL/transport/codec/application acceptance | Published reproducible CI and local validation; preserve namespace and existing controls |
+| 1.2.0 | Complete real Relay adaptive/topology invalidation and native failover; production tracing integrations | Real agents/extensions, concurrent writers/readers, controlled promotion/partition and duplicate-span checks |
+| 1.3.0 | Further hot-path and prefetch tuning; selective stale-query reclamation | Sustained workload CPU/RSS and latency evidence without premature invalidation or cross-site leakage |
+| 1.4.0 | Wider site/application matrix and deployment/update/rollback distribution | Site-specific workflows, package parity and directory review |
 
-Use isolated prefixes/databases on disposable staging. Do not run failover, outage injection, global flushes or synthetic load against a production Redis service. Keep a package/configuration backup and test restoration of the previous owned drop-in. The plugin never installs Redis or changes its daemon configuration.
+Default analytics samples 10%, retained history is bounded and browser charts do not poll. Prefetch, query recycling, debug recording and external tracing remain off by default. On-demand node/group probes do not run on every frontend request. These controls limit optional work; they are not universal CPU guarantees.
 
-## Roadmap status
-
-| Version | Delivered or planned work | Acceptance status |
-| --- | --- | --- |
-| 1.1.1 | Bounded request key/prefix memoization, warm-hit acceleration, inactive tracing bypass, standalone routing shortcut; native pipeline and TCP cluster fixes; same-workload latency/PHP CPU/memory comparisons | Local functional and native PhpRedis evidence available. Linux/MySQL/TLS/ACL/socket/codecs and server CPU gates above remain open. |
-| 1.1.2 | Stabilization: recoverable drop-in updates, coordinated option TTLs, all-key write pinning, topology reset, cleanup leases/batches, consistent dashboard settings and metrics | Isolated failures and local regression/layout checks; Linux and real Relay gates remain open. |
-| 1.2.0 | Real Relay per-option invalidation, adaptive cache and cluster acceptance; New Relic agent export; native topology promotion/recovery and concurrent readers/writers | PhpRedis/Relay topology connector implementation and real OpenTelemetry HTTP export have landed in 1.1.1. Real Relay, New Relic, production collector and native failover acceptance remain open. |
-| 1.3.0 | Selective generation-aware stale-query collection and measured prefetch tuning | Demonstrated memory reduction without premature invalidation or cross-site leakage |
-| 1.4.0 | Multisite/application matrix, Composer deployment/rollback and verified update distribution | Server workflow evidence, package parity and WordPress.org review |
-
-Relay interfaces have contract fixtures, not real-extension certification. The per-option manifest requires real Relay cross-worker invalidation and concurrent same/different-field testing. Relay topology clients apply adaptive policy and invalidation listeners to replicas as well as the primary; native extension behavior must still be checked. [Relay's event documentation](https://relay.so/docs/1.x/events) describes the corresponding APIs. New Relic's exactly-once wrapper has fixtures, not account delivery evidence.
-
-## Installing this update on an existing site
-
-Install the 1.1.2 ZIP and visit HarborCache. Keep the existing connection settings. Its owned outdated drop-in refreshes after a successful administrator connection check when automatic refresh is enabled; otherwise use Update drop-in. Confirm Diagnostics shows version 1.1.2 and Connected, then check front-end pages, login, publishing, options and scheduled jobs. The teal dashboard, graph widget and equal-sized connection controls remain; optional REST/helper APIs remain excluded.
-
-Default analytics is sampled at 10%, history is bounded and no background browser polling occurs. Prefetch, query recycling, debug command recording and external tracing stay off unless explicitly enabled. Group/node probes run on demand. These defaults limit optional work but do not guarantee low server CPU for every workload. Retain the current Redis client until the operator has verified another installed extension; HarborCache cannot install PhpRedis or Relay through WordPress.
+Install 1.1.3, preserve the existing connection settings, and refresh the owned drop-in. Confirm Connected and version 1.1.3 in Diagnostics. No package was uploaded to autoscareer.com during this acceptance run. Never inject outages, failover or synthetic load into a shared production Redis service.

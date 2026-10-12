@@ -67,6 +67,13 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 
 == Changelog ==
 
+= 1.1.3 =
+* Reduce repeated wildcard-group matching and inactive command instrumentation overhead.
+* Preserve late group registration, optional tracing and existing namespace formats.
+* Fix native counter failure replies and bypass Relay local caching for forced reads.
+* Add Linux/MySQL, native codecs, ACL/TLS/socket, concurrency, WooCommerce and multisite acceptance tests.
+* Publish reproducible CPU, memory and latency comparisons with Redis Object Cache 3.0.0.
+
 = 1.1.2 =
 * Added verified drop-in staging, update locking, backup restoration and interrupted-update recovery.
 * Fixed per-option TTL coordination, missing-field recovery and primary pinning for multi-key writes.
@@ -86,7 +93,7 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 * Published same-workload Redis Cache 3.0.0 comparisons and explicit remaining deployment gates.
 
 = 1.1.0 =
-* Removed plugin protected admin actions; management and exports use protected WordPress admin actions.
+* Removed plugin REST routes; management and exports use protected WordPress admin actions.
 * Fixed the obsolete drop-in update notice/action and added safe owned-drop-in refresh.
 * Added time-window analytics, percentiles, interval summaries and CSV export.
 * Added on-demand group memory/counts, node latency, operational health and Relay adaptive diagnostics.
@@ -116,6 +123,9 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.1.3 =
+Cache-path optimizations and expanded Linux acceptance. Refresh the owned drop-in after installing. Connection settings and namespace format are preserved.
 
 = 1.1.2 =
 Correctness, update recovery and dashboard readability fixes. Refresh the owned drop-in after installing. Existing connection settings and key namespace format are preserved.

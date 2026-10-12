@@ -2,7 +2,7 @@
 
 HarborCache uses your existing Redis server; it does not install or restart Redis. Configure the host/port or Unix socket, database and credentials in Connection or HARBORCACHE_CONFIG. Keep TLS peer verification enabled. Only one object-cache manager can own wp-content/object-cache.php.
 
-Install the plugin ZIP, enable it and press Connect. The owned drop-in is replaced atomically after a connection check. Disconnect removes only that drop-in, retaining connection settings. Reconnect starts a fresh namespace; old entries expire under maximum TTL. Other applications' Redis keys are not flushed.
+Install the plugin ZIP, enable it and press Connect. The owned drop-in is staged and verified after a connection check, with recovery of the previous copy if replacement fails. Remote filesystem fallback replacement is recoverable; it is not guaranteed atomic. Disconnect removes only that drop-in, retaining connection settings. Reconnect starts a fresh namespace; old entries expire under maximum TTL. Other applications' Redis keys are not flushed.
 
 ## Upgrades
 
