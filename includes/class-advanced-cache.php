@@ -38,6 +38,10 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_prefixes = array();
 	private $ch_derived_count = 0;
 	private $ch_layout_state;
+	private $ch_ignored_source;
+	private $ch_ignored_exact = array();
+	private $ch_ignored_patterns = array();
+	private $ch_ignored_results = array();
 	public $ch_retries = 0;
 
 	public function __construct( $fail_gracefully = false ) {
@@ -85,6 +89,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$readonly = in_array( strtolower( $method ), array( 'get', 'mget', 'pttl' ), true );
 		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
 			if ( $readonly ) { ++$this->ch_routes['primary']; }
+			if ( ! $this->ch_config['save_commands'] && ! $this->ch_config['debug'] && ! $this->ch_config['retries'] && ( null === $this->ch_config['tracer'] || 'none' === $this->ch_config['tracer'] ) ) { return parent::redis_call( $method, ...$args ); }
 			return $this->observe_command( strtoupper( $method ), function () use ( $method, $args ) { return parent::redis_call( $method, ...$args ); }, $readonly );
 		}
 		if ( ! $readonly ) { $this->mark_write( $args[0] ?? '' ); }
@@ -240,10 +245,23 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	protected function maybe_unserialize( $data ) { return $this->ch_codec->decode( $data ); }
 
 	protected function is_ignored_group( $group ) {
-		foreach ( $this->ignored_groups as $pattern ) {
-			if ( preg_match( '/^' . str_replace( '\*', '.*', preg_quote( (string) $pattern, '/' ) ) . '$/D', (string) $group ) ) { return true; }
+		if ( $this->ch_ignored_source !== $this->ignored_groups ) {
+			$this->ch_ignored_source = $this->ignored_groups;
+			$this->ch_ignored_exact = array(); $this->ch_ignored_patterns = array(); $this->ch_ignored_results = array();
+			foreach ( $this->ignored_groups as $pattern ) {
+				$pattern = (string) $pattern;
+				if ( false === strpos( $pattern, '*' ) ) { $this->ch_ignored_exact[ $pattern ] = true; }
+				else { $this->ch_ignored_patterns[] = '/^' . str_replace( '\*', '.*', preg_quote( $pattern, '/' ) ) . '$/D'; }
+			}
 		}
-		return parent::is_ignored_group( $group );
+		$group = (string) $group;
+		if ( isset( $this->ch_ignored_exact[ $group ] ) || parent::is_ignored_group( $group ) ) { return true; }
+		if ( isset( $this->ch_ignored_results[ $group ] ) ) { return $this->ch_ignored_results[ $group ]; }
+		$ignored = false;
+		foreach ( $this->ch_ignored_patterns as $pattern ) { if ( preg_match( $pattern, $group ) ) { $ignored = true; break; } }
+		if ( count( $this->ch_ignored_results ) >= 256 ) { $this->ch_ignored_results = array(); }
+		$this->ch_ignored_results[ $group ] = $ignored;
+		return $ignored;
 	}
 
 	private function ch_rotate( $key ) { $value = bin2hex( random_bytes( 12 ) ); $this->ch_command( array( 'SET', $key, $value ) ); $this->ch_tokens[ $key ] = $value; $this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0; return $value; }

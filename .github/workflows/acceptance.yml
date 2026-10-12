@@ -1,0 +1,89 @@
+name: Linux acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'codex/**']
+    paths: ['**.php', 'tests/**', '.github/workflows/acceptance.yml']
+permissions:
+  contents: read
+jobs:
+  wordpress:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.2', '8.3', '8.4', '8.5']
+        redis: ['7']
+        include:
+          - php: '8.3'
+            redis: '6'
+          - php: '8.3'
+            redis: '8'
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: local-ci-only
+          MYSQL_DATABASE: harborcache
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=5s --health-timeout=5s --health-retries=30
+      redis:
+        image: redis:${{ matrix.redis }}
+        ports: ['6379:6379']
+        options: --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      WP_ROOT: /tmp/harborcache-wordpress
+      HC_CONCURRENCY: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, redis, igbinary, lzf, lz4, zstd
+          coverage: none
+          tools: wp-cli
+      - name: Syntax and isolated MySQL installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          find includes -name '*.php' -print0 | xargs -0 -n1 php -l > /tmp/syntax.log
+          wp core download --path="$WP_ROOT"
+          wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
+          wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
+          wp core install --path="$WP_ROOT" --url=http://localhost --title='HarborCache CI' --admin_user=ci --admin_password=ci-disposable-only --admin_email=ci@example.org --skip-email
+          mkdir -p "$WP_ROOT/wp-content/plugins/harborcache"
+          rsync -a --exclude=.git --exclude=media --exclude=dist --exclude=tests --exclude=.github ./ "$WP_ROOT/wp-content/plugins/harborcache/"
+          wp plugin activate harborcache --path="$WP_ROOT"
+          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+      - name: Native and PHP clients, codecs, concurrent workers and WordPress flows
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          for client in predis phpredis credis; do
+            export HC_TEST_CONFIG="{\"client\":\"$client\"}"
+            php tests/acceptance.php | tee "evidence/$client.txt"
+          done
+          for serializer in php igbinary; do
+            for compression in none lzf lz4 zstd; do
+              php -r "exit(('$serializer'==='php'||function_exists('igbinary_serialize'))&&('$compression'==='none'||function_exists('${compression}_compress'))?0:1);" || { echo "Unavailable $serializer/$compression" | tee -a evidence/unavailable.txt; continue; }
+              export HC_TEST_CONFIG="{\"client\":\"phpredis\",\"serializer\":\"$serializer\",\"compression\":\"$compression\",\"persistent\":true}"
+              php tests/acceptance.php | tee "evidence/codec-$serializer-$compression.txt"
+            done
+          done
+      - name: Outage and restart recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          export HC_TEST_CONFIG='{"client":"phpredis","timeout":0.2,"read_timeout":0.2}'
+          docker stop '${{ job.services.redis.id }}'
+          php tests/acceptance.php down | tee evidence/outage.txt
+          docker start '${{ job.services.redis.id }}'
+          for attempt in $(seq 1 30); do docker exec '${{ job.services.redis.id }}' redis-cli ping && break || sleep 1; done
+          php tests/acceptance.php recovery | tee evidence/recovery.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-php-${{ matrix.php }}-redis-${{ matrix.redis }}
+          path: evidence/
