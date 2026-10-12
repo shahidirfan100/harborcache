@@ -315,7 +315,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		try {
 			// Decimal arithmetic avoids Lua's loss of integer precision above 2^53.
 			$script = <<<'LUA'
-local v=redis.call('GET',KEYS[1]); if not v then return false end
+local v=redis.call('GET',KEYS[1]); if not v then return {0} end
 local function norm(s) local neg=string.sub(s,1,1)=='-'; if neg then s=string.sub(s,2) end; s=string.gsub(s,'^0+',''); if s=='' then s='0'; neg=false end; return s,neg end
 local function cmp(a,b) if #a~=#b then return #a>#b end; return a>=b end
 local function add(a,b)
@@ -335,12 +335,12 @@ if (string.sub(v,1,1)~='N' and string.sub(v,1,1)~='S') or not string.match(raw,'
 local a,an=norm(raw); local b,bn=norm(ARGV[1]); local r; local negative
 if an==bn then r=add(a,b); negative=an elseif cmp(a,b) then r=sub(a,b); negative=an else r=sub(b,a); negative=bn end
 if negative then r='0' end
-if not cmp(ARGV[2],r) then return false end
-local t=redis.call('PTTL',KEYS[1]); redis.call('SET',KEYS[1],'N'..r); if t>0 then redis.call('PEXPIRE',KEYS[1],t) end; return r
+if not cmp(ARGV[2],r) then return {0} end
+local t=redis.call('PTTL',KEYS[1]); redis.call('SET',KEYS[1],'N'..r); if t>0 then redis.call('PEXPIRE',KEYS[1],t) end; return {1,r}
 LUA;
 			$value = $this->ch_command( array( 'EVAL', $script, 1, $this->build_key( $key, $group ), (string) (int) $offset, (string) PHP_INT_MAX ) );
 			unset( $this->cache[ $this->build_key( $key, $group ) ] );
-			return null === $value ? false : (int) $value;
+			return is_array( $value ) && 1 === (int) ( $value[0] ?? 0 ) && isset( $value[1] ) ? (int) $value[1] : false;
 		} catch ( Throwable $error ) { $this->handle_exception( $error ); return false; }
 	}
 
