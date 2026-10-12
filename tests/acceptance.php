@@ -27,6 +27,9 @@ if($mode==='down'){
 gate('Connected to configured Redis transport',$c->redis_status());
 if($mode==='recovery'){gate('New worker recovers after restart',$c->set('recovered',42,'ci-outage',60)&&42===$c->get('recovered','ci-outage',true));exit;}
 gate('Advanced implementation loaded',$c instanceof HarborCache_Advanced_Cache);
+if($config['client']==='relay'){
+ $c->set('external',1,'ci-force',60);$c->get('external','ci-force',true);$key_method=new ReflectionMethod($c,'build_key');$key_method->setAccessible(true);$rawkey=$key_method->invoke($c,'external','ci-force');$other=new Redis();$other->connect('127.0.0.1',6379);$other->setex($rawkey,60,'N2');$cache_mode=$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE);gate('Forced Relay read bypasses shared cache',2===$c->get('external','ci-force',true));gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));$other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
+}
 $values=array(false,null,true,0,-1,PHP_INT_MAX,PHP_INT_MIN,1.25,'','001','1e3','b:0;',array('nested'=>array(false,null)),(object)array('v'=>1),str_repeat('large-value-',10000));
 foreach($values as $i=>$value){gate('Write type '.$i,$c->set('type-'.$i,$value,'ci-types',60));$c->flush_runtime();$actual=$c->get('type-'.$i,'ci-types',true,$found);gate('Roundtrip type '.$i,$found&&serialize($actual)===serialize($value));}
 $c->get('absent','ci-types',true,$found);gate('Missing found flag',!$found);
