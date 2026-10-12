@@ -19,7 +19,7 @@ try{
  WC()->initialize_session();WC()->initialize_cart();app_gate('Cart accepts product',false!==WC()->cart->add_to_cart($id,3));WC()->cart->calculate_totals();
  $order_id=WC()->checkout()->create_order(array('billing_first_name'=>'CI','billing_last_name'=>'Test','billing_email'=>'ci@example.org','billing_country'=>'US','payment_method'=>'bacs'));
  app_gate('Checkout creates order',!is_wp_error($order_id)&&$order_id>0);$order=wc_get_order($order_id);app_gate('Checkout order line totals',abs((float)$order->get_subtotal()-59.97)<0.00001);
- wc_reduce_stock_levels($order_id);wp_cache_flush_runtime();app_gate('Stock cache invalidates',7===(int)wc_get_product($id)->get_stock_quantity());
+ wc_maybe_reduce_stock_levels($order_id);wp_cache_flush_runtime();app_gate('Stock cache invalidates',7===(int)wc_get_product($id)->get_stock_quantity());
  $order->set_customer_note('Updated through integration');$order->save();wp_cache_flush_runtime();app_gate('Order update survives cache reload','Updated through integration'===wc_get_order($order_id)->get_customer_note());
  wc_maybe_increase_stock_levels($order_id);wp_cache_flush_runtime();app_gate('Stock restored',10===(int)wc_get_product($id)->get_stock_quantity());$order->delete(true);
 }finally{$product->delete(true);if(WC()->cart){WC()->cart->empty_cart();}}

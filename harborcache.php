@@ -3,7 +3,7 @@
  * Plugin Name: HarborCache – Object Cache with Redis
  * Plugin URI: https://profiles.wordpress.org/shahidirfan100/
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.1.2
+ * Version: 1.1.3
  * Text Domain: harborcache
  * Domain Path: /languages
  * Network: true

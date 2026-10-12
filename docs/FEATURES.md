@@ -1,4 +1,4 @@
-# HarborCache 1.1.2 feature ledger
+# HarborCache 1.1.3 feature ledger
 
 HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This describes the stable release implementation, not certification of complete Pro parity.
 
@@ -24,7 +24,7 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. 
 | Values | PHP serialization live-tested. igbinary/LZF/LZ4/Zstandard adapters reject missing codec functions. Live codec-extension testing remains required. |
 | Administration | Six responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
 | Shared servers | Shared mode hides memory/key totals which would include other applications; dedicated mode sums primary memory and selected-database key counts. Server command statistics are explicitly labeled. |
-| Protection | Strict prefix ownership, foreign drop-in preservation, atomic file replacement, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
+| Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging and recoverable replacement, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
 
 ## Configuration coverage
 
