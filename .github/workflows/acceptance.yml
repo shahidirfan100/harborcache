@@ -82,6 +82,39 @@ jobs:
           docker start '${{ job.services.redis.id }}'
           for attempt in $(seq 1 30); do docker exec '${{ job.services.redis.id }}' redis-cli ping && break || sleep 1; done
           php tests/acceptance.php recovery | tee evidence/recovery.txt
+      - name: Real ACL, trusted TLS, rejected certificate and Unix socket
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec '${{ job.services.redis.id }}' redis-cli ACL SETUSER hc-ci on '>disposable-ci-only' '~*' '+@all'
+          for client in predis phpredis; do
+            export HC_TEST_CONFIG="{\"client\":\"$client\",\"username\":\"hc-ci\",\"password\":\"disposable-ci-only\"}"
+            php tests/acceptance.php | tee "evidence/acl-$client.txt"
+          done
+          mkdir -p /tmp/hc-redis
+          chmod 777 /tmp/hc-redis
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -keyout /tmp/hc-redis/key.pem -out /tmp/hc-redis/cert.pem -subj /CN=localhost -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1'
+          chmod 644 /tmp/hc-redis/*.pem
+          docker run -d --name hc-tls -p 6380:6380 -v /tmp/hc-redis:/hc redis:${{ matrix.redis }} redis-server --port 0 --tls-port 6380 --tls-cert-file /hc/cert.pem --tls-key-file /hc/key.pem --tls-ca-cert-file /hc/cert.pem --tls-auth-clients no --unixsocket /hc/redis.sock --unixsocketperm 777
+          for attempt in $(seq 1 30); do test -S /tmp/hc-redis/redis.sock && break || sleep 1; done
+          for client in predis phpredis; do
+            export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"cafile\":\"/tmp/hc-redis/cert.pem\",\"verify_peer\":true,\"verify_peer_name\":true}}"
+            php tests/acceptance.php | tee "evidence/tls-$client.txt"
+            export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"verify_peer\":true,\"verify_peer_name\":true}}"
+            php tests/acceptance.php down | tee "evidence/untrusted-tls-$client.txt"
+            export HC_TEST_CONFIG="{\"client\":\"$client\",\"host\":\"/tmp/hc-redis/redis.sock\"}"
+            php tests/acceptance.php | tee "evidence/socket-$client.txt"
+          done
+      - name: WordPress lifecycle and scheduled event execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          wp cron event run --due-now --path="$WP_ROOT" | tee evidence/cron.txt
+          wp plugin deactivate harborcache --path="$WP_ROOT" | tee evidence/deactivate.txt
+          wp plugin activate harborcache --path="$WP_ROOT" | tee evidence/reactivate.txt
+          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          export HC_TEST_CONFIG='{"client":"phpredis"}'
+          php tests/acceptance.php recovery | tee evidence/lifecycle-recovery.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
