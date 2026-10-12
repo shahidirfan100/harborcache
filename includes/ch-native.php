@@ -2,6 +2,18 @@
 /** Native client options, kept outside the portable value encoding layer. */
 defined( 'ABSPATH' ) || exit;
 trait HarborCache_Native {
+	/** Forced reads must bypass Relay's process/shared cache as well as WordPress memory. */
+	private function relay_uncached_read( callable $call ) {
+		$client = $this->redis_instance(); $previous = null; $option = null;
+		if ( $client instanceof \Relay\Relay || $client instanceof \Relay\Cluster ) {
+			$option = $this->native_constant( 'OPT_USE_CACHE' ); $previous = $client->getOption( $option );
+			if ( false === $client->setOption( $option, false ) ) { throw new RuntimeException( 'Relay cannot bypass its local cache.' ); }
+		}
+		$this->ch_relay_bypass = true;
+		try { return $call(); }
+		finally { $this->ch_relay_bypass = false; if ( null !== $option ) { $client->setOption( $option, $previous ); } }
+	}
+
 	protected function connect_using_phpredis( $parameters ) {
 		if ( $this->ch_config['servers'] || $this->ch_config['sentinels'] ) { $this->connect_native_topology(); } else { parent::connect_using_phpredis( $parameters ); }
 		$this->native_option( 'OPT_MAX_RETRIES', 0, false );

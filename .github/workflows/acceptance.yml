@@ -162,14 +162,6 @@ jobs:
           wp plugin activate harborcache --path="$WP_ROOT"
           cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
 
-      - name: Real Relay extension and concurrent option updates
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p evidence
-          php --ri relay | tee evidence/relay-extension.txt
-          export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-ci","relay":{"listeners":true}}'
-          php tests/acceptance.php | tee evidence/relay.txt
       - name: Equal-workload Linux performance comparison
         shell: bash
         run: |
@@ -238,6 +230,14 @@ jobs:
           sudo systemctl restart php8.3-fpm
           curl -fsS -H 'Host: localhost' 'http://127.0.0.1:8080/wp-content/hc-http.php?summary=1' | tee evidence/http-after-fpm-restart.json
           php -r '$s=json_decode(file_get_contents("evidence/http-after-fpm-restart.json"),true);if($s["requests"]!==160){exit(1);}echo "PASS Persistent values survive FPM restart\n";'
+      - name: Real Relay extension and concurrent option updates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          php --ri relay | tee evidence/relay-extension.txt
+          export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-ci","relay":{"listeners":true}}'
+          php tests/acceptance.php | tee evidence/relay.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -38,6 +38,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_prefixes = array();
 	private $ch_derived_count = 0;
 	private $ch_layout_state;
+	private $ch_relay_bypass = false;
 	private $ch_ignored_source;
 	private $ch_ignored_exact = array();
 	private $ch_ignored_patterns = array();
@@ -451,6 +452,9 @@ LUA;
 		return parent::replace( $key, $value, $group, $expiration );
 	}
 	public function get( $key, $group = 'default', $force = false, &$found = null ) {
+		if ( $force && ! $this->ch_relay_bypass && 'relay' === $this->ch_config['client'] ) {
+			return $this->relay_uncached_read( function () use ( $key, $group, &$found ) { return $this->get( $key, $group, true, $found ); } );
+		}
 		if ( ! is_int( $key ) && ( ! is_string( $key ) || '' === trim( $key ) ) ) { $found = false; return false; }
 		if ( ! $force && $this->ch_ready ) {
 			$san_key = $this->sanitize_key_part( $key ); $san_group = $this->sanitize_key_part( $group ?: 'default' );
@@ -477,6 +481,9 @@ LUA;
 		return parent::get( $key, $group, $force, $found );
 	}
 	public function get_multiple( $keys, $group = 'default', $force = false ) {
+		if ( $force && ! $this->ch_relay_bypass && 'relay' === $this->ch_config['client'] ) {
+			return $this->relay_uncached_read( function () use ( $keys, $group ) { return $this->get_multiple( $keys, $group, true ); } );
+		}
 		if ( ! is_array( $keys ) ) { return false; }
 		if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && in_array( 'alloptions', $keys, true ) ) { $r = array(); foreach ( $keys as $key ) { $r[ $key ] = $this->get( $key, $group, $force ); } return $r; }
 		return parent::get_multiple( $keys, $group, $force );
