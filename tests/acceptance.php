@@ -36,7 +36,7 @@ $data=array('false'=>false,'null'=>null,'text'=>'ok');gate('Bulk writes',!in_arr
 gate('Atomic add',$c->add('add',1,'ci-types')&&!$c->add('add',2,'ci-types'));
 gate('Replace semantics',!$c->replace('missing',1,'ci-types')&&$c->replace('add',2,'ci-types'));
 $c->set('big',9007199254740992,'ci-types',60);gate('Counter precision',9007199254740993===$c->incr('big',1,'ci-types'));
-$c->set('overflow',PHP_INT_MAX,'ci-types',60);gate('Counter overflow rejected',false===$c->incr('overflow',1,'ci-types')&&PHP_INT_MAX===$c->get('overflow','ci-types',true));
+$c->set('overflow',PHP_INT_MAX,'ci-types',60);$overflow=$c->incr('overflow',1,'ci-types');$overflow_value=$c->get('overflow','ci-types',true);if(false!==$overflow||PHP_INT_MAX!==$overflow_value){echo json_encode(array('counter_reply'=>$overflow,'counter_value'=>$overflow_value,'reply_type'=>gettype($overflow),'value_type'=>gettype($overflow_value)))."\n";}gate('Counter overflow rejected',false===$overflow&&PHP_INT_MAX===$overflow_value);
 $c->set('foreign-proof','keep','ci-kept',60);$c->set('invalidate','old','ci-invalidated',60);gate('Group rotation',$c->flush_group('ci-invalidated'));$fresh=new HarborCache_Advanced_Cache();gate('Fresh worker sees scoped invalidation',false===$fresh->get('invalidate','ci-invalidated',true)&&'keep'===$fresh->get('foreign-proof','ci-kept',true));
 $c->ch_command(array('SET','harborcache-ci-foreign','keep','EX',60));gate('Installation invalidation',$c->flush());gate('Foreign key survives','keep'===$c->ch_command(array('GET','harborcache-ci-foreign')));
 $c->add_non_persistent_groups(array('private-*'));$c->set('x',1,'private-user');$c->flush_runtime();gate('Wildcard exclusions',false===$c->get('x','private-user',true));
