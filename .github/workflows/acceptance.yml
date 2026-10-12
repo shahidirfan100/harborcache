@@ -144,7 +144,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.3
-          extensions: mysqli, redis, igbinary, lzf, lz4, zstd
+          extensions: mysqli, redis, igbinary, lzf, lz4, zstd, relay, msgpack
+          ini-values: relay.maxmemory=32M
           coverage: none
           tools: wp-cli
       - name: Syntax and isolated MySQL installation
@@ -161,6 +162,14 @@ jobs:
           wp plugin activate harborcache --path="$WP_ROOT"
           cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
 
+      - name: Real Relay extension and concurrent option updates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          php --ri relay | tee evidence/relay-extension.txt
+          export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-ci","relay":{"listeners":true}}'
+          php tests/acceptance.php | tee evidence/relay.txt
       - name: Equal-workload Linux performance comparison
         shell: bash
         run: |
@@ -204,6 +213,31 @@ jobs:
           wp plugin activate harborcache --network --path="$WP_ROOT"
           cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
           php tests/applications.php multisite | tee evidence/multisite.txt
+      - name: Concurrent PHP-FPM HTTP smoke and recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq php8.3-fpm nginx
+          cp tests/http.php "$WP_ROOT/wp-content/hc-http.php"
+          sudo chown -R www-data:www-data "$WP_ROOT"
+          printf '%s\n' 'server { listen 8080; server_name localhost; root /tmp/harborcache-wordpress; location ~ \.php$ { include fastcgi_params; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; fastcgi_pass unix:/run/php/php8.3-fpm.sock; } }' | sudo tee /etc/nginx/sites-enabled/harborcache-ci
+          sudo systemctl restart php8.3-fpm nginx
+          curl -fsS -H 'Host: localhost' 'http://127.0.0.1:8080/wp-content/hc-http.php?init=1'
+          export HTTP_EVIDENCE="$GITHUB_WORKSPACE/evidence"
+          seq 1 160 | xargs -P8 -I{} sh -c 'curl -fsS -H "Host: localhost" -w "\n%{time_total}\n" http://127.0.0.1:8080/wp-content/hc-http.php > "$HTTP_EVIDENCE/http-{}.txt"'
+          curl -fsS -H 'Host: localhost' 'http://127.0.0.1:8080/wp-content/hc-http.php?summary=1' | tee evidence/http-summary.json
+          python3 - <<'PY'
+          import json, pathlib
+          rows=[p.read_text().splitlines() for p in pathlib.Path('evidence').glob('http-[0-9]*.txt')]
+          assert len(rows)==160 and all(json.loads(x[0])['ok'] for x in rows)
+          assert json.loads(pathlib.Path('evidence/http-summary.json').read_text())['requests']==160
+          times=sorted(float(x[1])*1000 for x in rows)
+          print(json.dumps({'requests':160,'concurrency':8,'http_p50_ms':times[79],'http_p95_ms':times[151],'http_p99_ms':times[158],'limitations':'Short isolated PHP-FPM smoke; not sustained production load or free-plugin HTTP comparison'}))
+          PY
+          sudo systemctl restart php8.3-fpm
+          curl -fsS -H 'Host: localhost' 'http://127.0.0.1:8080/wp-content/hc-http.php?summary=1' | tee evidence/http-after-fpm-restart.json
+          php -r '$s=json_decode(file_get_contents("evidence/http-after-fpm-restart.json"),true);if($s["requests"]!==160){exit(1);}echo "PASS Persistent values survive FPM restart\n";'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
