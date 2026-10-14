@@ -101,7 +101,7 @@ jobs:
           docker exec '${{ job.services.redis.id }}' redis-cli ACL SETUSER hc-ci on '>disposable-ci-only' '~*' '+@all'
           for client in predis phpredis; do
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"username\":\"hc-ci\",\"password\":\"disposable-ci-only\"}"
-            run_transport_acceptance "ACL $client" "evidence/acl-$client.txt" tests/acceptance.php
+            run_transport_acceptance "ACL $client" "evidence/acl-$client.txt" tests/acceptance.php transport
           done
           mkdir -p /tmp/hc-redis
           chmod 777 /tmp/hc-redis
@@ -112,11 +112,11 @@ jobs:
           if ! test -S /tmp/hc-redis/redis.sock; then docker logs hc-tls; exit 1; fi
           for client in predis phpredis; do
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"cafile\":\"/tmp/hc-redis/cert.pem\",\"verify_peer\":true,\"verify_peer_name\":true}}"
-            run_transport_acceptance "trusted TLS $client" "evidence/tls-$client.txt" tests/acceptance.php
+            run_transport_acceptance "trusted TLS $client" "evidence/tls-$client.txt" tests/acceptance.php transport
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"verify_peer\":true,\"verify_peer_name\":true}}"
             run_transport_acceptance "untrusted TLS rejection $client" "evidence/untrusted-tls-$client.txt" tests/acceptance.php down
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"host\":\"/tmp/hc-redis/redis.sock\"}"
-            run_transport_acceptance "Unix socket $client" "evidence/socket-$client.txt" tests/acceptance.php
+            run_transport_acceptance "Unix socket $client" "evidence/socket-$client.txt" tests/acceptance.php transport
           done
       - name: WordPress lifecycle and scheduled event execution
         shell: bash

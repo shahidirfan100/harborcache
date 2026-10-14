@@ -24,6 +24,17 @@ if($mode==='down'){
  gate('Unavailable backend falls back to runtime memory',!$c->redis_status()&&$c->set('fallback',false,'ci-outage')&&false===$c->get('fallback','ci-outage',false,$found)&&$found);
  exit;
 }
+if($mode==='transport'){
+ gate('Configured transport connects',$c->redis_status());
+ $transport_key='transport-'.bin2hex(random_bytes(8));
+ gate('Configured transport writes',$c->set($transport_key,'before','ci-transport',60));
+ $fresh=new HarborCache_Advanced_Cache();
+ gate('Fresh transport client replaces a persistent key',$fresh->replace($transport_key,'after','ci-transport',60));
+ $verify=new HarborCache_Advanced_Cache();
+ gate('Fresh transport client reads the replacement','after'===$verify->get($transport_key,'ci-transport',true));
+ gate('Configured transport deletes',$c->delete($transport_key,'ci-transport'));
+ exit;
+}
 gate('Connected to configured Redis transport',$c->redis_status());
 if($mode==='recovery'){gate('New worker recovers after restart',$c->set('recovered',42,'ci-outage',60)&&42===$c->get('recovered','ci-outage',true));exit;}
 gate('Advanced implementation loaded',$c instanceof HarborCache_Advanced_Cache);
