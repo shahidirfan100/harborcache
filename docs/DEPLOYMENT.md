@@ -10,7 +10,7 @@ Authorized administrators automatically refresh an outdated owned drop-in when a
 
 ## Must-use setup
 
-Keep the full plugin in wp-content/plugins/harborcache and copy deployment/harborcache-loader.php to wp-content/mu-plugins/harborcache-loader.php. The stub requires the main plugin once; there is no need to activate the normal plugin too. An absolute HARBORCACHE_PLUGIN_PATH defined in wp-config.php supports another installation directory. Run `wp harborcache enable` to install the cache drop-in. MU plugins cannot be deactivated from the normal plugin screen; remove the loader deliberately to stop loading it, and disable the owned drop-in first.
+Keep the full plugin in wp-content/plugins/harborcache-object-cache-with-redis and copy deployment/harborcache-loader.php to wp-content/mu-plugins/harborcache-loader.php. The stub requires the main plugin once; there is no need to activate the normal plugin too. An absolute HARBORCACHE_PLUGIN_PATH defined in wp-config.php supports another installation directory. Run `wp harborcache enable` to install the cache drop-in. MU plugins cannot be deactivated from the normal plugin screen; remove the loader deliberately to stop loading it, and disable the owned drop-in first.
 
 ## Composer project
 

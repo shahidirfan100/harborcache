@@ -34,7 +34,7 @@ class QM_Output extends QM_Output_Html {
      * @return string
      */
     public function name() {
-        return __( 'Object Cache', 'harborcache' );
+        return __( 'Object Cache', 'harborcache-object-cache-with-redis' );
     }
 
     /**
@@ -99,7 +99,7 @@ class QM_Output extends QM_Output_Html {
             $this->before_non_tabular_output();
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             echo $this->build_notice(
-                esc_html__( 'The HarborCache drop-in is not installed. Use WP CLI or go to "Settings -> Redis" to enable drop-in.', 'harborcache' )
+                esc_html__( 'The HarborCache drop-in is not installed. Use WP CLI or go to "Settings -> Redis" to enable drop-in.', 'harborcache-object-cache-with-redis' )
             );
             $this->after_non_tabular_output();
 
@@ -110,7 +110,7 @@ class QM_Output extends QM_Output_Html {
             $this->before_non_tabular_output();
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             echo $this->build_notice(
-                esc_html__( 'WordPress is using a foreign object cache drop-in and HarborCache is not being used. Use WP CLI or go to "Settings -> Redis" to enable drop-in.', 'harborcache' )
+                esc_html__( 'WordPress is using a foreign object cache drop-in and HarborCache is not being used. Use WP CLI or go to "Settings -> Redis" to enable drop-in.', 'harborcache-object-cache-with-redis' )
             );
             $this->after_non_tabular_output();
 

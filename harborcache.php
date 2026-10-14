@@ -1,10 +1,9 @@
 <?php
 /**
- * Plugin Name: HarborCache – Object Cache with Redis
- * Plugin URI: https://profiles.wordpress.org/shahidirfan100/
- * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.1.3
- * Text Domain: harborcache
+ * Plugin Name: HarborCache
+ * Description: Fast Redis object caching for WordPress with clear insights, analytics and safe cache controls.
+ * Version: 1.1.4
+ * Text Domain: harborcache-object-cache-with-redis
  * Domain Path: /languages
  * Network: true
  * Requires PHP: 7.4
@@ -21,7 +20,7 @@
 defined( 'ABSPATH' ) || exit;
 // A second object cache manager cannot safely share the legacy engine constants.
 if ( ( defined( 'WP_REDIS_FILE' ) && WP_REDIS_FILE !== __FILE__ ) || ( defined( 'WP_REDIS_PLUGIN_PATH' ) && realpath( WP_REDIS_PLUGIN_PATH ) !== realpath( __DIR__ ) ) ) {
- add_action( 'admin_notices', static function () { echo '<div class="notice notice-error"><p>' . esc_html__( 'Deactivate the other Redis object cache plugin before activating HarborCache.', 'harborcache' ) . '</p></div>'; } );
+ add_action( 'admin_notices', static function () { echo '<div class="notice notice-error"><p>' . esc_html__( 'Deactivate the other Redis object cache plugin before activating HarborCache.', 'harborcache-object-cache-with-redis' ) . '</p></div>'; } );
  return;
 }
 require_once __DIR__ . '/includes/ch-config.php';

@@ -31,7 +31,7 @@ class QM_Collector extends QM_BaseCollector {
      * @return string
      */
     public function name() {
-        return __( 'HarborCache', 'harborcache' );
+        return __( 'HarborCache', 'harborcache-object-cache-with-redis' );
     }
 
     /**
@@ -75,7 +75,7 @@ class QM_Collector extends QM_BaseCollector {
         $this->data['harborcache_commands'] = $wp_object_cache instanceof \HarborCache_Advanced_Cache ? $wp_object_cache->ch_commands : array();
 
         if ( defined( 'WP_REDIS_DISABLED' ) && WP_REDIS_DISABLED ) {
-            $this->data['meta'][ __( 'Disabled', 'harborcache' ) ] = __( 'Yes', 'harborcache' );
+            $this->data['meta'][ __( 'Disabled', 'harborcache-object-cache-with-redis' ) ] = __( 'Yes', 'harborcache-object-cache-with-redis' );
         }
 
         $this->data['groups'] = [

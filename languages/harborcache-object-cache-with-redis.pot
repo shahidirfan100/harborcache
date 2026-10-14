@@ -2,27 +2,21 @@
 # This file is distributed under the GPL-3.0-only.
 msgid ""
 msgstr ""
-"Project-Id-Version: HarborCache – Object Cache with Redis 1.1.1\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/harborcache\n"
+"Project-Id-Version: HarborCache 1.1.4\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/harborcache-object-cache-with-redis\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-10T15:36:06+00:00\n"
+"POT-Creation-Date: 2026-10-14T05:52:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
-"X-Domain: harborcache\n"
+"X-Domain: harborcache-object-cache-with-redis\n"
 
 #. Plugin Name of the plugin
 #: harborcache.php
-msgid "HarborCache – Object Cache with Redis"
-msgstr ""
-
-#. Plugin URI of the plugin
-#. Author URI of the plugin
-#: harborcache.php
-msgid "https://profiles.wordpress.org/shahidirfan100/"
+msgid "HarborCache"
 msgstr ""
 
 #. Description of the plugin
@@ -35,757 +29,801 @@ msgstr ""
 msgid "Shahid Irfan"
 msgstr ""
 
-#: harborcache.php:24
+#. Author URI of the plugin
+#: harborcache.php
+msgid "https://profiles.wordpress.org/shahidirfan100/"
+msgstr ""
+
+#: harborcache.php:23
 msgid "Deactivate the other Redis object cache plugin before activating HarborCache."
 msgstr ""
 
-#: includes/class-console.php:30
+#: includes/class-console.php:34
 msgid "Every minute (HarborCache)"
 msgstr ""
 
-#: includes/class-console.php:75
+#: includes/class-console.php:80
 msgid "Invalidate the selected cache scope? Cached entries will be rebuilt by subsequent requests."
 msgstr ""
 
-#: includes/class-console.php:75
+#: includes/class-console.php:80
 msgid "Diagnostics copied."
 msgstr ""
 
-#: includes/class-console.php:75
+#: includes/class-console.php:80
 msgid "Report selected. Press Ctrl+C or Command+C to copy."
 msgstr ""
 
-#: includes/class-console.php:75
+#: includes/class-console.php:80
 msgid "Invalidating cache…"
 msgstr ""
 
-#: includes/class-console.php:75
+#: includes/class-console.php:80
 msgid "Cache invalidated."
 msgstr ""
 
-#: includes/class-console.php:75
+#: includes/class-console.php:80
 msgid "Cache action failed. Open Diagnostics for connection details."
 msgstr ""
 
-#: includes/class-console.php:81
-#: includes/class-console.php:347
+#: includes/class-console.php:86
+#: includes/class-console.php:367
 msgid "Cache dashboard"
 msgstr ""
 
-#: includes/class-console.php:82
+#: includes/class-console.php:87
 msgid "Invalidate cache"
 msgstr ""
 
-#: includes/class-console.php:89
+#: includes/class-console.php:94
 msgid "WordPress could not open the filesystem. Configure filesystem access and try again."
 msgstr ""
 
-#: includes/class-console.php:111
+#: includes/class-console.php:124
+msgid "HarborCache retained the previous drop-in after an interrupted update. Check wp-content permissions and refresh this page to retry recovery. The backup is object-cache.php.harborcache-backup.php."
+msgstr ""
+
+#: includes/class-console.php:128
 msgid "HarborCache could not refresh its cache drop-in. Check Redis connectivity and wp-content permissions, then update it below."
 msgstr ""
 
-#: includes/class-console.php:112
-#: includes/class-console.php:355
+#. translators: 1: runtime hits, 2: persistent store hits, 3: persistent store misses.
+#: includes/class-console.php:129
+#: includes/class-console.php:374
 msgid "Update drop-in"
 msgstr ""
 
-#: includes/class-console.php:119
+#: includes/class-console.php:137
 msgid "Another object-cache.php is installed. Disable its owning plugin before enabling HarborCache."
 msgstr ""
 
-#: includes/class-console.php:123
+#: includes/class-console.php:141
 msgid "Install the selected PHP Redis client extension before enabling this connection."
 msgstr ""
 
-#: includes/class-console.php:124
+#: includes/class-console.php:142
 msgid "Remove the disabled configuration flag before enabling the cache."
 msgstr ""
 
-#: includes/class-console.php:132
+#: includes/class-console.php:149
 msgid "The drop-in could not be written. Check wp-content permissions."
 msgstr ""
 
-#: includes/class-console.php:154
+#: includes/class-console.php:171
 msgid "Enable a connected HarborCache drop-in first."
 msgstr ""
 
-#: includes/class-console.php:166
+#: includes/class-console.php:183
 msgid "Server-wide reset controls require allow_server_controls in configuration."
 msgstr ""
 
-#: includes/class-console.php:168
+#: includes/class-console.php:185
 msgid "Unknown cache action."
 msgstr ""
 
-#: includes/class-console.php:176
+#: includes/class-console.php:193
 msgid "Settings must contain scalar values."
 msgstr ""
 
-#: includes/class-console.php:178
+#: includes/class-console.php:195
 msgid "Port, database, retry interval and TTL must be whole numbers."
 msgstr ""
 
-#: includes/class-console.php:184
+#: includes/class-console.php:201
 msgid "Check port, database and TTL values."
 msgstr ""
 
-#: includes/class-console.php:185
+#: includes/class-console.php:202
 msgid "Timeouts must be above zero and at most 30 seconds."
 msgstr ""
 
-#: includes/class-console.php:186
+#: includes/class-console.php:203
 msgid "Unknown connection or flush mode."
 msgstr ""
 
-#: includes/class-console.php:188
+#: includes/class-console.php:205
 msgid "Put callback and object configuration in HARBORCACHE_CONFIG; the settings file accepts scalar values and arrays."
 msgstr ""
 
-#: includes/class-console.php:193
+#: includes/class-console.php:210
 msgid "Refusing to replace a linked configuration file."
 msgstr ""
 
-#: includes/class-console.php:197
+#: includes/class-console.php:214
 msgid "Could not save configuration in wp-content."
 msgstr ""
 
-#: includes/class-console.php:203
+#: includes/class-console.php:220
 #: includes/class-plugin.php:609
 msgid "You do not have permission to manage HarborCache."
 msgstr ""
 
-#: includes/class-console.php:216
+#: includes/class-console.php:233
 msgid "The operation did not succeed."
 msgstr ""
 
-#: includes/class-console.php:217
+#: includes/class-console.php:234
 msgid "Action completed. Configuration changes apply on the next request."
 msgstr ""
 
-#: includes/class-console.php:219
+#: includes/class-console.php:236
 msgid "Action failed. Check the connection, filesystem access and prerequisites in Diagnostics."
 msgstr ""
 
-#: includes/class-console.php:244
+#: includes/class-console.php:261
 msgid "HarborCache health"
 msgstr ""
 
-#: includes/class-console.php:250
+#: includes/class-console.php:267
 msgid "Persistent Redis caching is not connected."
 msgstr ""
 
-#: includes/class-console.php:251
+#: includes/class-console.php:268
 msgid "The owned drop-in differs from the installed plugin."
 msgstr ""
 
-#: includes/class-console.php:254
+#: includes/class-console.php:271
 msgid "Redis uses noeviction; exhausted memory can reject cache writes. Review the server policy."
 msgstr ""
 
-#: includes/class-console.php:255
+#: includes/class-console.php:272
 msgid "The cache cleanup schedule is missing."
 msgstr ""
 
-#: includes/class-console.php:256
+#: includes/class-console.php:273
 msgid "The query maintenance schedule is missing."
 msgstr ""
 
-#: includes/class-console.php:258
+#: includes/class-console.php:275
 msgid "HarborCache needs attention"
 msgstr ""
 
-#: includes/class-console.php:258
+#: includes/class-console.php:275
 msgid "HarborCache is connected and current"
 msgstr ""
 
-#: includes/class-console.php:258
+#: includes/class-console.php:275
 msgid "Performance"
 msgstr ""
 
-#: includes/class-console.php:258
+#: includes/class-console.php:275
 msgid "The connection and owned drop-in checks passed."
 msgstr ""
 
-#: includes/class-console.php:258
+#: includes/class-console.php:275
 msgid "Open HarborCache diagnostics"
 msgstr ""
 
-#: includes/class-console.php:273
+#: includes/class-console.php:290
 msgid "Redis connected"
 msgstr ""
 
-#: includes/class-console.php:273
+#: includes/class-console.php:290
 msgid "Disconnected"
 msgstr ""
 
-#: includes/class-console.php:274
-#: includes/class-console.php:343
+#: includes/class-console.php:291
+#: includes/class-console.php:363
 msgid "Disconnect"
 msgstr ""
 
-#: includes/class-console.php:274
-#: includes/class-console.php:343
+#: includes/class-console.php:291
+#: includes/class-console.php:363
 msgid "Connect"
 msgstr ""
 
-#: includes/class-console.php:275
+#: includes/class-console.php:292
 msgid "Disconnect turns off persistent caching for this WordPress installation. Redis stays running; connection settings are kept. Reconnecting starts a fresh cache."
 msgstr ""
 
-#: includes/class-console.php:275
+#: includes/class-console.php:292
 msgid "Persistent caching is not active. Check the connection settings and connect to start a fresh cache."
 msgstr ""
 
-#: includes/class-console.php:279
+#: includes/class-console.php:296
 msgid "Current dashboard request"
 msgstr ""
 
-#: includes/class-console.php:280
+#: includes/class-console.php:297
 msgid "Hit ratio (%)"
 msgstr ""
 
-#: includes/class-console.php:280
+#: includes/class-console.php:297
 msgid "Cache hits"
 msgstr ""
 
-#: includes/class-console.php:280
+#: includes/class-console.php:297
 msgid "Cache misses"
 msgstr ""
 
-#: includes/class-console.php:280
-#: includes/class-console.php:301
-#: includes/class-console.php:352
-#: includes/ui/query-monitor.php:132
-msgid "Redis commands"
+#: includes/class-console.php:297
+#: includes/class-console.php:318
+#: includes/class-console.php:372
+msgid "Cache operations"
 msgstr ""
 
-#: includes/class-console.php:280
-#: includes/class-console.php:352
-msgid "Redis time (ms)"
+#: includes/class-console.php:297
+#: includes/class-console.php:372
+msgid "Request cache time (ms)"
 msgstr ""
 
 #. translators: 1: sample count, 2: weighted hit ratio, 3: average Redis time in milliseconds.
-#: includes/class-console.php:288
+#: includes/class-console.php:305
 #, php-format
 msgid "Latest %1$s sampled requests: %2$s%% hit ratio; %3$s ms average Redis time."
 msgstr ""
 
-#: includes/class-console.php:289
+#: includes/class-console.php:306
 msgid "No recent samples. Analytics must be enabled; samples appear after one minute."
 msgstr ""
 
-#: includes/class-console.php:290
+#: includes/class-console.php:307
 msgid "Request measurements include runtime cache hits. Samples are local, may span sites sharing this cache namespace, and are not server-wide totals. Refresh the page to update."
 msgstr ""
 
-#: includes/class-console.php:292
+#: includes/class-console.php:309
 msgid "Open cache dashboard"
 msgstr ""
 
-#: includes/class-console.php:292
+#: includes/class-console.php:309
 msgid "View analytics"
 msgstr ""
 
 #. translators: 1: median time, 2: p95 time.
-#: includes/class-console.php:298
-#: includes/class-console.php:381
-#: includes/class-console.php:413
+#: includes/class-console.php:315
+#: includes/class-console.php:342
+#: includes/class-console.php:400
+#: includes/class-console.php:450
 msgid "Time"
 msgstr ""
 
-#: includes/class-console.php:298
+#: includes/class-console.php:315
 msgid "Redis time"
 msgstr ""
 
-#: includes/class-console.php:299
+#: includes/class-console.php:316
 msgid "Bytes"
 msgstr ""
 
-#: includes/class-console.php:299
+#: includes/class-console.php:316
 msgid "Runtime cache size"
 msgstr ""
 
-#: includes/class-console.php:300
+#: includes/class-console.php:317
 msgid "Ratio"
 msgstr ""
 
-#: includes/class-console.php:300
+#: includes/class-console.php:317
 msgid "Cache hit ratio"
 msgstr ""
 
-#: includes/class-console.php:301
+#: includes/class-console.php:318
 msgid "Calls"
 msgstr ""
 
-#: includes/class-console.php:305
+#: includes/class-console.php:322
 msgid "Sampled cache performance"
 msgstr ""
 
-#: includes/class-console.php:305
+#: includes/class-console.php:322
 msgid "Chart metric"
 msgstr ""
 
-#: includes/class-console.php:307
+#: includes/class-console.php:324
 #: includes/class-plugin.php:196
 msgid "Settings"
 msgstr ""
 
-#: includes/class-console.php:322
+#: includes/class-console.php:339
 msgid "Latest"
 msgstr ""
 
-#: includes/class-console.php:322
+#: includes/class-console.php:339
 msgid "Average"
 msgstr ""
 
-#: includes/class-console.php:322
+#: includes/class-console.php:339
 msgid "Peak"
 msgstr ""
 
-#. translators: %s: number of recent sampled requests.
-#: includes/class-console.php:326
-#, php-format
-msgid "%s recent sampled requests · Times shown in the site timezone."
+#: includes/class-console.php:342
+msgid "View chart data"
 msgstr ""
 
-#. translators: %s: number of recent sampled requests.
-#: includes/class-console.php:326
+#: includes/class-console.php:342
+msgid "Operations"
+msgstr ""
+
+#. translators: 1: sample count, 2: configured sampling percentage, 3: last sample date and time.
+#: includes/class-console.php:346
+#, php-format
+msgid "%1$s recent sampled requests · %2$s%% sampling · Last sample: %3$s · Samples are delayed by one minute. Site timezone."
+msgstr ""
+
+#. translators: 1: sample count, 2: configured sampling percentage, 3: last sample date and time.
+#: includes/class-console.php:346
 msgid "Enable JavaScript to switch chart metrics. The Time chart and request details remain available."
 msgstr ""
 
-#: includes/class-console.php:337
+#: includes/class-console.php:357
 msgid "Overview"
 msgstr ""
 
-#: includes/class-console.php:337
+#: includes/class-console.php:357
 msgid "Analytics"
 msgstr ""
 
-#: includes/class-console.php:337
+#: includes/class-console.php:357
 msgid "Connection"
 msgstr ""
 
-#: includes/class-console.php:337
+#: includes/class-console.php:357
 msgid "Cache groups"
 msgstr ""
 
-#: includes/class-console.php:337
+#: includes/class-console.php:357
 msgid "Tools"
 msgstr ""
 
-#: includes/class-console.php:337
+#: includes/class-console.php:357
 msgid "Diagnostics"
 msgstr ""
 
-#: includes/class-console.php:342
+#: includes/class-console.php:362
 msgid "Redis object cache"
 msgstr ""
 
-#: includes/class-console.php:342
+#: includes/class-console.php:362
 #: includes/class-plugin.php:377
 msgid "Connected"
 msgstr ""
 
-#: includes/class-console.php:342
+#: includes/class-console.php:362
 msgid "Not active"
 msgstr ""
 
-#: includes/class-console.php:351
+#: includes/class-console.php:371
 msgid "Check cache health, inspect the current request and manage persistent storage."
 msgstr ""
 
-#: includes/class-console.php:352
-msgid "Request hit ratio"
+#: includes/class-console.php:372
+msgid "Combined hit ratio"
 msgstr ""
 
-#: includes/class-console.php:352
+#: includes/class-console.php:372
 msgid "Runtime cache (bytes)"
 msgstr ""
 
-#: includes/class-console.php:353
+#: includes/class-console.php:373
+msgid "Combined hits include request-memory and Redis reads. Cache time is not full page response time; operation counts include namespace metadata."
+msgstr ""
+
+#. translators: 1: runtime hits, 2: persistent store hits, 3: persistent store misses.
+#: includes/class-console.php:373
+#, php-format
+msgid "Request-memory hits: %1$s · Redis-store hits: %2$s · Redis-store misses: %3$s."
+msgstr ""
+
+#. translators: 1: runtime hits, 2: persistent store hits, 3: persistent store misses.
+#: includes/class-console.php:373
 msgid "Cache lifecycle"
 msgstr ""
 
-#: includes/class-console.php:353
+#. translators: 1: runtime hits, 2: persistent store hits, 3: persistent store misses.
+#: includes/class-console.php:373
 msgid "Enable installs the drop-in after a connection check. Flushing invalidates only this installation’s namespace; unrelated Redis data is preserved."
 msgstr ""
 
-#: includes/class-console.php:354
-msgid "Disable object cache"
-msgstr ""
-
-#: includes/class-console.php:354
-msgid "Enable object cache"
-msgstr ""
-
-#: includes/class-console.php:355
+#. translators: 1: runtime hits, 2: persistent store hits, 3: persistent store misses.
+#: includes/class-console.php:374
 msgid "Flush cache"
 msgstr ""
 
-#: includes/class-console.php:356
+#: includes/class-console.php:375
 msgid "Connection summary"
 msgstr ""
 
-#: includes/class-console.php:357
+#: includes/class-console.php:376
 msgid "Transport"
 msgstr ""
 
-#: includes/class-console.php:357
-#: includes/class-console.php:396
+#: includes/class-console.php:376
+#: includes/class-console.php:422
 msgid "Database"
 msgstr ""
 
-#: includes/class-console.php:357
+#: includes/class-console.php:376
 msgid "Serializer"
 msgstr ""
 
-#: includes/class-console.php:357
+#: includes/class-console.php:376
 msgid "Compression"
 msgstr ""
 
-#: includes/class-console.php:357
+#: includes/class-console.php:376
 msgid "Maximum TTL"
 msgstr ""
 
-#: includes/class-console.php:358
+#: includes/class-console.php:377
 msgid "Redis allocation"
 msgstr ""
 
-#: includes/class-console.php:358
+#: includes/class-console.php:377
 msgid "Shared server"
 msgstr ""
 
-#: includes/class-console.php:358
+#: includes/class-console.php:377
 msgid "Dedicated server"
 msgstr ""
 
-#: includes/class-console.php:359
+#: includes/class-console.php:378
 msgid "Server memory and total key counts include other applications and are omitted here."
 msgstr ""
 
 #. translators: 1: memory in bytes across primary nodes, 2: key count in the selected Redis database.
-#: includes/class-console.php:364
+#: includes/class-console.php:383
 #, php-format
 msgid "Redis primary nodes: %1$s bytes used, %2$s keys in the selected database."
 msgstr ""
 
-#: includes/class-console.php:366
+#: includes/class-console.php:385
 msgid "Server capacity information is unavailable."
 msgstr ""
 
-#: includes/class-console.php:372
+#: includes/class-console.php:391
 msgid "Groups observed in the current namespace. A group can remain listed after its entries expire."
 msgstr ""
 
-#: includes/class-console.php:372
+#: includes/class-console.php:391
 msgid "Group"
 msgstr ""
 
-#: includes/class-console.php:372
+#: includes/class-console.php:391
 msgid "Scope"
 msgstr ""
 
-#: includes/class-console.php:372
+#: includes/class-console.php:391
 msgid "Action"
 msgstr ""
 
-#: includes/class-console.php:373
+#: includes/class-console.php:392
 msgid "Flush group on this site"
 msgstr ""
 
-#: includes/class-console.php:379
+#: includes/class-console.php:398
 msgid "Local sampled requests, shown after one minute. This view reads at most 1,000 samples within the configured retention. Percentiles describe sampled requests, not individual commands."
 msgstr ""
 
-#: includes/class-console.php:380
+#: includes/class-console.php:399
 msgid "No measurements yet"
 msgstr ""
 
-#: includes/class-console.php:380
+#: includes/class-console.php:399
 msgid "Enable caching and analytics, then browse the site. Return after one minute."
 msgstr ""
 
 #. translators: 1: median time, 2: p95 time.
-#: includes/class-console.php:381
-#: includes/class-console.php:413
+#: includes/class-console.php:400
+#: includes/class-console.php:450
 msgid "Hit ratio"
 msgstr ""
 
-#: includes/class-console.php:381
+#: includes/class-console.php:400
 msgid "Commands"
 msgstr ""
 
-#: includes/class-console.php:381
+#: includes/class-console.php:400
 msgid "Time (ms)"
 msgstr ""
 
-#: includes/class-console.php:383
+#: includes/class-console.php:402
 msgid "Scoped invalidation"
 msgstr ""
 
-#: includes/class-console.php:383
+#: includes/class-console.php:402
 msgid "Invalidation changes namespace tokens immediately. Old entries expire within the configured maximum TTL."
 msgstr ""
 
-#: includes/class-console.php:383
+#: includes/class-console.php:402
 msgid "Flush configured scope"
 msgstr ""
 
-#: includes/class-console.php:383
+#: includes/class-console.php:402
 msgid "Flush global groups"
 msgstr ""
 
-#: includes/class-console.php:383
+#: includes/class-console.php:402
 msgid "Clear this request’s runtime cache"
 msgstr ""
 
-#: includes/class-console.php:383
+#: includes/class-console.php:402
 msgid "Run a cleanup batch"
 msgstr ""
 
-#: includes/class-console.php:383
+#: includes/class-console.php:402
 msgid "Recycle query cache batch"
 msgstr ""
 
-#: includes/class-console.php:385
+#: includes/class-console.php:404
 msgid "Server observability"
 msgstr ""
 
-#: includes/class-console.php:385
+#: includes/class-console.php:404
 msgid "Command statistics describe the Redis server. Slow-log output omits keys and values."
 msgstr ""
 
-#: includes/class-console.php:385
+#: includes/class-console.php:404
 msgid "Command statistics"
 msgstr ""
 
-#: includes/class-console.php:385
+#: includes/class-console.php:404
 msgid "Slow commands"
 msgstr ""
 
-#: includes/class-console.php:387
+#: includes/class-console.php:406
 msgid "This report excludes credentials, connection endpoints, cached keys and values."
 msgstr ""
 
-#: includes/class-console.php:387
+#: includes/class-console.php:406
 msgid "Copy diagnostics"
 msgstr ""
 
-#: includes/class-console.php:387
+#: includes/class-console.php:406
 msgid "Review the verified feature matrix and deployment requirements in docs/FEATURES.md before production use."
 msgstr ""
 
-#: includes/class-console.php:393
+#: includes/class-console.php:419
 msgid "Settings are saved to a guarded PHP file in wp-content. HARBORCACHE_CONFIG and existing WP_REDIS constants take precedence. Change settings on staging before production."
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:421
+msgid "Connection and cache limits"
+msgstr ""
+
+#: includes/class-console.php:422
 msgid "Redis host or socket"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Port"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "ACL username"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Password (blank keeps current)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Installation prefix"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Connect timeout (seconds)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Read timeout (seconds)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Maximum TTL (seconds)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Query TTL (seconds)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Retry interval (milliseconds)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Safe read retries (0–5)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Cleanup time budget (milliseconds)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Cleanup keys per batch (1–1000)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Extra global groups (comma separated)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Non-persistent groups (supports *)"
 msgstr ""
 
-#: includes/class-console.php:396
+#: includes/class-console.php:422
 msgid "Non-prefetchable groups"
 msgstr ""
 
-#: includes/class-console.php:399
-msgid "Caching and measurements"
+#: includes/class-console.php:424
+msgid "extension unavailable"
 msgstr ""
 
-#: includes/class-console.php:400
-msgid "Redis is shared with other applications"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Automatically refresh HarborCache’s owned drop-in after upgrades"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Recycle query cache groups gradually every hour (also expires valid query entries)"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Protect this installation’s cache prefix ownership"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Reclaim invalidated entries in background batches"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Reuse persistent connections where supported by the client"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Split autoloaded options (hash or Relay option strings)"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Enable registered key prefetching"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Enable debug mode"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Keep command names and timings for diagnostics"
-msgstr ""
-
-#: includes/class-console.php:400
-msgid "Collect local request analytics"
-msgstr ""
-
-#: includes/class-console.php:400
+#: includes/class-console.php:425
+#: includes/class-console.php:426
 msgid "Clear saved password"
 msgstr ""
 
-#: includes/class-console.php:401
+#: includes/class-console.php:426
+msgid "Redis is shared with other applications"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Automatically refresh HarborCache’s owned drop-in after upgrades"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Recycle query cache groups gradually every hour (also expires valid query entries)"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Protect this installation’s cache prefix ownership"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Reclaim invalidated entries in background batches"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Reuse persistent connections where supported by the client"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Split autoloaded options (hash or Relay option strings)"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Enable registered key prefetching"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Enable debug mode"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Keep command names and timings for diagnostics"
+msgstr ""
+
+#: includes/class-console.php:426
+msgid "Collect local request analytics"
+msgstr ""
+
+#: includes/class-console.php:428
+msgid "Cache safety"
+msgstr ""
+
+#: includes/class-console.php:429
+msgid "Performance and maintenance"
+msgstr ""
+
+#: includes/class-console.php:430
+msgid "Diagnostics and analytics"
+msgstr ""
+
+#: includes/class-console.php:438
+msgid "Analytics sampling"
+msgstr ""
+
+#: includes/class-console.php:438
 msgid "Sample rate (%)"
 msgstr ""
 
-#: includes/class-console.php:401
+#: includes/class-console.php:438
 msgid "Retention (seconds)"
 msgstr ""
 
-#: includes/class-console.php:401
+#: includes/class-console.php:438
 msgid "Save configuration"
 msgstr ""
 
-#: includes/class-console.php:405
+#: includes/class-console.php:442
 msgid "Time window"
 msgstr ""
 
-#: includes/class-console.php:406
+#: includes/class-console.php:443
 msgid "15 minutes"
 msgstr ""
 
-#: includes/class-console.php:406
+#: includes/class-console.php:443
 msgid "1 hour"
 msgstr ""
 
-#: includes/class-console.php:406
+#: includes/class-console.php:443
 msgid "2 hours"
 msgstr ""
 
-#: includes/class-console.php:406
+#: includes/class-console.php:443
 msgid "6 hours"
 msgstr ""
 
-#: includes/class-console.php:406
+#: includes/class-console.php:443
 msgid "24 hours"
 msgstr ""
 
-#: includes/class-console.php:407
+#: includes/class-console.php:444
 msgid "Apply"
 msgstr ""
 
-#: includes/class-console.php:409
+#: includes/class-console.php:446
 msgid "Export samples (CSV)"
 msgstr ""
 
 #. translators: 1: median time, 2: p95 time.
-#: includes/class-console.php:413
+#: includes/class-console.php:450
 #, php-format
 msgid "Sampled request Redis time: median %1$s ms; 95th percentile %2$s ms."
 msgstr ""
 
 #. translators: 1: median time, 2: p95 time.
-#: includes/class-console.php:413
+#: includes/class-console.php:450
 msgid "Five-minute summaries"
 msgstr ""
 
 #. translators: 1: median time, 2: p95 time.
-#: includes/class-console.php:413
+#: includes/class-console.php:450
 msgid "Samples"
 msgstr ""
 
 #. translators: 1: median time, 2: p95 time.
-#: includes/class-console.php:413
+#: includes/class-console.php:450
 msgid "Median ms"
 msgstr ""
 
 #. translators: 1: median time, 2: p95 time.
-#: includes/class-console.php:413
+#: includes/class-console.php:450
 msgid "P95 ms"
 msgstr ""
 
-#: includes/class-console.php:421
+#: includes/class-console.php:458
 msgid "Include memory"
 msgstr ""
 
-#: includes/class-console.php:421
+#: includes/class-console.php:458
 msgid "Inspect group"
 msgstr ""
 
-#: includes/class-console.php:425
+#: includes/class-console.php:462
 msgid "Connection diagnostics"
 msgstr ""
 
-#: includes/class-console.php:425
+#: includes/class-console.php:462
 msgid "Run checks on demand. Group inspection stops at 500 physical keys, 20 scan pages or its cooperative time budget; incomplete results are partial, not total counts."
 msgstr ""
 
-#: includes/class-console.php:426
+#: includes/class-console.php:463
 msgid "Test Redis nodes"
 msgstr ""
 
-#: includes/class-console.php:426
+#: includes/class-console.php:463
 msgid "Inspect Relay adaptive cache"
 msgstr ""
 
@@ -910,32 +948,32 @@ msgstr ""
 msgid "WordPress is using a foreign object cache drop-in and HarborCache is not being used. Use WP CLI or go to \"Settings -> Redis\" to enable drop-in."
 msgstr ""
 
-#: includes/object-cache.php:3036
+#: includes/object-cache.php:3067
 msgid "Error establishing a Redis connection"
 msgstr ""
 
 #. translators: %s = Formatted wp-config.php file name.
-#: includes/object-cache.php:3043
+#: includes/object-cache.php:3074
 #, php-format
 msgid "WordPress is unable to establish a connection to Redis. This means that the connection information in your %s file are incorrect, or that the Redis server is not reachable."
 msgstr ""
 
-#: includes/object-cache.php:3048
+#: includes/object-cache.php:3079
 msgid "Is the correct Redis host and port set?"
 msgstr ""
 
-#: includes/object-cache.php:3049
+#: includes/object-cache.php:3080
 msgid "Is the Redis server running?"
 msgstr ""
 
 #. translators: %s = Link to installation instructions.
-#: includes/object-cache.php:3054
+#: includes/object-cache.php:3085
 #, php-format
 msgid "If you need help, please read the <a href=\"%s\">installation instructions</a>."
 msgstr ""
 
 #. translators: %1$s = Formatted object-cache.php file name, %2$s = Formatted wp-content directory name.
-#: includes/object-cache.php:3061
+#: includes/object-cache.php:3092
 #, php-format
 msgid "To disable Redis, delete the %1$s file in the %2$s directory."
 msgstr ""
@@ -978,6 +1016,10 @@ msgstr ""
 
 #: includes/ui/query-monitor.php:115
 msgid "Metadata"
+msgstr ""
+
+#: includes/ui/query-monitor.php:132
+msgid "Redis commands"
 msgstr ""
 
 #: includes/ui/query-monitor.php:133

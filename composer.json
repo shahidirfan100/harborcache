@@ -4,5 +4,5 @@
   "type": "wordpress-plugin",
   "license": "GPL-3.0-only",
   "require": { "php": ">=7.4" },
-  "extra": { "installer-name": "harborcache" }
+  "extra": { "installer-name": "harborcache-object-cache-with-redis" }
 }

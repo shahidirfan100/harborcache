@@ -1,9 +1,8 @@
 <?php
 /**
  * Drop-In Name: HarborCache Drop-In
- * Plugin URI: https://profiles.wordpress.org/shahidirfan100/
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: Shahid Irfan
  * Author URI: https://profiles.wordpress.org/shahidirfan100/
  * License: GPL-3.0-only
@@ -16,7 +15,17 @@
 // WordPress drop-ins require wp_cache_* names; WP_REDIS_* constants preserve the upstream configuration API.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 defined( 'ABSPATH' ) || exit;
-if ( ! defined( 'WP_REDIS_PLUGIN_PATH' ) ) { define( 'WP_REDIS_PLUGIN_PATH', defined( 'HARBORCACHE_PLUGIN_PATH' ) ? HARBORCACHE_PLUGIN_PATH : ( defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR : WP_CONTENT_DIR . '/plugins' ) . '/harborcache' ); }
+if ( ! defined( 'WP_REDIS_PLUGIN_PATH' ) ) {
+    $harborcache_plugins_dir = defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR : WP_CONTENT_DIR . '/plugins';
+    $harborcache_plugin_path = $harborcache_plugins_dir . '/harborcache-object-cache-with-redis';
+    if ( defined( 'HARBORCACHE_PLUGIN_PATH' ) ) {
+        $harborcache_plugin_path = HARBORCACHE_PLUGIN_PATH;
+    } elseif ( ! is_readable( $harborcache_plugin_path . '/includes/ch-config.php' ) ) {
+        $harborcache_plugin_path = $harborcache_plugins_dir . '/harborcache';
+    }
+    define( 'WP_REDIS_PLUGIN_PATH', $harborcache_plugin_path );
+    unset( $harborcache_plugins_dir, $harborcache_plugin_path );
+}
 if ( ! is_readable( WP_REDIS_PLUGIN_PATH . '/includes/ch-config.php' ) ) { return; }
 if ( ( defined( 'HARBORCACHE_DISABLED' ) && HARBORCACHE_DISABLED ) || ( defined( 'WP_REDIS_DISABLED' ) && WP_REDIS_DISABLED ) ) { return; }
 require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-config.php';
@@ -3033,7 +3042,7 @@ class WP_Object_Cache {
     protected function show_error_and_die( Exception $exception ) {
         wp_load_translations_early();
 
-        $domain = 'harborcache';
+        $domain = 'harborcache-object-cache-with-redis';
         $locale = defined( 'WPLANG' ) ? WPLANG : 'en_US';
         $mofile = WP_LANG_DIR . "/plugins/{$domain}-{$locale}.mo";
 
@@ -3055,32 +3064,32 @@ class WP_Object_Cache {
             || defined( 'WP_ADMIN' )
             || ( defined( 'WP_DEBUG' ) && WP_DEBUG );
 
-        $message = '<h1>' . __( 'Error establishing a Redis connection', 'harborcache' ) . "</h1>\n";
+        $message = '<h1>' . __( 'Error establishing a Redis connection', 'harborcache-object-cache-with-redis' ) . "</h1>\n";
 
         if ( $verbose ) {
             $message .= "<p><code>" . $exception->getMessage() . "</code></p>\n";
 
             $message .= '<p>' . sprintf(
                 // translators: %s = Formatted wp-config.php file name.
-                __( 'WordPress is unable to establish a connection to Redis. This means that the connection information in your %s file are incorrect, or that the Redis server is not reachable.', 'harborcache' ),
+                __( 'WordPress is unable to establish a connection to Redis. This means that the connection information in your %s file are incorrect, or that the Redis server is not reachable.', 'harborcache-object-cache-with-redis' ),
                 '<code>wp-config.php</code>'
             ) . "</p>\n";
 
             $message .= "<ul>\n";
-            $message .= '<li>' . __( 'Is the correct Redis host and port set?', 'harborcache' ) . "</li>\n";
-            $message .= '<li>' . __( 'Is the Redis server running?', 'harborcache' ) . "</li>\n";
+            $message .= '<li>' . __( 'Is the correct Redis host and port set?', 'harborcache-object-cache-with-redis' ) . "</li>\n";
+            $message .= '<li>' . __( 'Is the Redis server running?', 'harborcache-object-cache-with-redis' ) . "</li>\n";
             $message .= "</ul>\n";
 
             $message .= '<p>' . sprintf(
                 // translators: %s = Link to installation instructions.
-                __( 'If you need help, please read the <a href="%s">installation instructions</a>.', 'harborcache' ),
+                __( 'If you need help, please read the <a href="%s">installation instructions</a>.', 'harborcache-object-cache-with-redis' ),
                 'https://github.com/rhubarbgroup/redis-cache/blob/develop/INSTALL.md'
             ) . "</p>\n";
         }
 
         $message .= '<p>' . sprintf(
             // translators: %1$s = Formatted object-cache.php file name, %2$s = Formatted wp-content directory name.
-            __( 'To disable Redis, delete the %1$s file in the %2$s directory.', 'harborcache' ),
+            __( 'To disable Redis, delete the %1$s file in the %2$s directory.', 'harborcache-object-cache-with-redis' ),
             '<code>object-cache.php</code>',
             '<code>/wp-content/</code>'
         ) . "</p>\n";

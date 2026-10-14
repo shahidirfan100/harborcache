@@ -17,27 +17,27 @@ echo $this->before_non_tabular_output();
 ?>
 
     <section>
-        <h3><?php esc_html_e( 'Status', 'harborcache' ); ?></h3>
+        <h3><?php esc_html_e( 'Status', 'harborcache-object-cache-with-redis' ); ?></h3>
         <p class="qm-ltr"><code><?php echo esc_html( $data['status'] ); ?></code></p>
     </section>
 
     <section>
-        <h3><?php esc_html_e( 'Hit Ratio', 'harborcache' ); ?></h3>
+        <h3><?php esc_html_e( 'Hit Ratio', 'harborcache-object-cache-with-redis' ); ?></h3>
         <p class="qm-ltr"><code><?php echo esc_html( $data['ratio'] ); ?>%</code></p>
     </section>
 
     <section>
-        <h3><?php esc_html_e( 'Hits', 'harborcache' ); ?></h3>
+        <h3><?php esc_html_e( 'Hits', 'harborcache-object-cache-with-redis' ); ?></h3>
         <p class="qm-ltr"><code><?php echo (int) $data['hits']; ?></code></p>
     </section>
 
     <section>
-        <h3><?php esc_html_e( 'Misses', 'harborcache' ); ?></h3>
+        <h3><?php esc_html_e( 'Misses', 'harborcache-object-cache-with-redis' ); ?></h3>
         <p class="qm-ltr"><code><?php echo (int) $data['misses']; ?></code></p>
     </section>
 
     <section>
-        <h3><?php esc_html_e( 'Size', 'harborcache' ); ?></h3>
+        <h3><?php esc_html_e( 'Size', 'harborcache-object-cache-with-redis' ); ?></h3>
         <p class="qm-ltr"><code><?php echo esc_html( size_format( $data['bytes'], 2 ) ); ?></code></p>
     </section>
 
@@ -47,7 +47,7 @@ echo $this->before_non_tabular_output();
     <div class="qm-boxed qm-boxed-wrap">
 
         <section>
-            <h3><?php esc_html_e( 'Errors', 'harborcache' ); ?></h3>
+            <h3><?php esc_html_e( 'Errors', 'harborcache-object-cache-with-redis' ); ?></h3>
 
             <table>
                 <tbody>
@@ -70,7 +70,7 @@ echo $this->before_non_tabular_output();
 
     <?php if ( ! empty( $data['groups']['global'] ) ) : ?>
         <section>
-            <h3><?php esc_html_e( 'Global Groups', 'harborcache' ); ?></h3>
+            <h3><?php esc_html_e( 'Global Groups', 'harborcache-object-cache-with-redis' ); ?></h3>
 
             <ul class="qm-ltr">
                 <?php foreach ( $data['groups']['global'] as $harborcache_group ) : ?>
@@ -84,7 +84,7 @@ echo $this->before_non_tabular_output();
 
     <?php if ( ! empty( $data['groups']['non_persistent'] ) ) : ?>
         <section>
-            <h3><?php esc_html_e( 'Non-persistent Groups', 'harborcache' ); ?></h3>
+            <h3><?php esc_html_e( 'Non-persistent Groups', 'harborcache-object-cache-with-redis' ); ?></h3>
 
             <ul class="qm-ltr">
                 <?php foreach ( $data['groups']['non_persistent'] as $harborcache_group ) : ?>
@@ -98,7 +98,7 @@ echo $this->before_non_tabular_output();
 
     <?php if ( ! empty( $data['groups']['unflushable'] ) ) : ?>
         <section>
-            <h3><?php esc_html_e( 'Unflushable Groups', 'harborcache' ); ?></h3>
+            <h3><?php esc_html_e( 'Unflushable Groups', 'harborcache-object-cache-with-redis' ); ?></h3>
 
             <ul class="qm-ltr">
                 <?php foreach ( $data['groups']['unflushable'] as $harborcache_group ) : ?>
@@ -112,7 +112,7 @@ echo $this->before_non_tabular_output();
 
     <?php if ( ! empty( $data['meta'] ) ) : ?>
         <section>
-            <h3><?php esc_html_e( 'Metadata', 'harborcache' ); ?></h3>
+            <h3><?php esc_html_e( 'Metadata', 'harborcache-object-cache-with-redis' ); ?></h3>
 
             <table>
                 <tbody>
@@ -129,11 +129,11 @@ echo $this->before_non_tabular_output();
 
 <?php if ( ! empty( $data['harborcache_commands'] ) ) : ?>
     <section>
-        <h3><?php esc_html_e( 'Redis commands', 'harborcache' ); ?></h3>
-        <p><?php esc_html_e( 'Up to 200 command names per request. Pipeline durations describe the whole batch. Keys and values are omitted.', 'harborcache' ); ?></p>
-        <table><thead><tr><th><?php esc_html_e( 'Command', 'harborcache' ); ?></th><th><?php esc_html_e( 'Duration (ms)', 'harborcache' ); ?></th><th><?php esc_html_e( 'Batch', 'harborcache' ); ?></th></tr></thead><tbody>
+        <h3><?php esc_html_e( 'Redis commands', 'harborcache-object-cache-with-redis' ); ?></h3>
+        <p><?php esc_html_e( 'Up to 200 command names per request. Pipeline durations describe the whole batch. Keys and values are omitted.', 'harborcache-object-cache-with-redis' ); ?></p>
+        <table><thead><tr><th><?php esc_html_e( 'Command', 'harborcache-object-cache-with-redis' ); ?></th><th><?php esc_html_e( 'Duration (ms)', 'harborcache-object-cache-with-redis' ); ?></th><th><?php esc_html_e( 'Batch', 'harborcache-object-cache-with-redis' ); ?></th></tr></thead><tbody>
         <?php foreach ( $data['harborcache_commands'] as $harborcache_command ) : ?>
-            <tr><td><?php echo esc_html( $harborcache_command['command'] ); ?></td><td><?php echo esc_html( (string) $harborcache_command['milliseconds'] ); ?></td><td><?php echo esc_html( $harborcache_command['batch'] ? __( 'Yes', 'harborcache' ) : __( 'No', 'harborcache' ) ); ?></td></tr>
+            <tr><td><?php echo esc_html( $harborcache_command['command'] ); ?></td><td><?php echo esc_html( (string) $harborcache_command['milliseconds'] ); ?></td><td><?php echo esc_html( $harborcache_command['batch'] ? __( 'Yes', 'harborcache-object-cache-with-redis' ) : __( 'No', 'harborcache-object-cache-with-redis' ) ); ?></td></tr>
         <?php endforeach; ?>
         </tbody></table>
     </section>

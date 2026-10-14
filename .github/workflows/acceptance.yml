@@ -167,13 +167,16 @@ jobs:
           cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
 
       - name: Equal-workload Linux performance comparison
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p evidence /tmp/hc-baseline
+          mkdir -p evidence /tmp/hc-baseline /tmp/hc-baseline-download
           wp plugin deactivate harborcache --path="$WP_ROOT"
           wp plugin install redis-cache --version=3.0.0 --path="$WP_ROOT"
-          curl -fsSL https://github.com/shahidirfan100/harborcache/releases/download/v1.1.2/harborcache-1.1.2.zip -o /tmp/hc-baseline.zip
+          gh release download v1.1.2 --repo "$GITHUB_REPOSITORY" --pattern 'harborcache-1.1.2.zip' --dir /tmp/hc-baseline-download
+          cp /tmp/hc-baseline-download/harborcache-1.1.2.zip /tmp/hc-baseline.zip
           echo 'f9f578f8504e7ad7cb3833024e99504666932e57a3f7d53a63ab4add39957adb  /tmp/hc-baseline.zip' | sha256sum -c -
           unzip -q /tmp/hc-baseline.zip -d /tmp/hc-baseline
           for round in $(seq 0 6); do

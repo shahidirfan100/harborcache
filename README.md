@@ -1,16 +1,16 @@
 # HarborCache
 
-Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release: **1.1.3**.
+Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release: **1.1.4**.
 
 ![HarborCache](media/banner-1544x500.png)
 
 ## Install
 
-Download [harborcache-1.1.3.zip](https://github.com/shahidirfan100/harborcache/releases/download/v1.1.3/harborcache-1.1.3.zip), then upload it in WordPress under Plugins → Add New → Upload Plugin. The installable ZIP is also in [dist](dist/). GitHub's source archive includes development documentation and media; use the release ZIP for installation.
+Download [harborcache-1.1.4.zip](https://github.com/shahidirfan100/harborcache/releases/download/v1.1.4/harborcache-1.1.4.zip), then upload it in WordPress under Plugins → Add New → Upload Plugin. The installable ZIP is also in [dist](dist/). GitHub's source archive includes development documentation and media; use the release ZIP for installation.
 
 Requires WordPress 6.6+, PHP 7.4+ and a separately operated Redis service. Disable the existing object cache manager through its own controls first. Configure a distinct prefix in Settings → HarborCache, save the connection and enable the object cache. HarborCache refuses to overwrite another plugin's drop-in. Verify connection status and Site Health before using it on production.
 
-For upgrades, back up configuration and the owned drop-in. Upload the latest plugin, then update the HarborCache drop-in if prompted. See [configuration](docs/CONFIGURATION.md) and [release notes](docs/RELEASE-1.1.3.md).
+For upgrades, back up configuration and the owned drop-in. Upload the latest plugin, then update the HarborCache drop-in if prompted. See [configuration](docs/CONFIGURATION.md) and [release notes](docs/RELEASE-1.1.4.md).
 
 ## Features
 
@@ -30,11 +30,11 @@ No license key or account is required. No plugin REST endpoints are included. Op
 
 ![Dashboard statistics widget](media/screenshot-7.png)
 
-[All screenshots, logos, banners and favicons](media/) are current for 1.1.3. Images show a local test installation and demonstration chart history, not production speed measurements.
+[All screenshots, logos, banners and favicons](media/) are current for 1.1.4; the interface is unchanged from 1.1.3. Images show a local test installation and demonstration chart history, not production speed measurements.
 
 ## Validation and deployment gates
 
-Version 1.1.3 includes bounded wildcard matching, inactive instrumentation bypass, explicit native counter results and forced Relay cache bypass. The local regression/layout suite, official readme validator and Plugin Check pass. Real Linux/MySQL acceptance covers eight runtime combinations, native codecs, ACL/TLS/socket, concurrent writers, outage recovery, WooCommerce and multisite. Real Relay 0.50.2 and a short concurrent PHP-FPM smoke also pass. See [validation](docs/VALIDATION-1.1.3.md) and [measured comparison](docs/COMPARISON-1.1.3.md).
+The 1.1.3 runtime validation covers bounded wildcard matching, inactive instrumentation bypass, explicit native counter results and forced Relay cache bypass. The 1.1.3 local regression/layout suite, official readme validator and Plugin Check pass. Version 1.1.4 adds the submitted directory slug and plugin identity correction; Plugin Check was rerun against the 1.1.4 package. See [1.1.4 validation](docs/VALIDATION-1.1.4.md). Real Linux/MySQL acceptance covers eight runtime combinations, native codecs, ACL/TLS/socket, concurrent writers, outage recovery, WooCommerce and multisite. Real Relay 0.50.2 and a short concurrent PHP-FPM smoke also pass. See [validation](docs/VALIDATION-1.1.3.md) and [measured comparison](docs/COMPARISON-1.1.3.md).
 
 The Linux comparison measured less PHP CPU than 1.1.2, with mixed operation latency changes. Free Redis Object Cache 3.0.0 still uses less CPU in the measured workload. Sustained production load, native Relay topology/failover and production tracing agents remain acceptance gates. This release does not claim complete Object Cache Pro parity, WordPress.org approval or universal production readiness. See [acceptance gates](docs/ACCEPTANCE.md).
 

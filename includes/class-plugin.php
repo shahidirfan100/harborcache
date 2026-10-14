@@ -148,8 +148,8 @@ class Plugin {
     public function add_admin_menu_page() {
         add_submenu_page(
             is_multisite() ? 'settings.php' : 'options-general.php',
-            __( 'HarborCache', 'harborcache' ),
-            __( 'HarborCache', 'harborcache' ),
+            __( 'HarborCache', 'harborcache-object-cache-with-redis' ),
+            __( 'HarborCache', 'harborcache-object-cache-with-redis' ),
             $this->manage_redis_capability(),
             'harborcache',
             [ $this, 'show_admin_page' ]
@@ -193,7 +193,7 @@ class Plugin {
         $settings = sprintf(
             '<a href="%s">%s</a>',
             network_admin_url( $this->page ),
-            esc_html__( 'Settings', 'harborcache' )
+            esc_html__( 'Settings', 'harborcache-object-cache-with-redis' )
         );
 
         return array_merge( [ $settings ], $links );
@@ -357,28 +357,28 @@ class Plugin {
         global $wp_object_cache;
 
         if ( defined( 'WP_REDIS_DISABLED' ) && WP_REDIS_DISABLED ) {
-            return __( 'Disabled (via config constant)', 'harborcache' );
+            return __( 'Disabled (via config constant)', 'harborcache-object-cache-with-redis' );
         }
 
         if ( ! $this->object_cache_dropin_exists() ) {
-            return __( 'Not enabled', 'harborcache' );
+            return __( 'Not enabled', 'harborcache-object-cache-with-redis' );
         }
 
         if ( $this->object_cache_dropin_outdated() ) {
-            return __( 'Drop-in is outdated', 'harborcache' );
+            return __( 'Drop-in is outdated', 'harborcache-object-cache-with-redis' );
         }
 
         if ( ! $this->validate_object_cache_dropin() ) {
-            return __( 'Drop-in is invalid', 'harborcache' );
+            return __( 'Drop-in is invalid', 'harborcache-object-cache-with-redis' );
         }
 
         if ( method_exists( $wp_object_cache, 'redis_status' ) ) {
             return $wp_object_cache->redis_status()
-                ? __( 'Connected', 'harborcache' )
-                : __( 'Not connected', 'harborcache' );
+                ? __( 'Connected', 'harborcache-object-cache-with-redis' )
+                : __( 'Not connected', 'harborcache-object-cache-with-redis' );
         }
 
-        return __( 'Unknown', 'harborcache' );
+        return __( 'Unknown', 'harborcache-object-cache-with-redis' );
     }
 
     /**
@@ -524,14 +524,14 @@ class Plugin {
                 if ( $this->object_cache_dropin_outdated() ) {
                     $message = sprintf(
                         // translators: %s = Action link to update the drop-in.
-                        __( 'The Redis object cache drop-in is outdated. Please <a href="%s">update the drop-in</a>.', 'harborcache' ),
+                        __( 'The Redis object cache drop-in is outdated. Please <a href="%s">update the drop-in</a>.', 'harborcache-object-cache-with-redis' ),
                         $this->action_link( 'update-dropin' )
                     );
                 }
             } else {
                 $message = sprintf(
                     // translators: %s = Link to settings page.
-                    __( 'A foreign object cache drop-in was found. To use Redis for object caching, please <a href="%s">enable the drop-in</a>.', 'harborcache' ),
+                    __( 'A foreign object cache drop-in was found. To use Redis for object caching, please <a href="%s">enable the drop-in</a>.', 'harborcache-object-cache-with-redis' ),
                     esc_url( network_admin_url( $this->page ) )
                 );
             }
@@ -606,13 +606,13 @@ class Plugin {
      * @return void
      */
     public function ajax_flush_cache() {
-        if ( ! \HarborCache\Console::allowed() ) { wp_die( esc_html__( 'You do not have permission to manage HarborCache.', 'harborcache' ), '', array( 'response' => 403 ) ); }
+        if ( ! \HarborCache\Console::allowed() ) { wp_die( esc_html__( 'You do not have permission to manage HarborCache.', 'harborcache-object-cache-with-redis' ), '', array( 'response' => 403 ) ); }
         if ( ! wp_verify_nonce( $_POST['nonce'] ?? '' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-            wp_die( esc_html__( 'Invalid Nonce.', 'harborcache' ) );
+            wp_die( esc_html__( 'Invalid Nonce.', 'harborcache-object-cache-with-redis' ) );
         } else if ( wp_cache_flush() ) {
-            wp_die( esc_html__( 'Object cache flushed.', 'harborcache' ) );
+            wp_die( esc_html__( 'Object cache flushed.', 'harborcache-object-cache-with-redis' ) );
         } else {
-            wp_die( esc_html__( 'Object cache could not be flushed.', 'harborcache' ) );
+            wp_die( esc_html__( 'Object cache could not be flushed.', 'harborcache-object-cache-with-redis' ) );
         }
     }
 
@@ -701,7 +701,7 @@ class Plugin {
 
         $debug = sprintf(
             // translators: %1$d = number of objects. %2$s = human-readable size of cache. %3$s = name of the used client.
-            __( 'Retrieved %1$d objects (%2$s) from Redis using %3$s.', 'harborcache' ),
+            __( 'Retrieved %1$d objects (%2$s) from Redis using %3$s.', 'harborcache-object-cache-with-redis' ),
             $wp_object_cache->cache_hits,
             function_exists( 'size_format' ) ? size_format( $bytes ) : "{$bytes} bytes",
             $wp_object_cache->diagnostics['client']
@@ -812,11 +812,11 @@ class Plugin {
         global $wp_filesystem;
 
         if ( ! $this->is_file_mod_allowed() ) {
-            return new WP_Error( 'disallowed', __( 'File modifications are not allowed.', 'harborcache' ) );
+            return new WP_Error( 'disallowed', __( 'File modifications are not allowed.', 'harborcache-object-cache-with-redis' ) );
         }
 
         if ( ! $this->initialize_filesystem( '', true ) ) {
-            return new WP_Error( 'fs', __( 'Could not initialize filesystem.', 'harborcache' ) );
+            return new WP_Error( 'fs', __( 'Could not initialize filesystem.', 'harborcache-object-cache-with-redis' ) );
         }
 
         $dropin_check = ! defined( 'WP_REDIS_DISABLE_DROPIN_CHECK' ) || ! WP_REDIS_DISABLE_DROPIN_CHECK;
@@ -827,7 +827,7 @@ class Plugin {
             }
 
             if ( ! $wp_filesystem->is_writable( WP_CONTENT_DIR . '/object-cache.php' ) ) {
-                return new WP_Error( 'writable', __( 'Object cache drop-in is not writable.', 'harborcache' ) );
+                return new WP_Error( 'writable', __( 'Object cache drop-in is not writable.', 'harborcache-object-cache-with-redis' ) );
             }
 
             return true;
@@ -837,35 +837,35 @@ class Plugin {
         $testfile = WP_CONTENT_DIR . '/object-cache.tmp';
 
         if ( ! $wp_filesystem->exists( $cachefile ) ) {
-            return new WP_Error( 'exists', __( 'Object cache file doesn’t exist.', 'harborcache' ) );
+            return new WP_Error( 'exists', __( 'Object cache file doesn’t exist.', 'harborcache-object-cache-with-redis' ) );
         }
 
         if ( $wp_filesystem->exists( $testfile ) ) {
             if ( ! $wp_filesystem->delete( $testfile ) ) {
-                return new WP_Error( 'delete', __( 'Test file exists, but couldn’t be deleted.', 'harborcache' ) );
+                return new WP_Error( 'delete', __( 'Test file exists, but couldn’t be deleted.', 'harborcache-object-cache-with-redis' ) );
             }
         }
 
         if ( ! $wp_filesystem->is_writable( WP_CONTENT_DIR ) ) {
-            return new WP_Error( 'writable', __( 'Content directory is not writable.', 'harborcache' ) );
+            return new WP_Error( 'writable', __( 'Content directory is not writable.', 'harborcache-object-cache-with-redis' ) );
         }
 
         if ( ! $wp_filesystem->copy( $cachefile, $testfile, true, FS_CHMOD_FILE ) ) {
-            return new WP_Error( 'copy', __( 'Failed to copy test file.', 'harborcache' ) );
+            return new WP_Error( 'copy', __( 'Failed to copy test file.', 'harborcache-object-cache-with-redis' ) );
         }
 
         if ( ! $wp_filesystem->exists( $testfile ) ) {
-            return new WP_Error( 'exists', __( 'Copied test file doesn’t exist.', 'harborcache' ) );
+            return new WP_Error( 'exists', __( 'Copied test file doesn’t exist.', 'harborcache-object-cache-with-redis' ) );
         }
 
         $meta = get_file_data( $testfile, [ 'Version' => 'Version' ] );
 
         if ( $meta['Version'] !== WP_REDIS_VERSION ) {
-            return new WP_Error( 'version', __( 'Couldn’t verify test file contents.', 'harborcache' ) );
+            return new WP_Error( 'version', __( 'Couldn’t verify test file contents.', 'harborcache-object-cache-with-redis' ) );
         }
 
         if ( ! $wp_filesystem->delete( $testfile ) ) {
-            return new WP_Error( 'delete', __( 'Copied test file couldn’t be deleted.', 'harborcache' ) );
+            return new WP_Error( 'delete', __( 'Copied test file couldn’t be deleted.', 'harborcache-object-cache-with-redis' ) );
         }
 
         return true;
