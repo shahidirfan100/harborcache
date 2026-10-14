@@ -1,12 +1,12 @@
 # HarborCache – Object Cache with Redis
 
-Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current development build: **1.2.0**.
+Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release build: **1.2.0**.
 
 ![HarborCache](media/banner-1544x500.png)
 
 ## Install
 
-Install the [1.2.0 candidate ZIP](dist/harborcache-1.2.0.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
+Install the [1.2.0 ZIP](dist/harborcache-1.2.0.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
 
 Requires WordPress 6.6+, PHP 7.4+ and a separately operated Redis service. Disable the existing object cache manager through its own controls first. Configure a distinct prefix in Settings → HarborCache, save the connection and enable the object cache. HarborCache refuses to overwrite another plugin's drop-in. Verify connection status and Site Health before using it on production.
 
@@ -34,7 +34,7 @@ No license key or account is required. No plugin REST endpoints are included. Op
 
 ## Validation and deployment gates
 
-The 1.2.0 candidate retains the Linux/MySQL acceptance matrix and adds fresh-worker replacement, ignored-group storage, group-flush scaling and a paired workload comparison. Local WordPress/Redis acceptance, package checks and the GitHub Actions results are recorded in [1.2.0 validation](docs/VALIDATION-1.2.0.md), with comparative results in [1.2.0 comparison](docs/COMPARISON-1.2.0.md). Plugin Check, readme validation and CI provide evidence for review; they do not guarantee WordPress.org approval or prove performance on every server.
+The 1.2.0 release retains the Linux/MySQL acceptance matrix and adds fresh-worker replacement, ignored-group storage, group-flush scaling and a paired workload comparison. Local WordPress/Redis acceptance, package checks and the GitHub Actions results are recorded in [1.2.0 validation](docs/VALIDATION-1.2.0.md), with comparative results in [1.2.0 comparison](docs/COMPARISON-1.2.0.md). Plugin Check, readme validation and CI provide evidence for review; they do not guarantee WordPress.org approval or prove performance on every server.
 
 Sustained production load, native Relay topology/failover and production tracing agents remain acceptance gates. HarborCache does not claim complete Object Cache Pro parity, WordPress.org approval or universal performance leadership. See [acceptance gates](docs/ACCEPTANCE.md).
 
