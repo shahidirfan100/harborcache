@@ -58,7 +58,7 @@ All timings are short isolated runner measurements. They exclude WordPress boots
 | Version | Focus | Acceptance gate |
 |---|---|---|
 | 1.2.0 MVP | Correctness, readable dashboard, package checks, repeatable comparisons and bounded group invalidation | Final CI matrix, local regression, extracted-package checks, clean Plugin Check and readme validation |
-| 1.3.0 | Relay option invalidation and adaptive/cluster behavior; real New Relic/OpenTelemetry export; topology connectors | Native extensions and agents, concurrent readers/writers, controlled failover and partition recovery, duplicate-span checks |
+| 1.3.0 | Relay option invalidation and adaptive/cluster behavior; sampled flush/miss attribution; real New Relic/OpenTelemetry export; topology connectors | Native extensions and agents, concurrent readers/writers, controlled failover and partition recovery, duplicate-span checks, measured attribution overhead with values excluded |
 | 1.4.0 | Sustained performance work, measured prefetch tuning and selective stale-query reclamation | Isolated staging profiles for latency, CPU, memory, cache churn and application correctness with optional features on/off |
 | 1.5.0 | Broader application and deployment compatibility | Payment, queues, cron, upgrade/rollback and real site workflow matrix |
 

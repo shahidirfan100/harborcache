@@ -35,7 +35,7 @@ The hot-path change removes a temporary layout array from repeated cache-key che
 | Version | Work | Acceptance gate |
 | --- | --- | --- |
 | 1.2.0 MVP | Fresh-worker and ignored-group correctness, Relay metadata consistency, measured hot-path change, group-invalidation comparison, readable dashboard and refreshed assets | Linux matrix and real Relay default/adaptive acceptance pass; workload comparison shows no material regression; package, Plugin Check and readme validation pass |
-| 1.3.0 | Relay adaptive behavior under shared PHP-FPM; native cluster/Sentinel/replica promotion and failover; production tracing integrations | Real agents/extensions, concurrent writers/readers, controlled promotion/partition and duplicate-span checks |
+| 1.3.0 | Relay adaptive behavior under shared PHP-FPM; native cluster/Sentinel/replica promotion and failover; sampled flush/miss attribution; production tracing integrations | Real agents/extensions, concurrent writers/readers, controlled promotion/partition, duplicate-span checks and measured attribution overhead with values excluded |
 | 1.4.0 | Further hot-path and prefetch tuning; selective stale-query reclamation | Sustained workload CPU/RSS and latency evidence without premature invalidation or cross-site leakage |
 | 1.5.0 | Wider site/application matrix and deployment/update/rollback distribution | Site-specific workflows, package parity and directory review |
 
