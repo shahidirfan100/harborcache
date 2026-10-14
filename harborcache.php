@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: HarborCache
+ * Plugin Name: HarborCache – Object Cache with Redis
  * Description: Fast Redis object caching for WordPress with clear insights, analytics and safe cache controls.
- * Version: 1.1.4
+ * Version: 1.1.5
  * Text Domain: harborcache-object-cache-with-redis
  * Domain Path: /languages
  * Network: true

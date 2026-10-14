@@ -148,7 +148,7 @@ class Plugin {
     public function add_admin_menu_page() {
         add_submenu_page(
             is_multisite() ? 'settings.php' : 'options-general.php',
-            __( 'HarborCache', 'harborcache-object-cache-with-redis' ),
+            __( 'HarborCache – Object Cache with Redis', 'harborcache-object-cache-with-redis' ),
             __( 'HarborCache', 'harborcache-object-cache-with-redis' ),
             $this->manage_redis_capability(),
             'harborcache',

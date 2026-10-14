@@ -2,26 +2,28 @@
 # This file is distributed under the GPL-3.0-only.
 msgid ""
 msgstr ""
-"Project-Id-Version: HarborCache 1.1.4\n"
+"Project-Id-Version: HarborCache – Object Cache with Redis 1.1.5\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/harborcache-object-cache-with-redis\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-14T05:52:21+00:00\n"
+"POT-Creation-Date: 2026-10-14T06:50:27+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: harborcache-object-cache-with-redis\n"
 
 #. Plugin Name of the plugin
 #: harborcache.php
-msgid "HarborCache"
+#: includes/class-console.php:362
+#: includes/class-plugin.php:151
+msgid "HarborCache – Object Cache with Redis"
 msgstr ""
 
 #. Description of the plugin
 #: harborcache.php
-msgid "A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI."
+msgid "Fast Redis object caching for WordPress with clear insights, analytics and safe cache controls."
 msgstr ""
 
 #. Author of the plugin
@@ -390,7 +392,7 @@ msgid "Diagnostics"
 msgstr ""
 
 #: includes/class-console.php:362
-msgid "Redis object cache"
+msgid "Persistent object caching for WordPress"
 msgstr ""
 
 #: includes/class-console.php:362
@@ -827,7 +829,6 @@ msgstr ""
 msgid "Inspect Relay adaptive cache"
 msgstr ""
 
-#: includes/class-plugin.php:151
 #: includes/class-plugin.php:152
 #: includes/class-qm-collector.php:34
 msgid "HarborCache"

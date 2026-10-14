@@ -1,10 +1,10 @@
-=== HarborCache ===
+=== HarborCache – Object Cache with Redis ===
 Contributors: shahidirfan100
 Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -67,8 +67,13 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 
 == Changelog ==
 
+= 1.1.5 =
+* Restore the complete HarborCache – Object Cache with Redis name used by the installed plugin.
+* Show the complete product name in the HarborCache settings page title and describe its purpose below the logo.
+* Refresh the plugin screenshots without a visible version footer.
+
 = 1.1.4 =
-* Standardize the WordPress plugin name as HarborCache across plugin listings and the dashboard.
+* Standardize the WordPress plugin identity as HarborCache across plugin listings and the dashboard.
 * Match the translation domain and installation folder to the WordPress.org submission slug.
 * Preserve the legacy HarborCache installation path for existing drop-ins and MU-loader setups.
 
@@ -128,6 +133,9 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.1.5 =
+Restore the full plugin identity so WordPress recognizes this as an update to HarborCache – Object Cache with Redis. Refresh the owned drop-in after upgrading.
 
 = 1.1.4 =
 Correct plugin identity and WordPress.org translation-domain metadata. Refresh the owned drop-in after upgrading. Redis settings and cache namespace are preserved.
