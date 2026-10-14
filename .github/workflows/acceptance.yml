@@ -90,10 +90,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          run_transport_acceptance() {
+            local label="$1"
+            local logfile="$2"
+            shift 2
+            echo "BEGIN transport probe: $label"
+            timeout --signal=TERM --kill-after=10s 90s php "$@" | tee "$logfile"
+            echo "PASS transport probe: $label"
+          }
           docker exec '${{ job.services.redis.id }}' redis-cli ACL SETUSER hc-ci on '>disposable-ci-only' '~*' '+@all'
           for client in predis phpredis; do
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"username\":\"hc-ci\",\"password\":\"disposable-ci-only\"}"
-            php tests/acceptance.php | tee "evidence/acl-$client.txt"
+            run_transport_acceptance "ACL $client" "evidence/acl-$client.txt" tests/acceptance.php
           done
           mkdir -p /tmp/hc-redis
           chmod 777 /tmp/hc-redis
@@ -101,13 +109,14 @@ jobs:
           chmod 644 /tmp/hc-redis/*.pem
           docker run -d --name hc-tls -p 6380:6380 -v /tmp/hc-redis:/hc redis:${{ matrix.redis }} redis-server --port 0 --tls-port 6380 --tls-cert-file /hc/cert.pem --tls-key-file /hc/key.pem --tls-ca-cert-file /hc/cert.pem --tls-auth-clients no --unixsocket /hc/redis.sock --unixsocketperm 777
           for attempt in $(seq 1 30); do test -S /tmp/hc-redis/redis.sock && break || sleep 1; done
+          if ! test -S /tmp/hc-redis/redis.sock; then docker logs hc-tls; exit 1; fi
           for client in predis phpredis; do
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"cafile\":\"/tmp/hc-redis/cert.pem\",\"verify_peer\":true,\"verify_peer_name\":true}}"
-            php tests/acceptance.php | tee "evidence/tls-$client.txt"
+            run_transport_acceptance "trusted TLS $client" "evidence/tls-$client.txt" tests/acceptance.php
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"verify_peer\":true,\"verify_peer_name\":true}}"
-            php tests/acceptance.php down | tee "evidence/untrusted-tls-$client.txt"
+            run_transport_acceptance "untrusted TLS rejection $client" "evidence/untrusted-tls-$client.txt" tests/acceptance.php down
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"host\":\"/tmp/hc-redis/redis.sock\"}"
-            php tests/acceptance.php | tee "evidence/socket-$client.txt"
+            run_transport_acceptance "Unix socket $client" "evidence/socket-$client.txt" tests/acceptance.php
           done
       - name: WordPress lifecycle and scheduled event execution
         shell: bash
