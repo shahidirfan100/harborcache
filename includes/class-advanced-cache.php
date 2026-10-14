@@ -60,7 +60,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 					global $table_prefix;
 					$identity = hash( 'sha256', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . ':' . $table_prefix . ':' . ( defined( 'AUTH_KEY' ) ? AUTH_KEY : WP_CONTENT_DIR ) );
 					$this->ch_command( array( 'SET', $this->ch_base . ':owner', $identity, 'NX' ) );
-					$owner = $this->ch_command( array( 'GET', $this->ch_base . ':owner' ) );
+					$owner = $this->ch_metadata_get( $this->ch_base . ':owner' );
 					if ( is_string( $owner ) && $owner !== $identity ) { $this->flush_scope( 'all' ); $this->ch_command( array( 'SET', $this->ch_base . ':owner', $identity ) ); \HarborCache\Observer::log( $this->ch_config, 'warning', 'Cache prefix ownership changed; integrity namespace rotated.' ); }
 				}
 			}
@@ -186,14 +186,18 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		}
 	}
 
+	private function ch_metadata_get( $key ) {
+		$read = function () use ( $key ) { return $this->ch_command( array( 'GET', $key ) ); };
+		return 'relay' === $this->ch_config['client'] ? $this->relay_uncached_read( $read ) : $read();
+	}
+
 	private function ch_token( $key ) {
 		if ( isset( $this->ch_tokens[ $key ] ) ) { return $this->ch_tokens[ $key ]; }
 		try {
-		$read = function () use ( $key ) { return $this->ch_command( array( 'GET', $key ) ); };
-		$value = 'relay' === $this->ch_config['client'] ? $this->relay_uncached_read( $read ) : $read();
+		$value = $this->ch_metadata_get( $key );
 		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) {
 			$value = bin2hex( random_bytes( 12 ) );
-			if ( null === $this->ch_command( array( 'SET', $key, $value, 'NX' ) ) ) { $value = 'relay' === $this->ch_config['client'] ? $this->relay_uncached_read( $read ) : $read(); }
+			if ( null === $this->ch_command( array( 'SET', $key, $value, 'NX' ) ) ) { $value = $this->ch_metadata_get( $key ); }
 			if ( ! is_string( $value ) ) { throw new RuntimeException( 'Cache namespace initialization failed.' ); }
 		}
 		return $this->ch_tokens[ $key ] = $value;

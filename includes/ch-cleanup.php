@@ -54,7 +54,7 @@ trait HarborCache_Cleanup {
 		foreach ( $job['pending'] as $keys ) { if ( ! is_array( $keys ) ) { return null; } }
 		foreach ( $job['cursors'] as $cursor ) { if ( ! is_string( $cursor ) || ! ctype_digit( $cursor ) ) { return null; } }
 		// A cleanup job may delete only a generation whose token has already changed.
-		$current = $this->ch_command( array( 'GET', $guard ) );
+		$current = $this->ch_metadata_get( $guard );
 		if ( ! is_string( $current ) || ! preg_match( '/^[a-f0-9]{24}$/D', $current ) || $current === $job['old_value'] || time() - $job['created'] > $this->ch_config['maxttl'] * 2 ) { return null; }
 		$budget = $this->ch_config['gc_batch_size'];
 		$nodes = $this->cleanup_nodes();
