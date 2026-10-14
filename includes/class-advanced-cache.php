@@ -189,10 +189,11 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private function ch_token( $key ) {
 		if ( isset( $this->ch_tokens[ $key ] ) ) { return $this->ch_tokens[ $key ]; }
 		try {
-		$value = $this->ch_command( array( 'GET', $key ) );
+		$read = function () use ( $key ) { return $this->ch_command( array( 'GET', $key ) ); };
+		$value = 'relay' === $this->ch_config['client'] ? $this->relay_uncached_read( $read ) : $read();
 		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) {
 			$value = bin2hex( random_bytes( 12 ) );
-			if ( null === $this->ch_command( array( 'SET', $key, $value, 'NX' ) ) ) { $value = $this->ch_command( array( 'GET', $key ) ); }
+			if ( null === $this->ch_command( array( 'SET', $key, $value, 'NX' ) ) ) { $value = 'relay' === $this->ch_config['client'] ? $this->relay_uncached_read( $read ) : $read(); }
 			if ( ! is_string( $value ) ) { throw new RuntimeException( 'Cache namespace initialization failed.' ); }
 		}
 		return $this->ch_tokens[ $key ] = $value;
