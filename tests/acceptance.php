@@ -55,7 +55,19 @@ $left->blog_prefix = 999999;
 $right->blog_prefix = 999999;
 $a = $left->get( 'alloptions', 'options', true );
 $b = $right->get( 'alloptions', 'options', true );
-gate( 'Option readers see the isolated seed', array( 'a' => 1, 'b' => 2 ) === $a && array( 'a' => 1, 'b' => 2 ) === $b );
+$readers_see_seed = array( 'a' => 1, 'b' => 2 ) === $a && array( 'a' => 1, 'b' => 2 ) === $b;
+if ( ! $readers_see_seed && 'relay' === $config['client'] ) {
+	$option_key = $left->build_key( 'alloptions', 'options' );
+	$probe = new Redis();
+	$probe->connect( '127.0.0.1', (int) ( $config['port'] ?? 6379 ) );
+	$manifest = $probe->get( $option_key );
+	$names = is_string( $manifest ) ? json_decode( $manifest, true ) : array();
+	$raw_values = array();
+	foreach ( (array) $names as $name => $unused ) { $raw_values[ $name ] = $probe->get( $option_key . ':o:' . hash( 'sha256', (string) $name ) ); }
+	echo json_encode( array( 'option_keys' => array( $c->build_key( 'alloptions', 'options' ), $left->build_key( 'alloptions', 'options' ), $right->build_key( 'alloptions', 'options' ) ), 'left' => $a, 'right' => $b, 'raw_manifest' => $manifest, 'raw_values' => $raw_values ) ) . "\n";
+	$probe->close();
+}
+gate( 'Option readers see the isolated seed', $readers_see_seed );
 $a['a'] = 3;
 $b['b'] = 4;
 gate( 'First option patch writes', $left->set( 'alloptions', $a, 'options', 120 ) );
