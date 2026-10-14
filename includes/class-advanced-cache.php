@@ -206,8 +206,18 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		try {
 		if ( 'harborcache' === $group && 'metrics' === $key ) { return $this->ch_base . ( $this->ch_config['analytics']['persist'] ? '' : ':' . $this->ch_root ) . ':analytics:metrics'; }
 		$group = $group ?: 'default';
-		$state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] );
-		if ( $state !== $this->ch_layout_state ) { $this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0; $this->ch_layout_state = $state; }
+		if (
+			null === $this->ch_layout_state ||
+			$this->ch_layout_state[0] !== $this->ch_config['serializer'] ||
+			$this->ch_layout_state[1] !== $this->ch_config['compression'] ||
+			$this->ch_layout_state[2] !== $this->ch_config['split_alloptions'] ||
+			$this->ch_layout_state[3] !== $this->ch_config['client']
+		) {
+			$this->ch_derived = array();
+			$this->ch_prefixes = array();
+			$this->ch_derived_count = 0;
+			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] );
+		}
 		$layout = $this->ch_config['split_alloptions'] && 'relay' === $this->ch_config['client'] ? ':relay-options-v1' : '';
 		$context = $this->ch_scope( $group ) . ':' . $group;
 		$cacheable = is_string( $key ) || is_int( $key );
@@ -460,7 +470,15 @@ LUA;
 			$san_key = $this->sanitize_key_part( $key ); $san_group = $this->sanitize_key_part( $group ?: 'default' );
 			$context = $this->ch_scope( $san_group ) . ':' . $san_group;
 			$derived = $this->ch_derived[ $context ][ $san_key ] ?? null;
-			if ( null !== $derived && $this->ch_layout_state === array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] ) && array_key_exists( $derived, $this->cache ) ) {
+			if (
+				null !== $derived &&
+				isset( $this->ch_layout_state[0] ) &&
+				$this->ch_layout_state[0] === $this->ch_config['serializer'] &&
+				$this->ch_layout_state[1] === $this->ch_config['compression'] &&
+				$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
+				$this->ch_layout_state[3] === $this->ch_config['client'] &&
+				array_key_exists( $derived, $this->cache )
+			) {
 				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $derived ] ) ? clone $this->cache[ $derived ] : $this->cache[ $derived ];
 			}
 		}

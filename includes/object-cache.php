@@ -2,7 +2,7 @@
 /**
  * Drop-In Name: HarborCache Drop-In
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.1.5
+ * Version: 1.2.0
  * Author: Shahid Irfan
  * Author URI: https://profiles.wordpress.org/shahidirfan100/
  * License: GPL-3.0-only

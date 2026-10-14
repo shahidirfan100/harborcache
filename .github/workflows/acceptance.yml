@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, 'codex/**']
-    paths: ['**.php', 'tests/**', '.github/workflows/acceptance.yml']
+    paths: ['**.php', 'assets/**', 'tests/**', '.github/workflows/acceptance.yml']
 permissions:
   contents: read
 jobs:
@@ -175,9 +175,9 @@ jobs:
           mkdir -p evidence /tmp/hc-baseline /tmp/hc-baseline-download
           wp plugin deactivate harborcache --path="$WP_ROOT"
           wp plugin install redis-cache --version=3.0.0 --path="$WP_ROOT"
-          gh release download v1.1.2 --repo "$GITHUB_REPOSITORY" --pattern 'harborcache-1.1.2.zip' --dir /tmp/hc-baseline-download
-          cp /tmp/hc-baseline-download/harborcache-1.1.2.zip /tmp/hc-baseline.zip
-          echo 'f9f578f8504e7ad7cb3833024e99504666932e57a3f7d53a63ab4add39957adb  /tmp/hc-baseline.zip' | sha256sum -c -
+          gh release download v1.1.5 --repo "$GITHUB_REPOSITORY" --pattern 'harborcache-1.1.5.zip' --dir /tmp/hc-baseline-download
+          cp /tmp/hc-baseline-download/harborcache-1.1.5.zip /tmp/hc-baseline.zip
+          echo '6010c441104746cfeeff27399c850732ca8b800c94ee3ded33ac659e91e2f741  /tmp/hc-baseline.zip' | sha256sum -c -
           unzip -q /tmp/hc-baseline.zip -d /tmp/hc-baseline
           for round in $(seq 0 6); do
             for offset in 0 1 2; do
@@ -185,12 +185,21 @@ jobs:
               engine=${engines[$(((round+offset)%3))]}
               case "$engine" in
                 free) source="$WP_ROOT/wp-content/plugins/redis-cache" ;;
-                baseline) source=/tmp/hc-baseline/harborcache ;;
+                baseline) source=/tmp/hc-baseline/harborcache-object-cache-with-redis ;;
                 harbor) source="$GITHUB_WORKSPACE" ;;
               esac
               cp "$source/includes/object-cache.php" "$WP_ROOT/wp-content/object-cache.php"
               php tests/benchmark.php "$engine" "$source" "$round" 0 | tee -a evidence/benchmark.jsonl
             done
+          done
+          for engine in free baseline harbor; do
+            case "$engine" in
+              free) source="$WP_ROOT/wp-content/plugins/redis-cache" ;;
+              baseline) source=/tmp/hc-baseline/harborcache-object-cache-with-redis ;;
+              harbor) source="$GITHUB_WORKSPACE" ;;
+            esac
+            cp "$source/includes/object-cache.php" "$WP_ROOT/wp-content/object-cache.php"
+            php tests/benchmark-flush.php "$engine" "$source" 5 | tee -a evidence/group-flush.jsonl
           done
           cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
           for sampling in 10 100; do php tests/benchmark.php harbor "$GITHUB_WORKSPACE" 100 "$sampling" | tee -a evidence/benchmark-sampling.jsonl; done

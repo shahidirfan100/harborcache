@@ -1,34 +1,34 @@
 .ch-chart { color: #182c32; margin: 16px 0 20px; min-width: 0; }
 .ch-chart-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .ch-chart-controls { display: flex; gap: 2px; flex-wrap: wrap; }
-.ch-chart-controls button { font: inherit; font-size: 15px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #0b615e; min-height: 44px; padding: 8px 10px; cursor: pointer; }
+.ch-chart-controls button { font: inherit; font-size: 16px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #0b615e; min-height: 44px; padding: 8px 10px; cursor: pointer; }
 .ch-chart-controls button[aria-pressed=true] { border-bottom-color: #0b615e; color: #182c32; font-weight: 600; }
-.ch-chart-toolbar a { color: #0b615e; font-size: 15px; }
+.ch-chart-toolbar a { color: #0b615e; font-size: 16px; }
 .ch-chart :is(a, button, summary):focus-visible { outline: 3px solid #135ead; outline-offset: 2px; }
 .ch-chart-panel[hidden] { display: none; }
 .ch-chart svg { display: block; width: 100%; height: 250px; margin: 12px 0; }
-.ch-chart svg text { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #485e65; }
+.ch-chart svg text { font: 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #485e65; }
 .ch-chart-grid { stroke: #dbe4e2; stroke-width: 1; }
 .ch-chart-area { fill: #0b615e; fill-opacity: .12; }
 .ch-chart-line { fill: none; stroke: #0b615e; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .ch-chart-point { fill: #0b615e; fill-opacity: .01; }
 .ch-chart-point:hover, .ch-chart svg[data-single=true] .ch-chart-point { fill-opacity: 1; stroke: #fff; stroke-width: 2; }
 .ch-chart-summary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; border-top: 1px solid #dbe4e2; padding-top: 12px; margin: 0; }
-.ch-chart-summary dt { color: #485e65; font-size: 14px; line-height: 1.5; }
-.ch-chart-summary dd { margin: 4px 0 0; font-weight: 600; font-size: 18px; line-height: 1.5; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.ch-chart-caption { font-size: 14px; line-height: 1.6; color: #485e65; }
+.ch-chart-summary dt { color: #485e65; font-size: 15px; line-height: 1.5; }
+.ch-chart-summary dd { margin: 4px 0 0; font-weight: 600; font-size: 20px; line-height: 1.5; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ch-chart-caption { font-size: 15px; line-height: 1.6; color: #485e65; }
 .ch-request-details { margin: 16px 0; }
-.ch-request-details summary { cursor: pointer; padding: 10px 0; min-height: 24px; font-size: 15px; line-height: 24px; }
+.ch-request-details summary { cursor: pointer; padding: 10px 0; min-height: 24px; font-size: 16px; line-height: 26px; }
 .ch-request-details table { margin-top: 8px; }
 .ch-request-details summary:focus-visible { outline: 3px solid #135ead; outline-offset: 2px; }
 .ch-connection-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .ch-connection-controls .ch-action { margin: 0; flex: none; }
-.ch-connection-controls .ch-status, .ch-connection-controls > strong, .ch-connection-controls .button { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 144px; min-height: 44px; padding: 10px 12px; font-size: 14px; line-height: 22px; font-weight: 600; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.ch-connection-controls .ch-status, .ch-connection-controls > strong, .ch-connection-controls .button { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 144px; min-height: 44px; padding: 10px 12px; font-size: 15px; line-height: 22px; font-weight: 600; white-space: normal; overflow-wrap: anywhere; text-align: center; }
 .ch-connection-controls .button { color: #0b615e; border-color: #0b615e; }
 .ch-connection-controls > strong { border: 1px solid #4b8375; background: #e9f5f0; color: #064e42; }
 .ch-connection-controls > strong.ch-disconnected { border-color: #806325; background: #fff5da; color: #624810; }
 .ch-connection-controls :is(button, a):focus-visible { outline: 3px solid #135ead; outline-offset: 3px; }
-#harborcache_status .inside { font-size: 15px; line-height: 1.6; }
-#harborcache_status .inside p, #harborcache_status .description, #harborcache_status table, #harborcache_status th, #harborcache_status td { font-size: 14px; line-height: 1.6; }
+#harborcache_status .inside { font-size: 16px; line-height: 1.6; }
+#harborcache_status .inside p, #harborcache_status .description, #harborcache_status table, #harborcache_status th, #harborcache_status td { font-size: 15px; line-height: 1.6; }
 #harborcache_status .ch-chart-controls button { font-size: 16px; }
 #harborcache_status .ch-table-scroll { overflow-x: auto; }

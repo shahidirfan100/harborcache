@@ -1,6 +1,6 @@
-# HarborCache 1.1.3 feature ledger
+# HarborCache feature ledger (1.2.0 candidate)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This describes the stable release implementation, not certification of complete Pro parity.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This ledger describes implemented behavior and the evidence available for the 1.2.0 candidate; it does not certify complete Pro parity.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -25,6 +25,10 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. 
 | Administration | Six responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
 | Shared servers | Shared mode hides memory/key totals which would include other applications; dedicated mode sums primary memory and selected-database key counts. Server command statistics are explicitly labeled. |
 | Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging and recoverable replacement, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
+
+## 1.2.0 candidate additions
+
+The 1.2.0 candidate adds fresh-worker coverage for `wp_cache_replace()`, confirms wildcard non-persistent groups never reach Redis, and checks that runtime cache entries are discarded when the serialization/layout settings change. The hot key-layout path avoids allocating a temporary array on every lookup while preserving the same key format. Dashboard figures are locale-formatted and the console, chart, settings and widget typography is larger; connection actions retain equal 44px control dimensions. See [the validation report](VALIDATION-1.2.0.md) and [paired comparison](COMPARISON-1.2.0.md) for the actual test results and benchmark limits.
 
 ## Configuration coverage
 

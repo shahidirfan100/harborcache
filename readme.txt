@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.5
+Stable tag: 1.2.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,12 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.0 =
+* Reduce temporary allocations in the repeated cache-key layout check without changing key or namespace semantics.
+* Format dashboard counters for quick reading and increase dashboard, chart, settings and widget text sizes.
+* Add fresh-worker replacement, ignored-group storage and group-flush scaling coverage.
+* Compare group invalidation and cache workloads against Redis Object Cache 3.0.0 and HarborCache 1.1.5 in Linux CI.
 
 = 1.1.5 =
 * Restore the complete HarborCache – Object Cache with Redis name used by the installed plugin.
@@ -133,6 +139,9 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+Performance and dashboard readability improvements with expanded correctness and Linux comparison coverage. Existing connection settings and key namespace are preserved.
 
 = 1.1.5 =
 Restore the full plugin identity so WordPress recognizes this as an update to HarborCache – Object Cache with Redis. Refresh the owned drop-in after upgrading.
