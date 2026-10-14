@@ -46,7 +46,25 @@ $c->set('foreign-proof','keep','ci-kept',60);$c->set('invalidate','old','ci-inva
 $c->ch_command(array('SET','harborcache-ci-foreign','keep','EX',60));gate('Installation invalidation',$c->flush());gate('Foreign key survives','keep'===$c->ch_command(array('GET','harborcache-ci-foreign')));
 $c->add_non_persistent_groups(array('private-*'));$c->set('x',1,'private-user');$c->flush_runtime();$ignored_key=$c->build_key('x','private-user');gate('Wildcard exclusions bypass Redis storage',null===$c->ch_command(array('GET',$ignored_key)));gate('Wildcard exclusions remain unavailable after runtime flush',false===$c->get('x','private-user',true));
 $c->set('ttl',1,'ci-ttl',1);sleep(2);gate('Expiration',false===$c->get('ttl','ci-ttl',true));
-$seed_write=$c->set('alloptions',array('a'=>1,'b'=>2),'options',120);$left=new HarborCache_Advanced_Cache();$right=new HarborCache_Advanced_Cache();$a=$left->get('alloptions','options',true);$b=$right->get('alloptions','options',true);$left_count=is_array($a)?count($a):null;$right_count=is_array($b)?count($b):null;$a['a']=3;$b['b']=4;$left_write=$left->set('alloptions',$a,'options',120);$right_write=$right->set('alloptions',$b,'options',120);$actual=(new HarborCache_Advanced_Cache())->get('alloptions','options',true);if(array('a'=>3,'b'=>4)!==$actual){$key_method=new ReflectionMethod($c,'build_key');$key_method->setAccessible(true);$manifest_key=$key_method->invoke($c,'alloptions','options');$probe=new Redis();$probe->connect(getenv('HC_REDIS_HOST')?:'127.0.0.1',(int)(getenv('HC_REDIS_PORT')?:6379));$manifest=$probe->get($manifest_key);$names=is_string($manifest)?json_decode($manifest,true):array();$raw=array();foreach(array_keys(is_array($names)?$names:array()) as $name){$raw[$name]=$probe->get($manifest_key.':o:'.hash('sha256',(string)$name));}echo json_encode(array('option_result'=>$actual,'split_alloptions'=>$c->ch_config['split_alloptions'],'writes'=>array($seed_write,$left_write,$right_write),'reader_counts'=>array($left_count,$right_count),'redis_manifest'=>$manifest,'redis_fields'=>$raw))."\n";$probe->close();}gate('Independent option patches survive',array('a'=>3,'b'=>4)===$actual);
+$original_blog_prefix = $c->blog_prefix;
+$c->blog_prefix = 999999;
+gate( 'Option cache seed writes', $c->set( 'alloptions', array( 'a' => 1, 'b' => 2 ), 'options', 120 ) );
+$left = new HarborCache_Advanced_Cache();
+$right = new HarborCache_Advanced_Cache();
+$left->blog_prefix = 999999;
+$right->blog_prefix = 999999;
+$a = $left->get( 'alloptions', 'options', true );
+$b = $right->get( 'alloptions', 'options', true );
+gate( 'Option readers see the isolated seed', array( 'a' => 1, 'b' => 2 ) === $a && array( 'a' => 1, 'b' => 2 ) === $b );
+$a['a'] = 3;
+$b['b'] = 4;
+gate( 'First option patch writes', $left->set( 'alloptions', $a, 'options', 120 ) );
+gate( 'Second option patch writes', $right->set( 'alloptions', $b, 'options', 120 ) );
+$final_reader = new HarborCache_Advanced_Cache();
+$final_reader->blog_prefix = 999999;
+$actual = $final_reader->get( 'alloptions', 'options', true );
+$c->blog_prefix = $original_blog_prefix;
+gate( 'Independent option patches survive', array( 'a' => 3, 'b' => 4 ) === $actual );
 $c->ch_config['async_flush']=true;for($i=0;$i<20;++$i){$c->set($i,'old','ci-cleanup',120);}$c->flush_group('ci-cleanup');$c->set('fresh','keep','ci-cleanup',120);for($i=0;$i<100;++$i){$state=$c->cleanup_status();if(!$state['pending']&&!$state['inflight']){break;}$c->cleanup(5);}gate('Cleanup drains bounded queue',!$state['pending']&&!$state['inflight']);gate('Cleanup preserves new generation','keep'===$c->get('fresh','ci-cleanup',true));
 if(getenv('HC_CONCURRENCY')==='1'){
  $c->set('counter',0,'ci-concurrent',120);$children=array();
