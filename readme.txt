@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,13 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.1 =
+* Scope chart styles and scripts to HarborCache’s admin page and visible dashboard widget.
+* Sanitize request paths used to build prefetch identifiers.
+* Remove unused legacy AJAX handlers and their unsanitized nonce path.
+* Namespace the metrics cleanup cron event and migrate the earlier HarborCache event.
+* Keep the cache API, Redis key format and saved connection settings compatible.
 
 = 1.2.0 =
 * Reduce temporary allocations in the repeated cache-key layout check without changing key or namespace semantics.
@@ -139,6 +146,9 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+Fix WordPress.org review findings around request sanitization and dashboard style isolation. Existing connection settings and the cache namespace are preserved.
 
 = 1.2.0 =
 Performance and dashboard readability improvements with expanded correctness and Linux comparison coverage. Existing connection settings and key namespace are preserved.

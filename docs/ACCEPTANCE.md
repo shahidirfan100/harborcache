@@ -22,6 +22,12 @@ The approved MVP preserves the serialized cache-key format and WordPress cache A
 
 The hot-path change removes a temporary layout array from repeated cache-key checks. Keep it only if the benchmark does not show a repeatable regression. Dashboard changes make counts locale-formatted and raise type sizes across the overview, chart, settings form and dashboard widget while retaining the established HarborCache colors and equal connection-control dimensions. The UI release gate includes keyboard focus, 200% zoom, narrow layout, legible labels and version-free screenshots.
 
+## 1.2.1 WordPress.org review remediation
+
+The reviewer report for the 1.1.5 submission identified a directly supplied POST nonce, raw request paths in a prefetch hash, unprefixed Redis Cache AJAX actions, and dashboard chart styling that affected controls outside HarborCache. The 1.2.1 release removes the unused legacy AJAX routes, sanitizes the request path before hashing, scopes chart styles and scripts to the HarborCache page/widget, loads dashboard assets only when the widget is visible, and limits drop-in recovery notices to HarborCache settings screens. It also gives the metrics cron event a HarborCache-specific name and removes the older scheduled event on upgrade.
+
+Acceptance requires a clean activation with WP_DEBUG enabled, no legacy AJAX actions registered by HarborCache, no global recovery notice on unrelated admin screens, no dashboard asset enqueue when the widget is hidden, no CSS selector outside the HarborCache roots, passing full acceptance, exact-slug Plugin Check, official readme validation and a rebuilt package whose drop-in reports version 1.2.1. The official readme form was not verified in this environment; see [validation evidence](VALIDATION-1.2.1.md). Passing the available checks supports resubmission but cannot guarantee the review team's decision.
+
 ## Remaining gates, in order
 
 1. Measure sustained normal traffic on an isolated copy of the actual site: PHP-FPM CPU/RSS, Redis CPU/RSS, tail latency, cache churn, large options and analytics on/off. Short runner tests cannot establish long-running memory stability or capacity.
@@ -35,6 +41,7 @@ The hot-path change removes a temporary layout array from repeated cache-key che
 | Version | Work | Acceptance gate |
 | --- | --- | --- |
 | 1.2.0 MVP | Fresh-worker and ignored-group correctness, Relay metadata consistency, measured hot-path change, group-invalidation comparison, readable dashboard and refreshed assets | Linux matrix and real Relay default/adaptive acceptance pass; workload comparison shows no material regression; package, Plugin Check and readme validation pass |
+| 1.2.1 | Resolve the WordPress.org pre-review findings around sanitization, legacy hooks, cron naming and dashboard asset scope | Debug activation, isolated dashboard assets, full local acceptance, exact-slug Plugin Check and readme/package validation pass |
 | 1.3.0 | Relay adaptive behavior under shared PHP-FPM; native cluster/Sentinel/replica promotion and failover; sampled flush/miss attribution; production tracing integrations | Real agents/extensions, concurrent writers/readers, controlled promotion/partition, duplicate-span checks and measured attribution overhead with values excluded |
 | 1.4.0 | Further hot-path and prefetch tuning; selective stale-query reclamation | Sustained workload CPU/RSS and latency evidence without premature invalidation or cross-site leakage |
 | 1.5.0 | Wider site/application matrix and deployment/update/rollback distribution | Site-specific workflows, package parity and directory review |

@@ -8,7 +8,15 @@ define('HARBORCACHE_CONFIG',$config);
 require rtrim(getenv('WP_ROOT'),'/').'/wp-load.php';
 $c=$GLOBALS['wp_object_cache'];$checks=array();
 function gate($name,$pass){global $checks;$checks[]=array('test'=>$name,'pass'=>(bool)$pass);echo ($pass?'PASS ':'FAIL ').$name."\n";if(!$pass){throw new RuntimeException($name);}}
+function harborcache_test_css_scoped($path,$roots){
+ $css=file_get_contents($path);if(false===$css){return false;}$css=preg_replace('~/\*.*?\*/~s','',$css);preg_match_all('/(?m)^[ \t]*([^@{}\r\n][^{}\r\n]*)\s*\{/',$css,$matches);
+ foreach($matches[1] as $rule){$start=0;$depth=0;$quote='';$length=strlen($rule);for($i=0;$i<$length;$i++){$char=$rule[$i];if(''!==$quote){if($char===$quote&&($i===0||'\\'!==$rule[$i-1])){$quote='';}continue;}if('"'===$char||"'"===$char){$quote=$char;continue;}if('('===$char||'['===$char){++$depth;continue;}if(')'===$char||']'===$char){--$depth;continue;}if(','!==$char||0!==$depth){continue;}$selector=trim(substr($rule,$start,$i-$start));$start=$i+1;$scoped=false;foreach($roots as $root){if(0===strpos($selector,$root)){$scoped=true;break;}}if(!$scoped){return false;}}$selector=trim(substr($rule,$start));$scoped=false;foreach($roots as $root){if(0===strpos($selector,$root)){$scoped=true;break;}}if(!$scoped){return false;}}
+ return true;
+}
 $mode=$argv[1]??'main';
+gate('HarborCache uses only prefixed admin and metrics actions',false!==has_action('admin_post_harborcache_action')&&false===has_action('wp_ajax_roc_flush_cache')&&false===has_action('wp_ajax_roc_dismiss_notice')&&false===has_action('rediscache_discard_metrics')&&(!\HarborCache\Core\Metrics::is_enabled()||false!==has_action('harborcache_metrics_discard')));
+gate('Drop-in recovery notices stay on HarborCache settings screens',!\HarborCache\Console::is_console_screen('index.php')&&!\HarborCache\Console::is_console_screen('plugins.php')&&\HarborCache\Console::is_console_screen('settings_page_harborcache')&&\HarborCache\Console::is_console_screen('settings_page_harborcache-network'));
+gate('HarborCache dashboard styles stay inside its UI',harborcache_test_css_scoped(dirname(__DIR__).'/assets/css/console.css',array('#harborcache'))&&harborcache_test_css_scoped(dirname(__DIR__).'/assets/css/chart.css',array(':where(#harborcache, #harborcache_status)','#harborcache_status')));
 if($mode==='worker'){
  for($i=0;$i<50;++$i){if(false===$c->incr('counter',1,'ci-concurrent')){throw new RuntimeException('Counter worker');}}
  exit;

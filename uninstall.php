@@ -15,7 +15,9 @@ if ( WP_Filesystem() ) {
  $harborcache_config = WP_CONTENT_DIR . '/harborcache-config.php';
  if ( ! is_link( $harborcache_config ) && $harborcache_fs->is_readable( $harborcache_config ) && false !== strpos( $harborcache_fs->get_contents( $harborcache_config ), '// HarborCache configuration.' ) ) { $harborcache_fs->delete( $harborcache_config ); }
 }
-wp_clear_scheduled_hook( 'rediscache_discard_metrics' );
+wp_clear_scheduled_hook( 'harborcache_metrics_discard' );
+wp_clear_scheduled_hook( 'rediscache_discard_metrics' ); // Remove the event name used by earlier HarborCache builds.
+delete_option( 'harborcache_metrics_cron_migrated' );
 
 wp_clear_scheduled_hook( 'harborcache_cleanup' );
 

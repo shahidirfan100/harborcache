@@ -2,7 +2,7 @@
 /**
  * Drop-In Name: HarborCache Drop-In
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Shahid Irfan
  * Author URI: https://profiles.wordpress.org/shahidirfan100/
  * License: GPL-3.0-only
@@ -261,9 +261,16 @@ function wp_cache_init() {
         define( 'WP_REDIS_PREFIX', WP_CACHE_KEY_SALT );
     }
 
-    // Set unique prefix for sites hosted on Cloudways
-    if ( ! defined( 'WP_REDIS_PREFIX' ) && isset( $_SERVER['cw_allowed_ip'] ) )  {
-        define( 'WP_REDIS_PREFIX', getenv( 'HTTP_X_APP_USER' ) );
+    // Set a unique prefix for sites hosted on Cloudways, after validating both server-provided values.
+    $harborcache_cloudways_ip = isset( $_SERVER['cw_allowed_ip'] ) && is_scalar( $_SERVER['cw_allowed_ip'] )
+        ? sanitize_text_field( wp_unslash( (string) $_SERVER['cw_allowed_ip'] ) )
+        : '';
+    $harborcache_cloudways_user = getenv( 'HTTP_X_APP_USER' );
+    $harborcache_cloudways_user = is_string( $harborcache_cloudways_user )
+        ? sanitize_text_field( $harborcache_cloudways_user )
+        : '';
+    if ( ! defined( 'WP_REDIS_PREFIX' ) && '' !== $harborcache_cloudways_ip && '' !== $harborcache_cloudways_user ) {
+        define( 'WP_REDIS_PREFIX', $harborcache_cloudways_user );
     }
 
     if ( ! ( $wp_object_cache instanceof WP_Object_Cache ) ) {

@@ -90,7 +90,6 @@ class Plugin {
     public function add_actions_and_filters() {
         add_action( 'deactivate_plugin', [ $this, 'on_deactivation' ] );
         add_action( 'admin_init', [ $this, 'maybe_update_dropin' ] );
-        add_action( 'admin_init', [ $this, 'maybe_redirect' ] );
         add_action( 'init', [ $this, 'init' ] );
 
         add_action( is_multisite() ? 'network_admin_menu' : 'admin_menu', [ $this, 'add_admin_menu_page' ] );
@@ -109,8 +108,6 @@ class Plugin {
         add_action( 'wp_dashboard_setup', [ $this, 'setup_dashboard_widget' ] );
         add_action( 'wp_network_dashboard_setup', [ $this, 'setup_dashboard_widget' ] );
 
-        add_action( 'wp_ajax_roc_dismiss_notice', [ $this, 'ajax_dismiss_notice' ] );
-        add_action( 'wp_ajax_roc_flush_cache', [ $this, 'ajax_flush_cache' ] );
 
         add_filter( 'gettext_redis-cache', [ $this, 'get_text' ], 10, 2 );
 
@@ -135,8 +132,12 @@ class Plugin {
      * @return void
      */
     public function init() {
-        if ( is_admin() && ! wp_next_scheduled( 'rediscache_discard_metrics' ) ) {
-            wp_schedule_event( time(), 'hourly', 'rediscache_discard_metrics' );
+        if ( ! Metrics::is_enabled() ) {
+            if ( wp_next_scheduled( 'harborcache_metrics_discard' ) ) {
+                wp_clear_scheduled_hook( 'harborcache_metrics_discard' );
+            }
+        } elseif ( is_admin() && ! wp_next_scheduled( 'harborcache_metrics_discard' ) ) {
+            wp_schedule_event( time(), 'hourly', 'harborcache_metrics_discard' );
         }
     }
 
@@ -581,42 +582,6 @@ class Plugin {
     }
 
     /**
-     * Dismisses the admin notice for the current user
-     *
-     * @return void
-     */
-    public function ajax_dismiss_notice() {
-        if ( isset( $_POST['notice'] ) ) {
-            check_ajax_referer( 'roc_dismiss_notice' );
-
-            $notice = sprintf(
-                'roc_dismissed_%s',
-                sanitize_key( $_POST['notice'] )
-            );
-
-            update_user_meta( get_current_user_id(), $notice, '1' );
-        }
-
-        wp_die();
-    }
-
-    /**
-     * Flushes object cache
-     *
-     * @return void
-     */
-    public function ajax_flush_cache() {
-        if ( ! \HarborCache\Console::allowed() ) { wp_die( esc_html__( 'You do not have permission to manage HarborCache.', 'harborcache-object-cache-with-redis' ), '', array( 'response' => 403 ) ); }
-        if ( ! wp_verify_nonce( $_POST['nonce'] ?? '' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-            wp_die( esc_html__( 'Invalid Nonce.', 'harborcache-object-cache-with-redis' ) );
-        } else if ( wp_cache_flush() ) {
-            wp_die( esc_html__( 'Object cache flushed.', 'harborcache-object-cache-with-redis' ) );
-        } else {
-            wp_die( esc_html__( 'Object cache could not be flushed.', 'harborcache-object-cache-with-redis' ) );
-        }
-    }
-
-    /**
      * Displays a redis cache pro admin notice
      *
      * @return void
@@ -891,20 +856,6 @@ class Plugin {
      *
      * @return void
      */
-    public function maybe_redirect() {
-        if ( ! get_transient( '_rediscache_activation_redirect' ) ) {
-            return;
-        }
-
-        if ( ! $this->current_user_can_manage_redis() ) {
-            return;
-        }
-
-        delete_transient( '_rediscache_activation_redirect' );
-
-        wp_safe_redirect( network_admin_url( $this->page ) );
-    }
-
     /**
      * Updates the `object-cache.php` drop-in
      *
@@ -940,10 +891,6 @@ class Plugin {
      *
      * @return void
      */
-    public static function on_activation() {
-        set_transient( '_rediscache_activation_redirect', 1, 30 );
-    }
-
     /**
      * Plugin deactivation hook
      *
@@ -1021,10 +968,17 @@ class Plugin {
      * @return void
      */
     public function litespeed_disable_objectcache() {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        if ( isset( $_POST['LSCWP_CTRL'], $_POST['LSCWP_NONCE'], $_POST['object'] ) ) {
+        /* phpcs:disable WordPress.Security.NonceVerification.Missing -- Preserve the upstream LiteSpeed integration: this does not run a HarborCache action or persist settings; it only prevents LiteSpeed from replacing the active object-cache drop-in. */
+        if ( isset( $_POST['LSCWP_CTRL'], $_POST['LSCWP_NONCE'], $_POST['object'] )
+            && is_scalar( $_POST['LSCWP_CTRL'] )
+            && is_scalar( $_POST['LSCWP_NONCE'] )
+            && is_scalar( $_POST['object'] )
+            && '' !== sanitize_text_field( wp_unslash( (string) $_POST['LSCWP_CTRL'] ) )
+            && '' !== sanitize_text_field( wp_unslash( (string) $_POST['LSCWP_NONCE'] ) )
+            && '' !== sanitize_text_field( wp_unslash( (string) $_POST['object'] ) ) ) {
             $_POST['object'] = '0';
         }
+        /* phpcs:enable WordPress.Security.NonceVerification.Missing */
     }
 
     /**

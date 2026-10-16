@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.0)
+# HarborCache feature ledger (1.2.1)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This ledger describes implemented behavior and the evidence available for the 1.2.0 release; it does not certify complete Pro parity.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This ledger describes implemented behavior and evidence for the 1.2.1 release; it does not certify complete Pro parity.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -29,6 +29,10 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. 
 ## 1.2.0 release additions
 
 The 1.2.0 release adds fresh-worker coverage for `wp_cache_replace()`, confirms wildcard non-persistent groups never reach Redis, and checks that runtime cache entries are discarded when the serialization/layout settings change. The hot key-layout path avoids allocating a temporary array on every lookup while preserving the same key format. Dashboard figures are locale-formatted and the console, chart, settings and widget typography is larger; connection actions retain equal 44px control dimensions. See [the validation report](VALIDATION-1.2.0.md) and [paired comparison](COMPARISON-1.2.0.md) for the actual test results and benchmark limits.
+
+## 1.2.1 WordPress.org review fixes
+
+The 1.2.1 update removes obsolete Redis Cache AJAX handlers that were already disabled by HarborCache’s admin integration, eliminating their unused unsanitized nonce path. The prefetch identifier now hashes a sanitized request path. Dashboard chart CSS and JavaScript are limited to HarborCache’s own page and visible widget; the chart assets are skipped when the widget is hidden. The metrics cleanup event now uses a HarborCache-specific name, with a one-time cleanup of the old event. The WordPress cache API, key layout and saved connection configuration remain compatible.
 
 ## Configuration coverage
 

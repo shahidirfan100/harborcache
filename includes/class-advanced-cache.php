@@ -370,7 +370,8 @@ LUA;
 
 	private function ch_prefetch_id() {
 		$user = function_exists( 'get_current_user_id' ) ? get_current_user_id() : 0;
-		return $this->ch_base . ':prefetch:' . hash( 'sha256', $this->blog_prefix . ':' . $user . ':' . ( $_SERVER['REQUEST_URI'] ?? '/' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Hashed, never output or executed.
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
+		return $this->ch_base . ':prefetch:' . hash( 'sha256', $this->blog_prefix . ':' . $user . ':' . $request_uri );
 	}
 	public function track_prefetch( $key, $value, $group, $force, $found, $time ) {
 		if ( $this->ch_prefetching || ! $found || in_array( $group, $this->ch_config['non_prefetchable_groups'], true ) || $this->is_ignored_group( $group ) ) { return; }

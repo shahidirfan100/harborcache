@@ -83,7 +83,7 @@ class Metrics {
         }
 
         add_action( 'shutdown', [ self::class, 'record' ] );
-        add_action( 'rediscache_discard_metrics', [ self::class, 'discard' ] );
+        add_action( 'harborcache_metrics_discard', [ self::class, 'discard' ] );
     }
 
     /**

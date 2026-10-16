@@ -22,7 +22,7 @@ The same run produced the seven-round performance comparison and group-flush pro
 
 ## Installable package and WordPress checks
 
-The release ZIP is `../dist/harborcache-1.2.0.zip`; its SHA-256 is recorded in `../dist/SHA256SUMS`. The archive passed CRC and extraction checks, contains 626 install files, excludes development tests and media, and matches the working tree file-for-file. The extracted header reads **HarborCache – Object Cache with Redis**, version **1.2.0**, author **Shahid Irfan**.
+The 1.2.0 release ZIP passed CRC and extraction checks at release time, contained 626 install files, excluded development tests and media, and matched the 1.2.0 working tree. Its SHA-256 was `d16097047da54588fdf5ac06f4b045836cdcc487a81c742b3253e1bb8054de76`. The old ZIP is no longer kept in `dist/`; that folder contains only the current install package.
 
 Plugin Check 2.1.0 reported **no errors** for the extracted package using its actual WordPress.org slug. The official WordPress.org readme validator reported no errors or warnings; it displayed only the optional informational note that no donate link was found.
 
