@@ -2,7 +2,9 @@
 
 HarborCache uses your existing Redis server; it does not install or restart Redis. Configure the host/port or Unix socket, database and credentials in Connection or HARBORCACHE_CONFIG. Keep TLS peer verification enabled. Only one object-cache manager can own wp-content/object-cache.php.
 
-Install the plugin ZIP, enable it and press Connect. The owned drop-in is staged and verified after a connection check, with recovery of the previous copy if replacement fails. Remote filesystem fallback replacement is recoverable; it is not guaranteed atomic. Disconnect removes only that drop-in, retaining connection settings. Reconnect starts a fresh namespace; old entries expire under maximum TTL. Other applications' Redis keys are not flushed.
+Install the plugin ZIP, enable it and press Connect. The owned drop-in is staged and verified after a connection check, with recovery of the previous copy if replacement fails. If a filesystem transport reports a partial write, HarborCache removes the incomplete canonical file and keeps its verified backup so WordPress can start with its request-local cache while recovery is retried. Remote filesystem replacement is recoverable; it is not guaranteed atomic. Disconnect removes only that drop-in, retaining connection settings. Reconnect starts a fresh namespace; old entries expire under maximum TTL. Other applications' Redis keys are not flushed.
+
+If a PHP error in an existing drop-in prevents wp-admin from loading, use the hosting file manager to rename `wp-content/object-cache.php` to `object-cache.php.failed`; do not delete it or the adjacent `object-cache.php.harborcache-backup.php`. WordPress can then start with its request-local cache. After admin access returns, update HarborCache and let its recovery check restore or refresh the owned drop-in. If the backup is absent, foreign or damaged, restore a known-good copy through the host instead.
 
 ## Upgrades
 

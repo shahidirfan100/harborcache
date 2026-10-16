@@ -12,6 +12,7 @@ require_once __DIR__ . '/class-dropin-writer.php';
 final class Console {
 	private static $dropin_owned;
 	private static $dropin_matches;
+	private static $dropin_recovery_failed = false;
 	public static function reset_dropin_state() { self::$dropin_owned = null; self::$dropin_matches = null; }
 	public static function capability() { $default = is_multisite() ? 'manage_network_options' : 'manage_options'; return apply_filters( 'harborcache_manager_capability', $default ); }
 	public static function allowed() { return current_user_can( self::capability() ); }
@@ -132,21 +133,44 @@ final class Console {
 	}
 
 	public static function maybe_update_owned_dropin() {
-		if ( self::allowed() && ! file_exists( WP_CONTENT_DIR . '/object-cache.php' ) && file_exists( WP_CONTENT_DIR . '/object-cache.php.harborcache-backup.php' ) ) {
-			try { if ( Dropin_Writer::recover( self::filesystem(), WP_CONTENT_DIR . '/object-cache.php' ) ) { self::reset_dropin_state(); if ( function_exists( 'wp_opcache_invalidate' ) ) { wp_opcache_invalidate( WP_CONTENT_DIR . '/object-cache.php', true ); } } } catch ( \Throwable $error ) { /* Keep the verified backup available for manual recovery. */ }
+		$file = WP_CONTENT_DIR . '/object-cache.php';
+		$backup = $file . '.harborcache-backup.php';
+		if ( self::allowed() && file_exists( $backup ) ) {
+			try {
+				if ( Dropin_Writer::recover( self::filesystem(), $file, HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php' ) ) {
+					self::reset_dropin_state();
+					if ( function_exists( 'wp_opcache_invalidate' ) ) { wp_opcache_invalidate( $file, true ); }
+				} else {
+					self::$dropin_recovery_failed = true;
+					error_log( '[HarborCache] Drop-in recovery could not verify or restore the saved copy. Preserve both drop-in files and check wp-content filesystem access.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
+			} catch ( \Throwable $error ) {
+				self::$dropin_recovery_failed = true;
+				// Do not log connection data or file contents. This is a file-lifecycle failure only.
+				error_log( '[HarborCache] Drop-in recovery could not complete. Preserve the recovery backup and check wp-content filesystem access.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 		if ( ! self::allowed() || ! Config::load()['auto_update_dropin'] || ! self::owns_dropin() || self::dropin_current() ) { return; }
-		try { self::dropin( true ); } catch ( \Throwable $error ) { /* The notice below keeps the manual recovery action visible. */ }
+		try { self::dropin( true ); } catch ( \Throwable $error ) {
+			// Keep an actionable notice on the HarborCache screen; no endpoint or credential details are logged.
+			self::$dropin_recovery_failed = true;
+			error_log( '[HarborCache] Automatic drop-in refresh failed. Check the HarborCache admin notice and wp-content filesystem access.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 	}
 
 	public static function dropin_notice() {
 		if ( ! self::is_console_screen() ) { return; }
-		if ( self::allowed() && ! file_exists( WP_CONTENT_DIR . '/object-cache.php' ) && file_exists( WP_CONTENT_DIR . '/object-cache.php.harborcache-backup.php' ) ) {
-			echo '<div class="notice notice-error"><p>' . esc_html__( 'HarborCache retained the previous drop-in after an interrupted update. Check wp-content permissions and refresh this page to retry recovery. The backup is object-cache.php.harborcache-backup.php.', 'harborcache-object-cache-with-redis' ) . '</p></div>';
+		$backup = WP_CONTENT_DIR . '/object-cache.php.harborcache-backup.php';
+		if ( self::allowed() && ( self::$dropin_recovery_failed || ( file_exists( $backup ) && ! self::owns_dropin() ) ) ) {
+			$message = Dropin_Writer::error_message();
+			if ( ! $message ) { $message = __( 'HarborCache retained a drop-in recovery copy but could not safely complete recovery. Preserve object-cache.php and object-cache.php.harborcache-backup.php, check wp-content permissions, then retry.', 'harborcache-object-cache-with-redis' ); }
+			echo '<div class="notice notice-error"><p>' . esc_html( $message ) . '</p></div>';
 			return;
 		}
 		if ( ! self::allowed() || ! self::owns_dropin() || self::dropin_current() ) { return; }
-		echo '<div class="notice notice-warning"><p>' . esc_html__( 'HarborCache could not refresh its cache drop-in. Check Redis connectivity and wp-content permissions, then update it below.', 'harborcache-object-cache-with-redis' ) . '</p>';
+		$message = Dropin_Writer::error_message();
+		if ( ! $message ) { $message = __( 'HarborCache could not refresh its cache drop-in. Check Redis connectivity and wp-content permissions, then update it below.', 'harborcache-object-cache-with-redis' ); }
+		echo '<div class="notice notice-warning"><p>' . esc_html( $message ) . '</p>';
 		self::button( 'update', __( 'Update drop-in', 'harborcache-object-cache-with-redis' ) );
 		echo '</div>';
 	}
@@ -175,7 +199,10 @@ final class Console {
 			$ok = Dropin_Writer::replace( $fs, HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php', $file );
 		} else { $ok = Dropin_Writer::remove( $fs, $file ); }
 		self::reset_dropin_state();
-		if ( ! $ok ) { throw new \RuntimeException( esc_html__( 'The drop-in could not be written. Check wp-content permissions.', 'harborcache-object-cache-with-redis' ) ); }
+		if ( ! $ok ) {
+			error_log( '[HarborCache] Drop-in operation failed (' . sanitize_key( Dropin_Writer::last_error() ) . ').' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			throw new \InvalidArgumentException( esc_html( Dropin_Writer::error_message() ?: __( 'The drop-in could not be written. Check wp-content permissions.', 'harborcache-object-cache-with-redis' ) ) );
+		}
 		if ( function_exists( 'wp_opcache_invalidate' ) ) { wp_opcache_invalidate( $file, true ); }
 		return true;
 	}

@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,12 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.3 =
+* Recover verified backups when an interrupted update leaves a partial drop-in at the destination.
+* Remove incomplete drop-in files after failed first installs or failed rollback copies so WordPress can start without persistent caching.
+* Preserve foreign cache drop-ins and show a specific recovery message when HarborCache cannot safely replace a file.
+* Add automated coverage for interrupted writes, backup recovery and failed filesystem operations.
 
 = 1.2.2 =
 * Give HarborCache-owned plugin metadata and drop-in paths distinct HARBORCACHE-prefixed constants.

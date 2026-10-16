@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.2)
+# HarborCache feature ledger (1.2.3)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This ledger describes implemented behavior and evidence for the 1.2.2 release; it does not certify complete Pro parity.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This ledger describes implemented behavior and evidence for the 1.2.3 release; it does not certify complete Pro parity.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -24,7 +24,7 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. 
 | Values | PHP serialization live-tested. igbinary/LZF/LZ4/Zstandard adapters reject missing codec functions. Real Linux extension roundtrips passed for PHP/igbinary serialization with none/LZF/LZ4/Zstandard compression. |
 | Administration | Six responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
 | Shared servers | Shared mode hides memory/key totals which would include other applications; dedicated mode sums primary memory and selected-database key counts. Server command statistics are explicitly labeled. |
-| Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging and recoverable replacement, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
+| Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging, interrupted-write recovery and removal of incomplete canonical files, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
 
 ## 1.2.0 release additions
 
