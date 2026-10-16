@@ -20,7 +20,12 @@
 defined( 'ABSPATH' ) || exit;
 // A second object cache manager cannot safely share the legacy engine constants.
 if ( ( defined( 'WP_REDIS_FILE' ) && WP_REDIS_FILE !== __FILE__ ) || ( defined( 'WP_REDIS_PLUGIN_PATH' ) && realpath( WP_REDIS_PLUGIN_PATH ) !== realpath( __DIR__ ) ) ) {
- add_action( 'admin_notices', static function () { echo '<div class="notice notice-error"><p>' . esc_html__( 'Deactivate the other Redis object cache plugin before activating HarborCache.', 'harborcache-object-cache-with-redis' ) . '</p></div>'; } );
+ add_action( 'admin_notices', static function () {
+  $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+  if ( ! $screen || ! in_array( $screen->id, array( 'plugins', 'plugins-network' ), true ) ) { return; }
+  if ( ! current_user_can( 'activate_plugins' ) && ! current_user_can( 'manage_network_plugins' ) ) { return; }
+  echo '<div class="notice notice-error"><p>' . esc_html__( 'Deactivate the other Redis object cache plugin before activating HarborCache.', 'harborcache-object-cache-with-redis' ) . '</p></div>';
+ } );
  return;
 }
 require_once __DIR__ . '/includes/ch-config.php';
