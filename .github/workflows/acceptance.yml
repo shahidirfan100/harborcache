@@ -111,6 +111,7 @@ jobs:
           docker run -d --name hc-tls -p 6380:6380 -v /tmp/hc-redis:/hc redis:${{ matrix.redis }} redis-server --port 0 --tls-port 6380 --tls-cert-file /hc/cert.pem --tls-key-file /hc/key.pem --tls-ca-cert-file /hc/cert.pem --tls-auth-clients no --unixsocket /hc/redis.sock --unixsocketperm 777
           for attempt in $(seq 1 30); do test -S /tmp/hc-redis/redis.sock && break || sleep 1; done
           if ! test -S /tmp/hc-redis/redis.sock; then docker logs hc-tls; exit 1; fi
+          HC_TLS_CA=/tmp/hc-redis/cert.pem timeout --signal=TERM --kill-after=2s 15s php tests/phpredis-tls-smoke.php
           for client in predis phpredis; do
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"cafile\":\"/tmp/hc-redis/cert.pem\",\"verify_peer\":true,\"verify_peer_name\":true}}"
             run_transport_acceptance "trusted TLS $client" "evidence/tls-$client.txt" tests/acceptance.php transport
