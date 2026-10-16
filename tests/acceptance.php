@@ -37,9 +37,13 @@ if($mode==='transport'){
  $transport_key='transport-'.bin2hex(random_bytes(8));
  gate('Configured transport writes',$c->set($transport_key,'before','ci-transport',60));
  $fresh=new HarborCache_Advanced_Cache();
- gate('Fresh transport client replaces a persistent key',$fresh->replace($transport_key,'after','ci-transport',60));
+ gate('Fresh transport client connects',$fresh->redis_status());
+ $replaced=$fresh->replace($transport_key,'after','ci-transport',60);
+ gate('Fresh transport client replaces a persistent key',$replaced);
  $verify=new HarborCache_Advanced_Cache();
- gate('Fresh transport client reads the replacement','after'===$verify->get($transport_key,'ci-transport',true));
+ gate('Verification transport client connects',$verify->redis_status());
+ $replacement=$verify->get($transport_key,'ci-transport',true);
+ gate('Fresh transport client reads the replacement','after'===$replacement);
  gate('Configured transport deletes',$c->delete($transport_key,'ci-transport'));
  exit;
 }
