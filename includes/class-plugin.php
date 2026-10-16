@@ -112,7 +112,7 @@ class Plugin {
         add_filter( 'gettext_redis-cache', [ $this, 'get_text' ], 10, 2 );
 
         add_filter( 'plugin_row_meta', [ $this, 'add_plugin_row_meta' ], 10, 2 );
-        add_filter( sprintf( '%splugin_action_links_%s', is_multisite() ? 'network_admin_' : '', WP_REDIS_BASENAME ), [ $this, 'add_plugin_actions_links' ] );
+        add_filter( sprintf( '%splugin_action_links_%s', is_multisite() ? 'network_admin_' : '', HARBORCACHE_BASENAME ), [ $this, 'add_plugin_actions_links' ] );
 
         add_action( 'wp_head', [ $this, 'register_shutdown_hooks' ] );
 
@@ -311,7 +311,7 @@ class Plugin {
         }
 
         $dropin = get_plugin_data( WP_CONTENT_DIR . '/object-cache.php' );
-        $plugin = get_plugin_data( WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php' );
+        $plugin = get_plugin_data( HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php' );
 
         /**
          * Filters the drop-in validation state
@@ -340,7 +340,7 @@ class Plugin {
         }
 
         $dropin = get_plugin_data( WP_CONTENT_DIR . '/object-cache.php' );
-        $plugin = get_plugin_data( WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php' );
+        $plugin = get_plugin_data( HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php' );
 
         if ( $dropin['PluginURI'] === $plugin['PluginURI'] ) {
             return version_compare( $dropin['Version'], $plugin['Version'], '<' );
@@ -798,7 +798,7 @@ class Plugin {
             return true;
         }
 
-        $cachefile = WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php';
+        $cachefile = HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php';
         $testfile = WP_CONTENT_DIR . '/object-cache.tmp';
 
         if ( ! $wp_filesystem->exists( $cachefile ) ) {
@@ -825,7 +825,7 @@ class Plugin {
 
         $meta = get_file_data( $testfile, [ 'Version' => 'Version' ] );
 
-        if ( $meta['Version'] !== WP_REDIS_VERSION ) {
+        if ( $meta['Version'] !== HARBORCACHE_VERSION ) {
             return new WP_Error( 'version', __( 'Couldn’t verify test file contents.', 'harborcache-object-cache-with-redis' ) );
         }
 
@@ -870,7 +870,7 @@ class Plugin {
 
         if ( $this->initialize_filesystem( '', true ) ) {
             $result = $wp_filesystem->copy(
-                WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php',
+                HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php',
                 WP_CONTENT_DIR . '/object-cache.php',
                 true,
                 FS_CHMOD_FILE

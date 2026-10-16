@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.1)
+# HarborCache feature ledger (1.2.2)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This ledger describes implemented behavior and evidence for the 1.2.1 release; it does not certify complete Pro parity.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This ledger describes implemented behavior and evidence for the 1.2.2 release; it does not certify complete Pro parity.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -29,6 +29,10 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. 
 ## 1.2.0 release additions
 
 The 1.2.0 release adds fresh-worker coverage for `wp_cache_replace()`, confirms wildcard non-persistent groups never reach Redis, and checks that runtime cache entries are discarded when the serialization/layout settings change. The hot key-layout path avoids allocating a temporary array on every lookup while preserving the same key format. Dashboard figures are locale-formatted and the console, chart, settings and widget typography is larger; connection actions retain equal 44px control dimensions. See [the validation report](VALIDATION-1.2.0.md) and [paired comparison](COMPARISON-1.2.0.md) for the actual test results and benchmark limits.
+
+## 1.2.2 Runtime identity isolation
+
+HarborCache owns distinct `HARBORCACHE_FILE`, `HARBORCACHE_BASENAME`, `HARBORCACHE_PLUGIN_DIR`, `HARBORCACHE_PLUGIN_PATH` and `HARBORCACHE_VERSION` constants. The drop-in resolves its files from HarborCache’s own installation path. Existing `WP_REDIS_*` connection settings remain accepted as configuration inputs for migration compatibility, while HarborCache no longer defines Redis Cache’s plugin-file or plugin-path identity constants. This avoids claiming another plugin’s global identity and prevents the drop-in from loading files from a competing plugin.
 
 ## 1.2.1 WordPress.org review fixes
 

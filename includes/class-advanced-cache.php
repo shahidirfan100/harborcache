@@ -1,14 +1,14 @@
 <?php
 /** Original extensions to the GPL Redis Object Cache engine. */
 defined( 'ABSPATH' ) || exit;
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-codec.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-observer.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-cleanup.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-routing.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-native.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-topology.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-operations.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-relay-options.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-codec.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-observer.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-cleanup.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-routing.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-native.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-topology.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-operations.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-relay-options.php';
 
 class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	use HarborCache_Cleanup;

@@ -12,8 +12,12 @@ define( 'WP_REDIS_CLIENT', 'phpredis' );
 define( 'WP_REDIS_HOST', $host );
 define( 'WP_REDIS_PORT', $port );
 define( 'WP_REDIS_PREFIX', $prefix );
-define( 'WP_REDIS_PLUGIN_PATH', $source );
-define( 'WP_REDIS_FILE', rtrim( $source, '/\\' ) . DIRECTORY_SEPARATOR . ( 'free' === $engine ? 'redis-cache.php' : 'harborcache.php' ) );
+if ( 'free' === $engine || 'baseline' === $engine ) {
+	define( 'WP_REDIS_PLUGIN_PATH', $source );
+	define( 'WP_REDIS_FILE', rtrim( $source, '/\\' ) . DIRECTORY_SEPARATOR . ( 'free' === $engine ? 'redis-cache.php' : 'harborcache.php' ) );
+} else {
+	define( 'HARBORCACHE_PLUGIN_PATH', $source );
+}
 if ( 'free' !== $engine ) {
 	define( 'HARBORCACHE_CONFIG', array( 'client' => 'phpredis', 'analytics' => array( 'enabled' => false ), 'group_flush' => 'atomic', 'async_flush' => false ) );
 }

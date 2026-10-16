@@ -74,14 +74,14 @@ final class Console {
 		$dashboard_widget = 'index.php' === $hook && self::dashboard_widget_visible();
 		$chart_page        = $console_page || $dashboard_widget;
 		$ui_data           = array( 'endpoint' => admin_url( 'admin-post.php' ), 'nonce' => wp_create_nonce( 'harborcache_action' ), 'confirm' => __( 'Invalidate the selected cache scope? Cached entries will be rebuilt by subsequent requests.', 'harborcache-object-cache-with-redis' ), 'copied' => __( 'Diagnostics copied.', 'harborcache-object-cache-with-redis' ), 'selected' => __( 'Report selected. Press Ctrl+C or Command+C to copy.', 'harborcache-object-cache-with-redis' ), 'flushing' => __( 'Invalidating cache…', 'harborcache-object-cache-with-redis' ), 'done' => __( 'Cache invalidated.', 'harborcache-object-cache-with-redis' ), 'failed' => __( 'Cache action failed. Open Diagnostics for connection details.', 'harborcache-object-cache-with-redis' ) );
-		if ( $console_page ) { wp_enqueue_style( 'harborcache-console', plugins_url( 'assets/css/console.css', WP_REDIS_FILE ), array(), WP_REDIS_VERSION ); }
+		if ( $console_page ) { wp_enqueue_style( 'harborcache-console', plugins_url( 'assets/css/console.css', HARBORCACHE_FILE ), array(), HARBORCACHE_VERSION ); }
 		if ( $chart_page ) {
-			wp_enqueue_style( 'harborcache-chart', plugins_url( 'assets/css/chart.css', WP_REDIS_FILE ), array(), WP_REDIS_VERSION );
-			wp_enqueue_script( 'harborcache-console', plugins_url( 'assets/js/console.js', WP_REDIS_FILE ), array(), WP_REDIS_VERSION, true );
+			wp_enqueue_style( 'harborcache-chart', plugins_url( 'assets/css/chart.css', HARBORCACHE_FILE ), array(), HARBORCACHE_VERSION );
+			wp_enqueue_script( 'harborcache-console', plugins_url( 'assets/js/console.js', HARBORCACHE_FILE ), array(), HARBORCACHE_VERSION, true );
 			wp_localize_script( 'harborcache-console', 'harborcacheUI', $ui_data );
 		}
 		if ( is_admin_bar_showing() ) {
-			wp_enqueue_script( 'harborcache-adminbar', plugins_url( 'assets/js/adminbar.js', WP_REDIS_FILE ), array(), WP_REDIS_VERSION, true );
+			wp_enqueue_script( 'harborcache-adminbar', plugins_url( 'assets/js/adminbar.js', HARBORCACHE_FILE ), array(), HARBORCACHE_VERSION, true );
 			wp_localize_script( 'harborcache-adminbar', 'harborcacheUI', $ui_data );
 		}
 	}
@@ -125,7 +125,7 @@ final class Console {
 
 	public static function dropin_current() {
 		if ( null !== self::$dropin_matches ) { return self::$dropin_matches; }
-		$bundled = WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php';
+		$bundled = HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php';
 		if ( ! self::owns_dropin() || ! is_readable( $bundled ) ) { return self::$dropin_matches = false; }
 		$source = hash_file( 'sha256', $bundled ); $active = hash_file( 'sha256', WP_CONTENT_DIR . '/object-cache.php' );
 		return self::$dropin_matches = is_string( $source ) && is_string( $active ) && hash_equals( $source, $active );
@@ -172,7 +172,7 @@ final class Console {
 			$probe = new Core\Predis();
 			$probe->connect();
 			if ( ! self::owns_dropin() ) { $probe->invalidate_namespace(); }
-			$ok = Dropin_Writer::replace( $fs, WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php', $file );
+			$ok = Dropin_Writer::replace( $fs, HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php', $file );
 		} else { $ok = Dropin_Writer::remove( $fs, $file ); }
 		self::reset_dropin_state();
 		if ( ! $ok ) { throw new \RuntimeException( esc_html__( 'The drop-in could not be written. Check wp-content permissions.', 'harborcache-object-cache-with-redis' ) ); }
@@ -181,7 +181,7 @@ final class Console {
 	}
 
 	public static function deactivate( $plugin ) {
-		if ( ! defined( 'WP_REDIS_BASENAME' ) || WP_REDIS_BASENAME !== $plugin ) { return; }
+		if ( ! defined( 'HARBORCACHE_BASENAME' ) || HARBORCACHE_BASENAME !== $plugin ) { return; }
 		wp_clear_scheduled_hook( 'harborcache_metrics_discard' );
 		wp_clear_scheduled_hook( 'rediscache_discard_metrics' ); // Remove the event name used by earlier HarborCache builds.
 		wp_clear_scheduled_hook( 'harborcache_cleanup' );
@@ -191,7 +191,7 @@ final class Console {
 
 	public static function status() {
 		$cache = self::cache();
-		return array_merge( array( 'version' => WP_REDIS_VERSION, 'installed' => self::owns_dropin(), 'connected' => false ), $cache ? $cache->ch_diagnostics() : array() );
+		return array_merge( array( 'version' => HARBORCACHE_VERSION, 'installed' => self::owns_dropin(), 'connected' => false ), $cache ? $cache->ch_diagnostics() : array() );
 	}
 
 	public static function execute( $operation, array $args = array() ) {
@@ -389,7 +389,7 @@ final class Console {
 		if ( ! isset( $tabs[ $view ] ) ) { $view = 'overview'; }
 		$status = self::status();
 		$config = Config::load();
-		echo '<div id="harborcache" class="wrap ch-console"><h1 class="ch-page-title">' . esc_html__( 'HarborCache – Object Cache with Redis', 'harborcache-object-cache-with-redis' ) . '</h1><div class="ch-notices"></div><header class="ch-header"><div class="ch-identity"><img src="' . esc_url( plugins_url( 'assets/brand/icon.svg', WP_REDIS_FILE ) ) . '" alt="" width="44" height="44"><div><p class="ch-brand-name" aria-hidden="true">HarborCache</p><p>' . esc_html__( 'Persistent object caching for WordPress', 'harborcache-object-cache-with-redis' ) . '</p></div></div><div class="ch-connection-controls"><span class="ch-status ' . ( $status['connected'] ? 'is-connected' : '' ) . '">' . esc_html( $status['connected'] ? __( 'Connected', 'harborcache-object-cache-with-redis' ) : __( 'Not active', 'harborcache-object-cache-with-redis' ) ) . '</span>';
+		echo '<div id="harborcache" class="wrap ch-console"><h1 class="ch-page-title">' . esc_html__( 'HarborCache – Object Cache with Redis', 'harborcache-object-cache-with-redis' ) . '</h1><div class="ch-notices"></div><header class="ch-header"><div class="ch-identity"><img src="' . esc_url( plugins_url( 'assets/brand/icon.svg', HARBORCACHE_FILE ) ) . '" alt="" width="44" height="44"><div><p class="ch-brand-name" aria-hidden="true">HarborCache</p><p>' . esc_html__( 'Persistent object caching for WordPress', 'harborcache-object-cache-with-redis' ) . '</p></div></div><div class="ch-connection-controls"><span class="ch-status ' . ( $status['connected'] ? 'is-connected' : '' ) . '">' . esc_html( $status['connected'] ? __( 'Connected', 'harborcache-object-cache-with-redis' ) : __( 'Not active', 'harborcache-object-cache-with-redis' ) ) . '</span>';
 		self::button( $status['installed'] ? 'disable' : 'enable', $status['installed'] ? __( 'Disconnect', 'harborcache-object-cache-with-redis' ) : __( 'Connect', 'harborcache-object-cache-with-redis' ) );
 		echo '</div></header>';
 		$notice = get_user_meta( get_current_user_id(), '_harborcache_notice', true );
@@ -441,7 +441,7 @@ final class Console {
 		} else {
 			echo '<p>' . esc_html__( 'This report excludes credentials, connection endpoints, cached keys and values.', 'harborcache-object-cache-with-redis' ) . '</p><pre id="ch-diagnostics">' . esc_html( wp_json_encode( array( 'runtime' => self::status(), 'options' => self::read( 'options' ), 'php' => PHP_VERSION, 'wordpress' => get_bloginfo( 'version' ) ), JSON_PRETTY_PRINT ) ) . '</pre><button type="button" class="button" id="ch-copy">' . esc_html__( 'Copy diagnostics', 'harborcache-object-cache-with-redis' ) . '</button><p id="ch-feedback" role="status"></p><p>' . esc_html__( 'Review the verified feature matrix and deployment requirements in docs/FEATURES.md before production use.', 'harborcache-object-cache-with-redis' ) . '</p>';
 		}
-		echo '</main><footer class="ch-footer">HarborCache ' . esc_html( WP_REDIS_VERSION ) . '</footer></div>';
+		echo '</main><footer class="ch-footer">HarborCache ' . esc_html( HARBORCACHE_VERSION ) . '</footer></div>';
 	}
 
 	private static function available_option( $key, $option ) {

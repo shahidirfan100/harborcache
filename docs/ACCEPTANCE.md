@@ -28,6 +28,10 @@ The reviewer report for the 1.1.5 submission identified a directly supplied POST
 
 Acceptance requires a clean activation with WP_DEBUG enabled, no legacy AJAX actions registered by HarborCache, no global recovery notice on unrelated admin screens, no dashboard asset enqueue when the widget is hidden, no CSS selector outside the HarborCache roots, passing full acceptance, exact-slug Plugin Check, official readme validation and a rebuilt package whose drop-in reports version 1.2.1. The official readme form was not verified in this environment; see [validation evidence](VALIDATION-1.2.1.md). Passing the available checks supports resubmission but cannot guarantee the review team's decision.
 
+## 1.2.2 Runtime identity isolation
+
+HarborCache uses its own `HARBORCACHE_*` file, path and version constants throughout the plugin and drop-in. It still reads existing `WP_REDIS_*` connection values for configuration compatibility, but it no longer advertises itself as the Redis Cache plugin through that plugin's file/path constants. The drop-in finds its own files under the HarborCache slug or supported legacy folder. Acceptance requires clean activation with and without the owned drop-in, no duplicate-constant warnings, unchanged connection/key configuration, the current install ZIP passing exact-slug Plugin Check, all Linux acceptance jobs passing, and a successful readme/package check. Review approval remains the WordPress.org Plugins Team's decision.
+
 ## Remaining gates, in order
 
 1. Measure sustained normal traffic on an isolated copy of the actual site: PHP-FPM CPU/RSS, Redis CPU/RSS, tail latency, cache churn, large options and analytics on/off. Short runner tests cannot establish long-running memory stability or capacity.
@@ -42,6 +46,7 @@ Acceptance requires a clean activation with WP_DEBUG enabled, no legacy AJAX act
 | --- | --- | --- |
 | 1.2.0 MVP | Fresh-worker and ignored-group correctness, Relay metadata consistency, measured hot-path change, group-invalidation comparison, readable dashboard and refreshed assets | Linux matrix and real Relay default/adaptive acceptance pass; workload comparison shows no material regression; package, Plugin Check and readme validation pass |
 | 1.2.1 | Resolve the WordPress.org pre-review findings around sanitization, legacy hooks, cron naming and dashboard asset scope | Debug activation, isolated dashboard assets, full local acceptance, exact-slug Plugin Check and readme/package validation pass |
+| 1.2.2 | Isolate HarborCache runtime metadata/path constants from Redis Cache's identity while retaining supported configuration inputs | Clean activation with the owned drop-in, no metadata constant collisions, preserved connection and namespace behavior, zero Plugin Check issues and passing Linux acceptance |
 | 1.3.0 | Relay adaptive behavior under shared PHP-FPM; native cluster/Sentinel/replica promotion and failover; sampled flush/miss attribution; production tracing integrations | Real agents/extensions, concurrent writers/readers, controlled promotion/partition, duplicate-span checks and measured attribution overhead with values excluded |
 | 1.4.0 | Further hot-path and prefetch tuning; selective stale-query reclamation | Sustained workload CPU/RSS and latency evidence without premature invalidation or cross-site leakage |
 | 1.5.0 | Wider site/application matrix and deployment/update/rollback distribution | Site-specific workflows, package parity and directory review |

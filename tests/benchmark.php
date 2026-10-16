@@ -4,7 +4,7 @@ $engine=$argv[1];$source=$argv[2];$round=(int)$argv[3];$sampling=(int)($argv[4]?
 define('WP_HTTP_BLOCK_EXTERNAL',true);
 $host=getenv('HC_REDIS_HOST')?:'127.0.0.1';$port=max(1,min(65535,(int)(getenv('HC_REDIS_PORT')?:6379)));$prefix=(getenv('HC_BENCH_PREFIX')?:'hc-linux-').$engine.'-'.$round.'-'.$sampling.':';
 define('WP_REDIS_CLIENT','phpredis');define('WP_REDIS_HOST',$host);define('WP_REDIS_PORT',$port);define('WP_REDIS_PREFIX',$prefix);
-define('WP_REDIS_PLUGIN_PATH',$source);define('WP_REDIS_FILE',rtrim($source,'/\\').DIRECTORY_SEPARATOR.($engine==='free'?'redis-cache.php':'harborcache.php'));
+if($engine==='free'){define('WP_REDIS_PLUGIN_PATH',$source);define('WP_REDIS_FILE',rtrim($source,'/\\').DIRECTORY_SEPARATOR.'redis-cache.php');}elseif($engine==='baseline'){define('WP_REDIS_PLUGIN_PATH',$source);define('WP_REDIS_FILE',rtrim($source,'/\\').DIRECTORY_SEPARATOR.'harborcache.php');}else{define('HARBORCACHE_PLUGIN_PATH',$source);}
 if($engine!=='free'){define('HARBORCACHE_CONFIG',array('client'=>'phpredis','analytics'=>array('enabled'=>$sampling>0,'sample_rate'=>$sampling),'prefetch'=>false,'split_alloptions'=>false));}
 require rtrim(getenv('WP_ROOT'),'/').'/wp-load.php';
 if($engine!=='free'){require rtrim($source,'/\\').DIRECTORY_SEPARATOR.'harborcache.php';}

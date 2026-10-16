@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -28,7 +28,7 @@ Redis is a registered trademark of Redis Ltd. No affiliation or endorsement is i
 
 == Installation ==
 
-1. Upload the harborcache folder to your plugins directory and activate it.
+1. Install HarborCache from Plugins > Add New, or upload the installable ZIP, then activate it.
 2. Open Settings > HarborCache, or Network Admin > Settings > HarborCache.
 3. Configure your Redis host, port, database and credentials on the Connection tab.
 4. Save configuration, then choose Enable Object Cache on the Overview tab.
@@ -66,6 +66,11 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.2 =
+* Give HarborCache-owned plugin metadata and drop-in paths distinct HARBORCACHE-prefixed constants.
+* Preserve WP_REDIS_* connection configuration as an input compatibility layer without claiming Redis Cache plugin identity.
+* Resolve the drop-in path from HarborCache’s own installation directory and update the comparison harness to use the correct engine constants.
 
 = 1.2.1 =
 * Scope chart styles and scripts to HarborCache’s admin page and visible dashboard widget.
@@ -146,6 +151,9 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.2 =
+Separate HarborCache metadata from Redis Cache globals. Existing connection settings and cache data are preserved; update the HarborCache drop-in after upgrading.
 
 = 1.2.1 =
 Fix WordPress.org review findings around request sanitization and dashboard style isolation. Existing connection settings and the cache namespace are preserved.
