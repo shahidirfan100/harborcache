@@ -39,7 +39,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p evidence "$HC_CONTENT" "$HC_EXTENSIONS"
-          python3 tools/build-release.py | tee evidence/package.json
+          python3 tools/build-release.py --verify | tee evidence/package.json
           wp core download --path="$WP_ROOT"
           cp -a "$WP_ROOT/wp-content/themes" "$HC_CONTENT/themes"
           wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
@@ -128,7 +128,7 @@ jobs:
           mkdir -p "$WP_ROOT/wp-content/plugins/harborcache"
           rsync -a --exclude=.git --exclude=media --exclude=dist --exclude=tests --exclude=.github ./ "$WP_ROOT/wp-content/plugins/harborcache/"
           wp plugin activate harborcache --path="$WP_ROOT"
-          php tests/install-dropin.php
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
       - name: Native and PHP clients, codecs, concurrent workers and WordPress flows
         shell: bash
         run: |
@@ -195,7 +195,7 @@ jobs:
           wp cron event run --due-now --path="$WP_ROOT" | tee evidence/cron.txt
           wp plugin deactivate harborcache --path="$WP_ROOT" | tee evidence/deactivate.txt
           wp plugin activate harborcache --path="$WP_ROOT" | tee evidence/reactivate.txt
-          php tests/install-dropin.php
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           export HC_TEST_CONFIG='{"client":"phpredis"}'
           php tests/acceptance.php recovery | tee evidence/lifecycle-recovery.txt
       - uses: actions/upload-artifact@v4
@@ -243,7 +243,7 @@ jobs:
           mkdir -p "$WP_ROOT/wp-content/plugins/harborcache"
           rsync -a --exclude=.git --exclude=media --exclude=dist --exclude=tests --exclude=.github ./ "$WP_ROOT/wp-content/plugins/harborcache/"
           wp plugin activate harborcache --path="$WP_ROOT"
-          php tests/install-dropin.php
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
 
       - name: Equal-workload Linux performance comparison
         env:
@@ -280,11 +280,11 @@ jobs:
             php tests/install-dropin.php "$source"
             php tests/benchmark-flush.php "$engine" "$source" 5 | tee -a evidence/group-flush.jsonl
           done
-          php tests/install-dropin.php
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           for sampling in 10 100; do php tests/benchmark.php harbor "$GITHUB_WORKSPACE" 100 "$sampling" | tee -a evidence/benchmark-sampling.jsonl; done
           rm "$WP_ROOT/wp-content/object-cache.php"
           wp plugin activate harborcache --path="$WP_ROOT"
-          php tests/install-dropin.php
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
       - name: WooCommerce checkout, inventory and orders
         shell: bash
         run: |
@@ -298,7 +298,7 @@ jobs:
           set -euo pipefail
           wp core multisite-convert --title='HarborCache network' --path="$WP_ROOT"
           wp plugin activate harborcache --network --path="$WP_ROOT"
-          php tests/install-dropin.php
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           php tests/applications.php multisite | tee evidence/multisite.txt
       - name: Concurrent PHP-FPM HTTP smoke and recovery
         shell: bash

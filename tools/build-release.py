@@ -14,6 +14,7 @@ SLUG = "harborcache-object-cache-with-redis"
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="Audit inputs without writing a release")
+    parser.add_argument("--verify", action="store_true", help="Verify the existing ZIP against current runtime source")
     args = parser.parse_args()
     header = (ROOT / "harborcache.php").read_text(encoding="utf-8")
     readme = (ROOT / "readme.txt").read_text(encoding="utf-8")
@@ -45,9 +46,10 @@ def main():
         return
     output = ROOT / "dist" / f"harborcache-{version}.zip"
     output.parent.mkdir(exist_ok=True)
-    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-        for path, rel in included:
-            archive.write(path, f"{SLUG}/{rel}")
+    if not args.verify:
+        with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+            for path, rel in included:
+                archive.write(path, f"{SLUG}/{rel}")
     with zipfile.ZipFile(output) as archive:
         assert archive.testzip() is None
         assert set(archive.namelist()) == {f"{SLUG}/{rel}" for _, rel in included}
