@@ -2,6 +2,7 @@
 /** Fresh-process checks for renamed paths, early fallback and diagnostic escaping. */
 define( 'ABSPATH', __DIR__ . '/' );
 require_once dirname( __DIR__ ) . '/includes/class-dropin-writer.php';
+require_once dirname( __DIR__ ) . '/includes/ch-config.php';
 $root = sys_get_temp_dir() . '/hc-review-' . bin2hex( random_bytes( 6 ) );
 mkdir( $root );
 $source = file_get_contents( dirname( __DIR__ ) . '/includes/object-cache.php' );
@@ -24,6 +25,12 @@ $run = static function ( $code ) use ( $root ) {
 	return $out;
 };
 try {
+	$options = array( 'cafile' => '/local/ca.pem', 'verify_peer' => true, 'verify_peer_name' => true );
+	$compat = HarborCache\Config::tls_options( $options, 'phpredis', 70433 );
+	$assert( 'PHP 7.4 PhpRedis defaults to TLS 1.2 without relaxing certificate verification', isset( $compat['crypto_method'] ) && STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $compat['crypto_method'] && true === $compat['verify_peer'] && true === $compat['verify_peer_name'] && $options['cafile'] === $compat['cafile'] );
+	$explicit = $options + array( 'crypto_method' => STREAM_CRYPTO_METHOD_TLS_CLIENT );
+	$assert( 'Explicit TLS policy is preserved on PHP 7.4', $explicit === HarborCache\Config::tls_options( $explicit, 'phpredis', 70433 ) );
+	$assert( 'Newer PHP and Predis retain their configured TLS policy', $options === HarborCache\Config::tls_options( $options, 'phpredis', 80200 ) && $options === HarborCache\Config::tls_options( $options, 'predis', 70433 ) );
 	// A quote and space exercise safe PHP literals as well as a renamed directory.
 	$plugin = $root . "/custom extensions/renamed 'cache";
 	mkdir( $plugin . '/includes', 0777, true );

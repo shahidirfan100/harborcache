@@ -800,12 +800,12 @@ class WP_Object_Cache {
 
                 // Passing an SSL context enables TLS even for tcp seeds in PhpRedis.
                 $tls_cluster = 'tls' === $parameters['scheme'] || (bool) preg_grep( '/^tls:\/\//i', $args['cluster'] );
-                if ( $tls_cluster && version_compare( $version, '5.3.0', '>=' ) && defined( 'WP_REDIS_SSL_CONTEXT' ) && ! empty( WP_REDIS_SSL_CONTEXT ) ) {
+                if ( $tls_cluster && version_compare( $version, '5.3.0', '>=' ) ) {
                     if ( ! array_key_exists( 'password', $args ) ) {
                         $args['password'] = null;
                     }
 
-                    $args['ssl'] = WP_REDIS_SSL_CONTEXT;
+                    $args['ssl'] = \HarborCache\Config::tls_options( defined( 'WP_REDIS_SSL_CONTEXT' ) ? WP_REDIS_SSL_CONTEXT : array(), 'phpredis' );
                 }
 
                 $this->redis = new RedisCluster( null, ...array_values( $args ) );
@@ -839,8 +839,8 @@ class WP_Object_Cache {
                     str_replace( 'tls://', '', $parameters['host'] )
                 );
 
-                if ( version_compare( $version, '5.3.0', '>=' ) && defined( 'WP_REDIS_SSL_CONTEXT' ) && ! empty( WP_REDIS_SSL_CONTEXT ) ) {
-                    $args['others']['stream'] = WP_REDIS_SSL_CONTEXT;
+                if ( version_compare( $version, '5.3.0', '>=' ) ) {
+                    $args['others']['stream'] = \HarborCache\Config::tls_options( defined( 'WP_REDIS_SSL_CONTEXT' ) ? WP_REDIS_SSL_CONTEXT : array(), 'phpredis' );
                 }
             }
 

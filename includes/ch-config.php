@@ -36,6 +36,14 @@ final class Config {
 		);
 	}
 
+	/** Avoid the PHP 7.4/PhpRedis TLS 1.3 stream hang; preserve explicit policy. */
+	public static function tls_options( array $options, $client, $php_version = PHP_VERSION_ID ) {
+		if ( 'phpredis' === $client && $php_version >= 70400 && $php_version < 80000 && ! array_key_exists( 'crypto_method', $options ) && defined( 'STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT' ) ) {
+			$options['crypto_method'] = STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+		}
+		return $options;
+	}
+
 	public static function load( $refresh = false ) {
 		if ( ! $refresh && null !== self::$loaded ) { return self::$loaded; }
 		$input = defined( 'HARBORCACHE_CONFIG' ) ? HARBORCACHE_CONFIG : array();
@@ -131,6 +139,7 @@ final class Config {
 		if ( (int) ! empty( $config['cluster'] ) + (int) ! empty( $config['servers'] ) + (int) ! empty( $config['sentinels'] ) > 1 ) { throw new \InvalidArgumentException( 'Choose one connection topology.' ); }
 		if ( 'unix' === $config['scheme'] && '' === $config['path'] ) { throw new \InvalidArgumentException( 'Unix transport requires a socket path.' ); }
 		if ( ! is_numeric( $config['analytics']['sample_rate'] ) || $config['analytics']['sample_rate'] < 0 || $config['analytics']['sample_rate'] > 100 || ! is_int( $config['analytics']['retention'] ) || $config['analytics']['retention'] < 60 || $config['analytics']['retention'] > 86400 ) { throw new \InvalidArgumentException( 'Invalid analytics sample rate or retention.' ); }
+		$config['tls_options'] = self::tls_options( $config['tls_options'], $config['client'] );
 		return $config;
 	}
 

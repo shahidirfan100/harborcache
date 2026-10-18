@@ -7,3 +7,5 @@ The plugin derives its path from `plugin_dir_path()` and the verified installer 
 Diagnostic client text and error-page content are escaped at output. Existing cache key identities, settings, namespace formats and dashboard layout are retained. The rendered file goes through the same staged verification, lock, rollback and recovery process as previous updates.
 
 `HarborCache\Paths::content()` deliberately retains WordPress's configured `WP_CONTENT_DIR`: core loads `object-cache.php` from this exact filesystem location before plugin APIs are available. It is not used to infer the plugin directory or an upload path. The guarded configuration and recovery copy must remain alongside that drop-in. This also preserves cache-prefix identities for existing installations.
+
+The full compatibility gate also reproduced the known PHP 7.4/PhpRedis TLS 1.3 connection hang. PHP 7.4 native TLS now defaults to verified TLS 1.2 unless an explicit crypto_method is configured; newer PHP and Predis retain their policy. Repeated trusted TLS and untrusted-certificate rejection are covered in Linux CI.

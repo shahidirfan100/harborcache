@@ -71,6 +71,7 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 * Resolve the plugin directory from its actual installation and install a verified drop-in with that path.
 * Remove legacy directory guesses from Predis and preserve recovery when a plugin folder moves.
 * Escape diagnostic and error output at rendering time.
+* Default PHP 7.4 PhpRedis TLS connections to verified TLS 1.2 to avoid a known TLS 1.3 stream hang; preserve explicit TLS policies.
 * Exclude development reports and unused vendor documentation from the install ZIP while retaining source and licenses.
 
 = 1.2.3 =

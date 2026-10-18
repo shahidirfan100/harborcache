@@ -183,6 +183,11 @@ jobs:
           for client in predis phpredis; do
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"cafile\":\"/tmp/hc-redis/cert.pem\",\"verify_peer\":true,\"verify_peer_name\":true}}"
             run_transport_acceptance "trusted TLS $client" "evidence/tls-$client.txt" tests/acceptance.php transport
+            if [[ '${{ matrix.php }}' == '7.4' && "$client" == phpredis ]]; then
+              for round in $(seq 1 5); do
+                run_transport_acceptance "PHP 7.4 trusted TLS repeat $round" "evidence/tls-php74-repeat-$round.txt" tests/acceptance.php transport
+              done
+            fi
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"verify_peer\":true,\"verify_peer_name\":true}}"
             run_transport_acceptance "untrusted TLS rejection $client" "evidence/untrusted-tls-$client.txt" tests/acceptance.php down
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"host\":\"/tmp/hc-redis/redis.sock\"}"
