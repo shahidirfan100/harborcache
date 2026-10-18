@@ -297,7 +297,7 @@ class Plugin {
      * @return bool
      */
     public function object_cache_dropin_exists() {
-        return file_exists( WP_CONTENT_DIR . '/object-cache.php' );
+        return file_exists( \HarborCache\Paths::content( 'object-cache.php' ) );
     }
 
     /**
@@ -310,7 +310,7 @@ class Plugin {
             return false;
         }
 
-        $dropin = get_plugin_data( WP_CONTENT_DIR . '/object-cache.php' );
+        $dropin = get_plugin_data( \HarborCache\Paths::content( 'object-cache.php' ) );
         $plugin = get_plugin_data( HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php' );
 
         /**
@@ -339,7 +339,7 @@ class Plugin {
             return false;
         }
 
-        $dropin = get_plugin_data( WP_CONTENT_DIR . '/object-cache.php' );
+        $dropin = get_plugin_data( \HarborCache\Paths::content( 'object-cache.php' ) );
         $plugin = get_plugin_data( HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php' );
 
         if ( $dropin['PluginURI'] === $plugin['PluginURI'] ) {
@@ -656,8 +656,7 @@ class Plugin {
         );
 
         if ( ! WP_DEBUG_DISPLAY ) {
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            printf( "\n<!-- %s -->\n", $message );
+            printf( "\n<!-- %s -->\n", esc_html( $message ) );
 
             return;
         }
@@ -674,7 +673,7 @@ class Plugin {
 
         printf(
             "<!--\n%s\n\n%s\n-->\n",
-            $message, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            esc_html( $message ),
             esc_html( $debug )
         );
     }
@@ -768,7 +767,7 @@ class Plugin {
     }
 
     /**
-     * Test if we can write in the WP_CONTENT_DIR and modify the `object-cache.php` drop-in
+     * Test writing in the configured content directory and modifying the cache drop-in.
      *
      * @return true|WP_Error
      */
@@ -787,11 +786,11 @@ class Plugin {
         $dropin_check = ! defined( 'WP_REDIS_DISABLE_DROPIN_CHECK' ) || ! WP_REDIS_DISABLE_DROPIN_CHECK;
 
         if ( ! $dropin_check ) {
-            if ( ! $wp_filesystem->exists( WP_CONTENT_DIR . '/object-cache.php' ) ) {
+            if ( ! $wp_filesystem->exists( \HarborCache\Paths::content( 'object-cache.php' ) ) ) {
                 return true;
             }
 
-            if ( ! $wp_filesystem->is_writable( WP_CONTENT_DIR . '/object-cache.php' ) ) {
+            if ( ! $wp_filesystem->is_writable( \HarborCache\Paths::content( 'object-cache.php' ) ) ) {
                 return new WP_Error( 'writable', __( 'Object cache drop-in is not writable.', 'harborcache-object-cache-with-redis' ) );
             }
 
@@ -799,7 +798,7 @@ class Plugin {
         }
 
         $cachefile = HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php';
-        $testfile = WP_CONTENT_DIR . '/object-cache.tmp';
+        $testfile = \HarborCache\Paths::content( 'object-cache.tmp' );
 
         if ( ! $wp_filesystem->exists( $cachefile ) ) {
             return new WP_Error( 'exists', __( 'Object cache file doesn’t exist.', 'harborcache-object-cache-with-redis' ) );
@@ -811,7 +810,7 @@ class Plugin {
             }
         }
 
-        if ( ! $wp_filesystem->is_writable( WP_CONTENT_DIR ) ) {
+        if ( ! $wp_filesystem->is_writable( \HarborCache\Paths::content() ) ) {
             return new WP_Error( 'writable', __( 'Content directory is not writable.', 'harborcache-object-cache-with-redis' ) );
         }
 
@@ -869,11 +868,10 @@ class Plugin {
         }
 
         if ( $this->initialize_filesystem( '', true ) ) {
-            $result = $wp_filesystem->copy(
+            $result = \HarborCache\Dropin_Writer::replace(
+                $wp_filesystem,
                 HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php',
-                WP_CONTENT_DIR . '/object-cache.php',
-                true,
-                FS_CHMOD_FILE
+                \HarborCache\Paths::content( 'object-cache.php' )
             );
 
             /**

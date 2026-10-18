@@ -8,11 +8,11 @@ If a PHP error in an existing drop-in prevents wp-admin from loading, use the ho
 
 ## Upgrades
 
-Authorized administrators automatically refresh an outdated owned drop-in when auto_update_dropin is enabled. Its contents are compared with the packaged drop-in. Failed refreshes retain a working manual Update drop-in form. Foreign drop-ins and symlinks are never replaced. Headless deployments must run `wp harborcache update` after replacing plugin files. Keep the previous ZIP and configuration backup for rollback. Do not point an untrusted directory at HARBORCACHE_PLUGIN_PATH.
+Authorized administrators automatically refresh an outdated owned drop-in when auto_update_dropin is enabled. Its contents are compared with the packaged template rendered for the actual installation path. Failed refreshes retain a working manual Update drop-in form. Foreign drop-ins and symlinks are never replaced. Headless deployments must run `wp harborcache update` after replacing plugin files. Keep the previous ZIP and configuration backup for rollback. Do not point an untrusted directory at HARBORCACHE_PLUGIN_PATH.
 
 ## Must-use setup
 
-Keep the full plugin in wp-content/plugins/harborcache-object-cache-with-redis and copy deployment/harborcache-loader.php to wp-content/mu-plugins/harborcache-loader.php. The stub requires the main plugin once; there is no need to activate the normal plugin too. An absolute HARBORCACHE_PLUGIN_PATH defined in wp-config.php supports another installation directory. Run `wp harborcache enable` to install the cache drop-in. MU plugins cannot be deactivated from the normal plugin screen; remove the loader deliberately to stop loading it, and disable the owned drop-in first.
+Keep the full plugin in your chosen installation directory and define its absolute HARBORCACHE_PLUGIN_PATH in wp-config.php. Copy the optional deployment/harborcache-loader.php from the source repository to your configured MU-plugin directory. The stub requires the main plugin once; there is no need to activate the normal plugin too. The stub does not guess a directory name. Run `wp harborcache enable` to install the cache drop-in. MU plugins cannot be deactivated from the normal plugin screen; remove the loader deliberately to stop loading it, and disable the owned drop-in first.
 
 ## Composer project
 
@@ -29,3 +29,9 @@ Failure modes: silent falls back to runtime caching; strict throws on initializa
 `harborcache_manager_capability` can return a dedicated capability granted to a trusted operations role. It protects dashboard controls, admin actions and admin-bar management. Multisite defaults to manage_network_options. The hook is an internal WordPress extension point, not an additional public helper API.
 
 HarborCache registers no REST endpoints and adds no wp_cache_remember/wp_cache_sear helper functions. Required WordPress wp_cache_* functions remain. Admin mutations and CSV exports use nonce- and capability-protected admin-post forms.
+
+## Directory resolution
+
+Enable and update through HarborCache controls or WP-CLI; the installer embeds the actual plugin directory into the verified drop-in. If you manually copy the uninstalled template, define HARBORCACHE_PLUGIN_PATH in wp-config.php first. After moving or renaming an installation, refresh the owned drop-in through the admin or `wp harborcache update`. A missing source path safely leaves WordPress using its request-local cache.
+
+The content directory is special: WordPress itself loads object-cache.php from its configured WP_CONTENT_DIR before normal plugin APIs load. The guarded configuration, lock and recovery file use that same canonical directory. Upload directories may be elsewhere and cannot replace it. Cache-prefix and ownership identities retain the unchanged content path.

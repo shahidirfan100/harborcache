@@ -58,7 +58,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 				$this->ch_root = $this->ch_token( $this->ch_base . ':root' ); $this->ch_ready = '' !== $this->ch_root && $this->redis_status();
 				if ( $this->ch_config['strict'] ) {
 					global $table_prefix;
-					$identity = hash( 'sha256', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . ':' . $table_prefix . ':' . ( defined( 'AUTH_KEY' ) ? AUTH_KEY : WP_CONTENT_DIR ) );
+					$identity = hash( 'sha256', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . ':' . $table_prefix . ':' . ( defined( 'AUTH_KEY' ) ? AUTH_KEY : \HarborCache\Paths::content() ) );
 					$this->ch_command( array( 'SET', $this->ch_base . ':owner', $identity, 'NX' ) );
 					$owner = $this->ch_metadata_get( $this->ch_base . ':owner' );
 					if ( is_string( $owner ) && $owner !== $identity ) { $this->flush_scope( 'all' ); $this->ch_command( array( 'SET', $this->ch_base . ':owner', $identity ) ); \HarborCache\Observer::log( $this->ch_config, 'warning', 'Cache prefix ownership changed; integrity namespace rotated.' ); }

@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.3
+Stable tag: 1.2.4
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,12 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.4 =
+* Resolve the plugin directory from its actual installation and install a verified drop-in with that path.
+* Remove legacy directory guesses from Predis and preserve recovery when a plugin folder moves.
+* Escape diagnostic and error output at rendering time.
+* Exclude development reports and unused vendor documentation from the install ZIP while retaining source and licenses.
 
 = 1.2.3 =
 * Recover verified backups when an interrupted update leaves a partial drop-in at the destination.

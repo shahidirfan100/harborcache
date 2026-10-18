@@ -7,6 +7,17 @@ defined( 'ABSPATH' ) || exit;
 final class Dropin_Writer {
 	private static $last_error = '';
 
+	/** Render one guarded PHP path literal before staging the installed drop-in. */
+	public static function render( $text, $plugin_path ) {
+		if ( ! is_string( $text ) || ! is_string( $plugin_path ) || '' === $plugin_path || false !== strpos( $plugin_path, "\0" ) ) { return false; }
+		$marker = '$harborcache_plugin_path = null; // HARBORCACHE_PLUGIN_PATH_PLACEHOLDER';
+		return str_replace( $marker, '$harborcache_plugin_path = ' . var_export( rtrim( $plugin_path, '/\\' ), true ) . '; // HARBORCACHE_PLUGIN_PATH_INSTALLED', $text ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- PHP configuration literal, not diagnostic output.
+	}
+
+	private static function source_contents( $fs, $source ) {
+		return self::render( $fs->get_contents( $source ), defined( 'HARBORCACHE_PLUGIN_PATH' ) ? HARBORCACHE_PLUGIN_PATH : dirname( $source, 2 ) );
+	}
+
 	private static function locked( $fs, $file, callable $operation ) {
 		$lock = $file . '.harborcache-lock';
 		$handle = null;
@@ -79,7 +90,7 @@ final class Dropin_Writer {
 			$previous = $fs->get_contents( $backup );
 			if ( ! self::owned( $previous ) ) { return self::fail( 'invalid_backup' ); }
 			$previous_hash = hash( 'sha256', $previous );
-			$source_text = $source && $fs->exists( $source ) ? $fs->get_contents( $source ) : false;
+			$source_text = $source && $fs->exists( $source ) ? self::source_contents( $fs, $source ) : false;
 			$source_hash = is_string( $source_text ) ? hash( 'sha256', $source_text ) : '';
 
 			if ( $fs->exists( $file ) ) {
@@ -120,14 +131,14 @@ final class Dropin_Writer {
 		$result = self::locked( $fs, $file, static function () use ( $fs, $source, $file ) {
 			$backup = $file . '.harborcache-backup.php';
 			$temp = $file . '.' . wp_generate_password( 12, false ) . '.php';
-			$text = $fs->get_contents( $source );
+			$text = self::source_contents( $fs, $source );
 			if ( ! self::owned( $text ) ) { return self::fail( 'stage_failed' ); }
 			$expected = hash( 'sha256', $text );
 			$previous = $fs->exists( $file ) ? $fs->get_contents( $file ) : null;
 			if ( null !== $previous && ! self::owned( $previous ) ) { return self::fail( 'foreign_destination' ); }
 			$previous_hash = is_string( $previous ) ? hash( 'sha256', $previous ) : '';
 			try {
-				if ( ! $fs->copy( $source, $temp, false, FS_CHMOD_FILE ) || ! self::matches( $fs, $temp, $expected ) ) { return self::fail( 'stage_failed' ); }
+				if ( ! $fs->put_contents( $temp, $text, FS_CHMOD_FILE ) || ! self::matches( $fs, $temp, $expected ) ) { return self::fail( 'stage_failed' ); }
 				if ( null !== $previous && ( ! $fs->copy( $file, $backup, true, FS_CHMOD_FILE ) || ! self::matches( $fs, $backup, $previous_hash ) ) ) { return self::fail( 'backup_failed' ); }
 				// Direct same-directory rename preserves the old destination until success on POSIX.
 				$ok = $fs instanceof \WP_Filesystem_Direct && @rename( $temp, $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename

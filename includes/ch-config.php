@@ -5,6 +5,7 @@ namespace HarborCache;
 // WordPress drop-ins require wp_cache_* names; WP_REDIS_* constants preserve the upstream configuration API.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 defined( 'ABSPATH' ) || exit;
+require_once __DIR__ . '/ch-paths.php';
 
 final class Config {
 	private static $loaded;
@@ -42,8 +43,8 @@ final class Config {
 			throw new \InvalidArgumentException( 'HARBORCACHE_CONFIG must be an array.' );
 		}
 		$saved = array();
-		if ( is_readable( WP_CONTENT_DIR . '/harborcache-config.php' ) ) {
-			$saved = include WP_CONTENT_DIR . '/harborcache-config.php';
+		if ( is_readable( Paths::content( 'harborcache-config.php' ) ) ) {
+			$saved = include Paths::content( 'harborcache-config.php' );
 			if ( ! is_array( $saved ) ) { throw new \InvalidArgumentException( 'Saved configuration must be an array.' ); }
 		}
 		self::$loaded = self::validate( array_replace( self::defaults(), $saved, $input ), true );
@@ -90,7 +91,7 @@ final class Config {
 		elseif ( is_string( $config['host'] ) && preg_match( '#^(tcp|tls)://([^/]+)$#D', $config['host'], $parts ) ) { $config['scheme'] = $parts[1]; $config['host'] = $parts[2]; }
 		$config['analytics'] = array_replace( self::defaults()['analytics'], (array) $config['analytics'] );
 		if ( '' === $config['prefix'] ) {
-			$config['prefix'] = substr( hash( 'sha256', WP_CONTENT_DIR ), 0, 16 );
+			$config['prefix'] = substr( hash( 'sha256', Paths::content() ), 0, 16 );
 		}
 		foreach ( array( 'port' => array( 1, 65535 ), 'database' => array( 0, 65535 ), 'maxttl' => array( 1, 2592000 ), 'queryttl' => array( 1, 2592000 ) ) as $key => $bounds ) {
 			if ( ! is_int( $config[ $key ] ) || $config[ $key ] < $bounds[0] || $config[ $key ] > $bounds[1] ) {

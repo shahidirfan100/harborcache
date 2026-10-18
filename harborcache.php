@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HarborCache – Object Cache with Redis
  * Description: Fast Redis object caching for WordPress with clear insights, analytics and safe cache controls.
- * Version: 1.2.3
+ * Version: 1.2.4
  * Text Domain: harborcache-object-cache-with-redis
  * Domain Path: /languages
  * Network: true
@@ -28,18 +28,18 @@ if ( ( defined( 'WP_REDIS_FILE' ) && WP_REDIS_FILE !== __FILE__ ) || ( defined( 
  } );
  return;
 }
-require_once __DIR__ . '/includes/ch-config.php';
+define( 'HARBORCACHE_FILE', __FILE__ );
+if ( ! defined( 'HARBORCACHE_PLUGIN_PATH' ) ) {
+    define( 'HARBORCACHE_PLUGIN_PATH', untrailingslashit( plugin_dir_path( HARBORCACHE_FILE ) ) );
+}
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php';
 try { \HarborCache\Config::apply(); \HarborCache\Config::load(); }
 catch ( \Throwable $harborcache_error ) { error_log( 'HarborCache configuration is invalid. Review HARBORCACHE_CONFIG and wp-content/harborcache-config.php.' ); return; } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 require_once __DIR__ . '/includes/class-console.php';
 \HarborCache\Console::boot();
 
-define( 'HARBORCACHE_FILE', __FILE__ );
 define( 'HARBORCACHE_BASENAME', plugin_basename( HARBORCACHE_FILE ) );
 define( 'HARBORCACHE_PLUGIN_DIR', plugin_dir_url( HARBORCACHE_FILE ) );
-if ( ! defined( 'HARBORCACHE_PLUGIN_PATH' ) ) {
-    define( 'HARBORCACHE_PLUGIN_PATH', __DIR__ );
-}
 
 $harborcache_meta = get_file_data( HARBORCACHE_FILE, [ 'Version' => 'Version' ] );
 

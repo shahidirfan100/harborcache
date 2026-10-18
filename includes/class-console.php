@@ -118,7 +118,7 @@ final class Console {
 
 	public static function owns_dropin() {
 		if ( null !== self::$dropin_owned ) { return self::$dropin_owned; }
-		$file = WP_CONTENT_DIR . '/object-cache.php';
+		$file = Paths::content( 'object-cache.php' );
 		if ( ! is_readable( $file ) || is_link( $file ) ) { return self::$dropin_owned = false; }
 		$text = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		return self::$dropin_owned = is_string( $text ) && false !== strpos( $text, 'HarborCache_Advanced_Cache' ) && false !== strpos( $text, 'HarborCache Drop-In' );
@@ -128,12 +128,14 @@ final class Console {
 		if ( null !== self::$dropin_matches ) { return self::$dropin_matches; }
 		$bundled = HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php';
 		if ( ! self::owns_dropin() || ! is_readable( $bundled ) ) { return self::$dropin_matches = false; }
-		$source = hash_file( 'sha256', $bundled ); $active = hash_file( 'sha256', WP_CONTENT_DIR . '/object-cache.php' );
+		$text = Dropin_Writer::render( file_get_contents( $bundled ), HARBORCACHE_PLUGIN_PATH ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read the bundled local PHP template.
+		$source = is_string( $text ) ? hash( 'sha256', $text ) : false;
+		$active = hash_file( 'sha256', Paths::content( 'object-cache.php' ) );
 		return self::$dropin_matches = is_string( $source ) && is_string( $active ) && hash_equals( $source, $active );
 	}
 
 	public static function maybe_update_owned_dropin() {
-		$file = WP_CONTENT_DIR . '/object-cache.php';
+		$file = Paths::content( 'object-cache.php' );
 		$backup = $file . '.harborcache-backup.php';
 		if ( self::allowed() && file_exists( $backup ) ) {
 			try {
@@ -160,7 +162,7 @@ final class Console {
 
 	public static function dropin_notice() {
 		if ( ! self::is_console_screen() ) { return; }
-		$backup = WP_CONTENT_DIR . '/object-cache.php.harborcache-backup.php';
+		$backup = Paths::content( 'object-cache.php.harborcache-backup.php' );
 		if ( self::allowed() && ( self::$dropin_recovery_failed || ( file_exists( $backup ) && ! self::owns_dropin() ) ) ) {
 			$message = Dropin_Writer::error_message();
 			if ( ! $message ) { $message = __( 'HarborCache retained a drop-in recovery copy but could not safely complete recovery. Preserve object-cache.php and object-cache.php.harborcache-backup.php, check wp-content permissions, then retry.', 'harborcache-object-cache-with-redis' ); }
@@ -186,7 +188,7 @@ final class Console {
 	public static function dropin( $enable ) {
 		$fs = self::filesystem();
 		self::reset_dropin_state();
-		$file = WP_CONTENT_DIR . '/object-cache.php';
+		$file = Paths::content( 'object-cache.php' );
 		if ( $fs->exists( $file ) && ! self::owns_dropin() ) { throw new \RuntimeException( esc_html__( 'Another object-cache.php is installed. Disable its owning plugin before enabling HarborCache.', 'harborcache-object-cache-with-redis' ) ); }
 		if ( $enable ) {
 			$config = Config::load();
@@ -245,7 +247,7 @@ final class Console {
 
 	public static function save_config( array $input ) {
 		$old = Config::load();
-		$saved = is_readable( WP_CONTENT_DIR . '/harborcache-config.php' ) ? include WP_CONTENT_DIR . '/harborcache-config.php' : array();
+		$saved = is_readable( Paths::content( 'harborcache-config.php' ) ) ? include Paths::content( 'harborcache-config.php' ) : array();
 		$saved = array_replace( Config::defaults(), is_array( $saved ) ? $saved : array() );
 		foreach ( $input as $value ) { if ( ! is_scalar( $value ) && null !== $value ) { throw new \InvalidArgumentException( esc_html__( 'Settings must contain scalar values.', 'harborcache-object-cache-with-redis' ) ); } }
 		foreach ( array( 'host', 'username', 'client', 'serializer', 'compression', 'network_flush', 'prefix', 'backoff', 'group_flush', 'pattern_flush', 'failure_mode' ) as $key ) { if ( isset( $input[ $key ] ) ) { $saved[ $key ] = sanitize_text_field( $input[ $key ] ); } }
@@ -263,7 +265,7 @@ final class Console {
 		Config::validate( $saved );
 		new Codec( array_replace( $old, $saved ) );
 		$fs = self::filesystem();
-		$path = WP_CONTENT_DIR . '/harborcache-config.php';
+		$path = Paths::content( 'harborcache-config.php' );
 		if ( is_link( $path ) ) { throw new \RuntimeException( esc_html__( 'Refusing to replace a linked configuration file.', 'harborcache-object-cache-with-redis' ) ); }
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Generate the guarded PHP configuration, not debug output.
 		$contents = "<?php\n// HarborCache configuration. Credentials are never sent to an external service.\ndefined( 'ABSPATH' ) || exit;\nreturn " . var_export( $saved, true ) . ";\n";

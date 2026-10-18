@@ -7,6 +7,71 @@ on:
 permissions:
   contents: read
 jobs:
+  review-layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: local-ci-only
+          MYSQL_DATABASE: harborcache
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=5s --health-timeout=5s --health-retries=30
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      WP_ROOT: /tmp/hc-review-core
+      HC_CONTENT: /tmp/hc-review-content
+      HC_EXTENSIONS: /tmp/hc-review-extensions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, redis
+          coverage: none
+          tools: wp-cli
+      - name: Exact ZIP in relocated content and plugin directories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence "$HC_CONTENT" "$HC_EXTENSIONS"
+          python3 tools/build-release.py | tee evidence/package.json
+          wp core download --path="$WP_ROOT"
+          cp -a "$WP_ROOT/wp-content/themes" "$HC_CONTENT/themes"
+          wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
+          wp config set WP_CONTENT_DIR "$HC_CONTENT" --path="$WP_ROOT"
+          wp config set WP_CONTENT_URL http://localhost/content-moved --path="$WP_ROOT"
+          wp config set WP_PLUGIN_DIR "$HC_EXTENSIONS" --path="$WP_ROOT"
+          wp config set WP_PLUGIN_URL http://localhost/extensions-moved --path="$WP_ROOT"
+          wp config set WP_DEBUG true --raw --path="$WP_ROOT"
+          wp config set WP_DEBUG_LOG true --raw --path="$WP_ROOT"
+          wp config set WP_DEBUG_DISPLAY false --raw --path="$WP_ROOT"
+          wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
+          wp core install --path="$WP_ROOT" --url=http://localhost --title='HarborCache review' --admin_user=ci --admin_password=ci-disposable-only --admin_email=ci@example.org --skip-email
+          unzip -q dist/harborcache-*.zip -d "$HC_EXTENSIONS"
+          wp plugin activate harborcache-object-cache-with-redis --path="$WP_ROOT"
+          wp plugin install plugin-check --activate --path="$WP_ROOT"
+          wp plugin check harborcache-object-cache-with-redis --slug=harborcache-object-cache-with-redis --format=json --require="$HC_EXTENSIONS/plugin-check/cli.php" --path="$WP_ROOT" | tee evidence/plugin-check.json
+          wp harborcache enable --path="$WP_ROOT"
+          wp eval-file tests/review-wordpress.php --path="$WP_ROOT" | tee evidence/custom-layout.txt
+          wp eval '$active=get_option("active_plugins"); $active=array_map(static function($p){return str_replace("harborcache-object-cache-with-redis/","cache-renamed/",$p);},$active); update_option("active_plugins",$active);' --path="$WP_ROOT"
+          mv "$HC_EXTENSIONS/harborcache-object-cache-with-redis" "$HC_EXTENSIONS/cache-renamed"
+          wp eval 'if($GLOBALS["wp_object_cache"] instanceof HarborCache_Advanced_Cache){throw new RuntimeException("Expected safe fallback after a directory move");} echo "PASS Safe WordPress bootstrap after rename\n";' --path="$WP_ROOT" | tee evidence/rename-fallback.txt
+          wp harborcache update --path="$WP_ROOT"
+          wp eval-file tests/review-wordpress.php --path="$WP_ROOT" | tee evidence/renamed-layout.txt
+          wp plugin deactivate cache-renamed --path="$WP_ROOT"
+          test ! -e "$HC_CONTENT/object-cache.php"
+          wp plugin uninstall cache-renamed --path="$WP_ROOT"
+          if test -s "$HC_CONTENT/debug.log"; then cat "$HC_CONTENT/debug.log"; exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wordpress-review-layout
+          path: evidence
   wordpress:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -53,6 +118,8 @@ jobs:
           set -euo pipefail
           find includes -name '*.php' -print0 | xargs -0 -n1 php -l > /tmp/syntax.log
           php tests/dropin-writer.php
+          php tests/review-regressions.php
+          python3 tools/build-release.py --check
           php tests/conflict-notice.php
           wp core download --version="${{ matrix.wp || 'latest' }}" --path="$WP_ROOT"
           wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
@@ -61,7 +128,7 @@ jobs:
           mkdir -p "$WP_ROOT/wp-content/plugins/harborcache"
           rsync -a --exclude=.git --exclude=media --exclude=dist --exclude=tests --exclude=.github ./ "$WP_ROOT/wp-content/plugins/harborcache/"
           wp plugin activate harborcache --path="$WP_ROOT"
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php
       - name: Native and PHP clients, codecs, concurrent workers and WordPress flows
         shell: bash
         run: |
@@ -128,7 +195,7 @@ jobs:
           wp cron event run --due-now --path="$WP_ROOT" | tee evidence/cron.txt
           wp plugin deactivate harborcache --path="$WP_ROOT" | tee evidence/deactivate.txt
           wp plugin activate harborcache --path="$WP_ROOT" | tee evidence/reactivate.txt
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php
           export HC_TEST_CONFIG='{"client":"phpredis"}'
           php tests/acceptance.php recovery | tee evidence/lifecycle-recovery.txt
       - uses: actions/upload-artifact@v4
@@ -176,7 +243,7 @@ jobs:
           mkdir -p "$WP_ROOT/wp-content/plugins/harborcache"
           rsync -a --exclude=.git --exclude=media --exclude=dist --exclude=tests --exclude=.github ./ "$WP_ROOT/wp-content/plugins/harborcache/"
           wp plugin activate harborcache --path="$WP_ROOT"
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php
 
       - name: Equal-workload Linux performance comparison
         env:
@@ -200,7 +267,7 @@ jobs:
                 baseline) source=/tmp/hc-baseline/harborcache-object-cache-with-redis ;;
                 harbor) source="$GITHUB_WORKSPACE" ;;
               esac
-              cp "$source/includes/object-cache.php" "$WP_ROOT/wp-content/object-cache.php"
+              php tests/install-dropin.php "$source"
               php tests/benchmark.php "$engine" "$source" "$round" 0 | tee -a evidence/benchmark.jsonl
             done
           done
@@ -210,14 +277,14 @@ jobs:
               baseline) source=/tmp/hc-baseline/harborcache-object-cache-with-redis ;;
               harbor) source="$GITHUB_WORKSPACE" ;;
             esac
-            cp "$source/includes/object-cache.php" "$WP_ROOT/wp-content/object-cache.php"
+            php tests/install-dropin.php "$source"
             php tests/benchmark-flush.php "$engine" "$source" 5 | tee -a evidence/group-flush.jsonl
           done
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php
           for sampling in 10 100; do php tests/benchmark.php harbor "$GITHUB_WORKSPACE" 100 "$sampling" | tee -a evidence/benchmark-sampling.jsonl; done
           rm "$WP_ROOT/wp-content/object-cache.php"
           wp plugin activate harborcache --path="$WP_ROOT"
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php
       - name: WooCommerce checkout, inventory and orders
         shell: bash
         run: |
@@ -231,7 +298,7 @@ jobs:
           set -euo pipefail
           wp core multisite-convert --title='HarborCache network' --path="$WP_ROOT"
           wp plugin activate harborcache --network --path="$WP_ROOT"
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php
           php tests/applications.php multisite | tee evidence/multisite.txt
       - name: Concurrent PHP-FPM HTTP smoke and recovery
         shell: bash

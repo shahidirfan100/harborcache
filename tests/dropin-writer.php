@@ -3,6 +3,7 @@
 define( 'ABSPATH', __DIR__ );
 define( 'FS_CHMOD_FILE', 0644 );
 define( 'FS_CHMOD_DIR', 0755 );
+define( 'HARBORCACHE_PLUGIN_PATH', dirname( __DIR__ ) );
 
 function wp_generate_password( $length = 12, $special = false ) {
 	static $counter = 0;
@@ -10,6 +11,7 @@ function wp_generate_password( $length = 12, $special = false ) {
 }
 
 class WP_Filesystem_Direct {
+	public function put_contents( $path, $contents, $mode = false ) { return false !== file_put_contents( $path, $contents ); }
 	public function exists( $path ) { return file_exists( $path ); }
 	public function get_contents( $path ) { return file_get_contents( $path ); }
 	public function copy( $source, $destination, $overwrite = false, $mode = false ) {
@@ -31,6 +33,7 @@ class WP_Filesystem_Direct {
 }
 
 class HarborCache_Test_Failing_Filesystem {
+	public function put_contents( $path, $contents, $mode = false ) { return false !== file_put_contents( $path, $contents ); }
 	public $failed_destination;
 	public function __construct( $failed_destination ) { $this->failed_destination = $failed_destination; }
 	public function exists( $path ) { return file_exists( $path ); }
@@ -123,6 +126,22 @@ $assert( 'Next request can restore the old drop-in after failed upgrade', $recov
 file_put_contents( $file, $previous );
 $replaced = HarborCache\Dropin_Writer::replace( new WP_Filesystem_Direct(), $source, $file );
 $assert( 'Owned drop-in replacement installs exact packaged bytes', $replaced && hash_equals( hash( 'sha256', $current ), hash_file( 'sha256', $file ) ) && ! file_exists( $backup ) );
+
+// The installed engine contains the rendered source path, and recovery compares those bytes.
+$template = file_get_contents( dirname( __DIR__ ) . '/includes/object-cache.php' );
+$rendered = HarborCache\Dropin_Writer::render( $template, HARBORCACHE_PLUGIN_PATH );
+file_put_contents( $source, $template );
+$replaced = HarborCache\Dropin_Writer::replace( new WP_Filesystem_Direct(), $source, $file );
+$assert( 'Replacement verifies rendered bytes rather than the uninstalled template', $replaced && $rendered === file_get_contents( $file ) );
+file_put_contents( $backup, $previous );
+$recovered = HarborCache\Dropin_Writer::recover( new WP_Filesystem_Direct(), $file, $source );
+$assert( 'Completed rendered update clears backup without rolling back', $recovered && $rendered === file_get_contents( $file ) && ! file_exists( $backup ) );
+
+$staging = new class extends WP_Filesystem_Direct {
+	public function put_contents( $path, $contents, $mode = false ) { file_put_contents( $path, substr( $contents, 0, 80 ) ); return false; }
+};
+$replaced = HarborCache\Dropin_Writer::replace( $staging, $source, $file );
+$assert( 'Partial staging preserves the working drop-in and leaves no temporary PHP', ! $replaced && $rendered === file_get_contents( $file ) && ! file_exists( $backup ) && 0 === count( glob( $root . '/object-cache.php.*.php' ) ) );
 
 foreach ( glob( $root . '/*' ) as $path ) { if ( is_file( $path ) ) { unlink( $path ); } }
 foreach ( glob( $root . '/*' ) as $path ) { if ( is_dir( $path ) ) { rmdir( $path ); } }
