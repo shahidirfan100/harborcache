@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, 'codex/**']
-    paths: ['**.php', 'assets/**', 'tests/**', '.github/workflows/acceptance.yml']
+    paths: ['**.php', 'assets/**', 'tests/**', 'tools/**', '.distignore', 'dist/**', 'readme.txt', '.github/workflows/acceptance.yml']
 permissions:
   contents: read
 jobs:

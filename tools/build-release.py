@@ -25,6 +25,9 @@ def main():
     dropin = (ROOT / "includes/object-cache.php").read_text(encoding="utf-8")
     assert f"Version: {version}\n" in dropin
     patterns = [line.strip().lstrip("/") for line in (ROOT / ".distignore").read_text().splitlines() if line.strip() and not line.startswith("#")]
+    runtime_roots = {"assets", "docs", "includes", "languages", "vendor"}
+    root_files = {"harborcache.php", "uninstall.php", "readme.txt", "LICENSE.md", "composer.json"}
+    user_guides = {"ADVANCED.md", "CONFIGURATION.md", "DEPLOYMENT.md", "FEATURES.md", "SOURCE.md"}
     included = []
     for path in sorted(ROOT.rglob("*")):
         rel = path.relative_to(ROOT).as_posix()
@@ -32,6 +35,8 @@ def main():
             continue
         if not path.is_file():
             continue
+        assert path.parts[len(ROOT.parts)] in runtime_roots or rel in root_files, f"Unexpected distribution location: {rel}"
+        assert not rel.startswith("docs/") or path.name in user_guides, f"Unexpected user documentation: {rel}"
         assert not path.is_symlink(), f"Symlink in distribution: {rel}"
         assert path.suffix.lower() in {".php", ".js", ".css", ".txt", ".md", ".json", ".xml", ".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".pot", ".po", ".mo", ".map"} or path.name in {"LICENSE", "COPYING"}, f"Unexpected distribution file: {rel}"
         included.append((path, rel))
@@ -52,9 +57,10 @@ def main():
                 archive.write(path, f"{SLUG}/{rel}")
     with zipfile.ZipFile(output) as archive:
         assert archive.testzip() is None
-        assert set(archive.namelist()) == {f"{SLUG}/{rel}" for _, rel in included}
+        expected = {f"{SLUG}/{rel}" for _, rel in included}
+        assert set(archive.namelist()) == expected, f"ZIP file list mismatch: {set(archive.namelist()) ^ expected}"
         for path, rel in included:
-            assert archive.read(f"{SLUG}/{rel}") == path.read_bytes()
+            assert archive.read(f"{SLUG}/{rel}") == path.read_bytes(), f"ZIP/source mismatch: {rel}"
     print(json.dumps({"archive": str(output), "version": version, "files": len(included), "sha256": hashlib.sha256(output.read_bytes()).hexdigest(), "distribution_checks": "passed"}))
 
 
