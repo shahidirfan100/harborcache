@@ -40,11 +40,8 @@ require HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php';
 HarborCache\Config::apply();
 require HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-advanced-cache.php';
-class HC_Profile_Cache extends HarborCache_Advanced_Cache {
-    public function seed( $value ) { $this->cache[ $this->build_key( 'profile', 'posts' ) ] = $value; }
-}
-$cache = new HC_Profile_Cache();
-$cache->seed( array( 'value' => 42 ) );
+$cache = new HarborCache_Advanced_Cache();
+$cache->add_to_internal_cache( $cache->build_key( 'profile', 'posts' ), array( 'value' => 42 ) );
 $GLOBALS['hc_profile_driver']->values[ $cache->build_key( 'profile', 'posts' ) ] = ( new HarborCache\Codec( $cache->ch_config ) )->encode( array( 'value' => 42 ) );
 $results = array();
 foreach ( array( 'memory' => 200000, 'forced' => 20000, 'miss' => 20000, 'keys' => 20000 ) as $case => $iterations ) {

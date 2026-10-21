@@ -70,6 +70,11 @@ class HC_Routing_Fixture {
     public function read( $keys ) { return $this->routed_read( is_array( $keys ) ? 'mget' : 'get', array( $keys ), static function () { return 'primary'; } ); }
 }
 
+class HC_Custom_Sanitizer extends HarborCache_Advanced_Cache {
+    public $normalizations = 0;
+    protected function sanitize_key_part( $part ) { ++$this->normalizations; return parent::sanitize_key_part( $part ); }
+}
+
 class HC_Nested_Bypass_Fixture {
     use HarborCache_Native;
     public $ch_relay_bypass = false;
@@ -149,6 +154,11 @@ try {
     $check( 'A rejected metadata read cannot masquerade as a cache miss', ! $cache->redis_status() && str_repeat( 'b', 24 ) === $client->values['hc-safety:meta:root'] );
 
     $routes = new HC_Routing_Fixture();
+    $client = $driver();
+    $custom = new HC_Custom_Sanitizer();
+    $custom->add_to_internal_cache( $custom->build_key( 'key:part', 'group:part' ), 42 );
+    $before_normalization = $custom->normalizations;
+    $check( 'Custom sanitizer subclasses retain their normalization calls', 42 === $custom->get( 'key:part', 'group:part' ) && $custom->normalizations >= $before_normalization + 2 );
     $client = $driver();
     $context_cache = new HarborCache_Advanced_Cache();
     $context_cache->blog_prefix = 1;

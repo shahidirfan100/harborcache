@@ -48,8 +48,10 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_failure_reason = '';
 	private $ch_contexts = array();
 	private $ch_context_blog;
+	private $ch_default_sanitizer = false;
 
 	public function __construct( $fail_gracefully = false ) {
+		$this->ch_default_sanitizer = __CLASS__ === get_class( $this );
 		$this->ch_config = \HarborCache\Config::load();
 		$codec_error = null;
 		try { $this->ch_codec = new \HarborCache\Codec( $this->ch_config ); }
@@ -546,7 +548,13 @@ LUA;
 		}
 		if ( ! is_int( $key ) && ( ! is_string( $key ) || '' === trim( $key ) ) ) { $found = false; return false; }
 		if ( ! $force && $this->ch_ready ) {
-			$san_key = $this->sanitize_key_part( $key ); $san_group = $this->sanitize_key_part( $group ?: 'default' );
+			if ( $this->ch_default_sanitizer ) {
+				$san_key = is_string( $key ) ? str_replace( ':', '-', $key ) : $key;
+				$san_group = is_string( $group ) ? str_replace( ':', '-', $group ?: 'default' ) : ( $group ?: 'default' );
+			} else {
+				$san_key = $this->sanitize_key_part( $key );
+				$san_group = $this->sanitize_key_part( $group ?: 'default' );
+			}
 			$context = $this->ch_context( $san_group );
 			$derived = $this->ch_derived[ $context ][ $san_key ] ?? null;
 			if (
