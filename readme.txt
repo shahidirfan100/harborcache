@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.6
+Stable tag: 1.2.7
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,14 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.7 =
+* Reuse key contexts within a site and invalidate them when global groups or the current site change.
+* Batch independent metadata commands on supported single-node clients without changing cache key formats.
+* Skip drop-in inspection for unsampled requests and batch native request-metrics storage.
+* Contain metrics failures with concise redacted logs and reuse corruption-handling callbacks.
+* Reduce bootstrap work while retaining compatibility methods and the existing dashboard.
+* Add matched full-plugin and engine benchmarks, CPU profiling and regression coverage.
 
 = 1.2.6 =
 * Preserve another installation's cache-prefix ownership during startup and enable/reconnect checks.
@@ -178,6 +186,9 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.7 =
+Refresh the owned drop-in after upgrading. Existing settings, key formats, dashboard styling and prefix safety are preserved. This update reduces repeated PHP work and batches supported Redis commands.
 
 = 1.2.6 =
 Refresh the owned drop-in after upgrading. Prefix conflicts now use request-memory fallback. Configure a distinct prefix for a cloned site or restore its original identity. Existing cache key formats and dashboard styling are preserved.

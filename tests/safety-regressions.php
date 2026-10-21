@@ -149,6 +149,21 @@ try {
     $check( 'A rejected metadata read cannot masquerade as a cache miss', ! $cache->redis_status() && str_repeat( 'b', 24 ) === $client->values['hc-safety:meta:root'] );
 
     $routes = new HC_Routing_Fixture();
+    $client = $driver();
+    $context_cache = new HarborCache_Advanced_Cache();
+    $context_cache->blog_prefix = 1;
+    $local_key = $context_cache->build_key( 'key', 'context-fixture' );
+    $context_cache->blog_prefix = 2;
+    $other_key = $context_cache->build_key( 'key', 'context-fixture' );
+    $context_cache->blog_prefix = 1;
+    $check( 'Cached key contexts follow blog switches and restore the original namespace', $local_key !== $other_key && $local_key === $context_cache->build_key( 'key', 'context-fixture' ) );
+    $context_cache->add_global_groups( array( 'context-fixture' ) );
+    $global_key = $context_cache->build_key( 'key', 'context-fixture' );
+    $context_cache->blog_prefix = 2;
+    $check( 'Late global-group registration invalidates cached local contexts', $global_key !== $local_key && $global_key === $context_cache->build_key( 'key', 'context-fixture' ) );
+    $context_cache->add_to_internal_cache( 'typed-false', false );
+    $context_cache->add_to_internal_cache( 'typed-array', array( 'value' => null ) );
+    $check( 'Byte statistics retain their serialized-value meaning', strlen( serialize( false ) ) + strlen( serialize( array( 'value' => null ) ) ) === $context_cache->info()->bytes );
     $nested = new HC_Nested_Bypass_Fixture();
     $nested_state = $nested->read( static function () use ( $nested ) {
         $inner = $nested->read( static function () use ( $nested ) { return $nested->ch_relay_bypass; } );

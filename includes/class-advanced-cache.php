@@ -46,6 +46,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_ignored_results = array();
 	public $ch_retries = 0;
 	private $ch_failure_reason = '';
+	private $ch_contexts = array();
+	private $ch_context_blog;
 
 	public function __construct( $fail_gracefully = false ) {
 		$this->ch_config = \HarborCache\Config::load();
@@ -238,6 +240,46 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 
 	private function ch_scope( $group ) { return $this->is_global_group( $group ) ? 'global' : 'site-' . ( is_numeric( $this->blog_prefix ) ? (int) $this->blog_prefix : 1 ); }
 
+	private function ch_context( $group ) {
+		if ( $this->ch_context_blog !== $this->blog_prefix ) {
+			$this->ch_context_blog = $this->blog_prefix;
+			$this->ch_contexts = array();
+		}
+		if ( isset( $this->ch_contexts[ $group ] ) ) { return $this->ch_contexts[ $group ]; }
+		if ( count( $this->ch_contexts ) >= 256 ) { $this->ch_contexts = array(); }
+		return $this->ch_contexts[ $group ] = $this->ch_scope( $group ) . ':' . $group;
+	}
+
+	private function ch_register_group( $scope, $group_key, $group ) {
+		$registry = $this->ch_base . ':' . $this->ch_root . ':groups';
+		$expiry = $this->ch_config['maxttl'] * 2;
+		$client = $this->redis_instance();
+		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] && ( $client instanceof \Redis || $client instanceof \Predis\Client ) ) {
+			$start = microtime( true );
+			try {
+			$pipeline = $this->redis_pipeline();
+			$pipeline->sadd( $registry, $this->ch_scope( $group ) . '|' . rawurlencode( $group ) );
+			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $registry ) as $metadata ) { $pipeline->expire( $metadata, $expiry ); }
+			$replies = $client instanceof \Predis\Client ? $pipeline->execute() : $pipeline->exec();
+			if ( ! is_array( $replies ) || 4 !== count( $replies ) ) { throw new RuntimeException( 'Cache metadata registration failed.' ); }
+			foreach ( $replies as $index => $reply ) {
+				if ( ( 0 === $index && ! is_int( $reply ) && true !== $reply ) || ( $index > 0 && 1 !== $reply && true !== $reply ) ) { throw new RuntimeException( 'Cache metadata registration failed.' ); }
+			}
+			} finally {
+				$this->cache_calls += 4;
+				$this->cache_time += microtime( true ) - $start;
+			}
+		} else {
+			$this->ch_command( array( 'SADD', $registry, $this->ch_scope( $group ) . '|' . rawurlencode( $group ) ) );
+			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $registry ) as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $expiry ) ); }
+		}
+	}
+
+	public function add_global_groups( $groups ) {
+		$this->ch_contexts = array();
+		parent::add_global_groups( $groups );
+	}
+
 	public function fast_build_key( $key, $group = 'default' ) {
 		if ( ! $this->ch_ready ) { return parent::fast_build_key( $key, $group ); }
 		try {
@@ -256,7 +298,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] );
 		}
 		$layout = $this->ch_config['split_alloptions'] && 'relay' === $this->ch_config['client'] ? ':relay-options-v1' : '';
-		$context = $this->ch_scope( $group ) . ':' . $group;
+		$context = $this->ch_context( $group );
 		$cacheable = is_string( $key ) || is_int( $key );
 		if ( $cacheable && isset( $this->ch_derived[ $context ][ $key ] ) ) { return $this->ch_derived[ $context ][ $key ]; }
 		if ( isset( $this->ch_prefixes[ $context ] ) ) { $prefix = $this->ch_prefixes[ $context ]; }
@@ -269,8 +311,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$version = $this->ch_token( $group_key . ':epoch' );
 		if ( ! $this->ch_ready ) { return parent::fast_build_key( $key, $group ); }
 		if ( ! isset( $this->ch_registered[ $group_key ] ) ) {
-			$this->ch_command( array( 'SADD', $this->ch_base . ':' . $this->ch_root . ':groups', $this->ch_scope( $group ) . '|' . rawurlencode( $group ) ) );
-			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $this->ch_base . ':' . $this->ch_root . ':groups' ) as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $this->ch_config['maxttl'] * 2 ) ); }
+			$this->ch_register_group( $scope, $group_key, $group );
 			$this->ch_registered[ $group_key ] = true;
 		}
 		$signature = substr( hash( 'sha256', $format ), 0, 8 );
@@ -506,7 +547,7 @@ LUA;
 		if ( ! is_int( $key ) && ( ! is_string( $key ) || '' === trim( $key ) ) ) { $found = false; return false; }
 		if ( ! $force && $this->ch_ready ) {
 			$san_key = $this->sanitize_key_part( $key ); $san_group = $this->sanitize_key_part( $group ?: 'default' );
-			$context = $this->ch_scope( $san_group ) . ':' . $san_group;
+			$context = $this->ch_context( $san_group );
 			$derived = $this->ch_derived[ $context ][ $san_key ] ?? null;
 			if (
 				null !== $derived &&

@@ -7,8 +7,6 @@
 
 namespace HarborCache\Core;
 
-use Exception;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -128,12 +126,22 @@ class Metrics {
      * @return void
      */
     public static function record() {
-        if ( ! self::is_active() ) { return; }
         $config = \HarborCache\Config::load();
         if ( empty( $config['analytics']['enabled'] ) || random_int( 1, 10000 ) > (float) $config['analytics']['sample_rate'] * 100 ) { return; }
-        $metrics = new self();
-        $metrics->collect();
-        $metrics->save();
+        try {
+            if ( ! self::is_active() ) { return; }
+            $metrics = new self();
+            $metrics->collect();
+            $metrics->save();
+        } catch ( \Throwable $error ) { self::log_failure(); }
+    }
+
+    private static function log_failure() {
+        static $logged = false;
+        if ( $logged ) { return; }
+        $logged = true;
+        if ( class_exists( '\HarborCache\Observer' ) ) { \HarborCache\Observer::log( \HarborCache\Config::load(), 'warning', 'Request metrics could not be saved.' ); }
+        error_log( '[HarborCache] Request metrics could not be saved.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
     }
 
     /**
@@ -189,9 +197,8 @@ class Metrics {
                 [ 'withscores' => true ]
                 );
             }
-        } catch ( Exception $exception ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( $exception );
+        } catch ( \Throwable $exception ) {
+            self::log_failure();
 
             return [];
         }
@@ -226,7 +233,23 @@ class Metrics {
         global $wp_object_cache;
         $analytics = \HarborCache\Config::load()['analytics'];
         if ( ! $analytics['enabled'] ) { return; }
+        $pipeline_client = null;
         try {
+        $client = $wp_object_cache->redis_instance();
+        if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache && $client instanceof \Redis ) {
+            $key = $wp_object_cache->build_key( 'metrics', 'harborcache' );
+            $pipeline_client = $client;
+            $pipeline = $client->pipeline();
+            $pipeline->zremrangebyscore( $key, '-inf', time() - self::max_time() );
+            $pipeline->zadd( $key, $this->timestamp, serialize( $this ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
+            if ( null !== $analytics['persist_limit'] ) { $pipeline->zremrangebyrank( $key, 0, -$analytics['persist_limit'] - 1 ); }
+            $pipeline->expire( $key, self::max_time() );
+            $replies = $pipeline->exec();
+            $pipeline_client = null;
+            $expected = null === $analytics['persist_limit'] ? 3 : 4;
+            if ( ! is_array( $replies ) || $expected !== count( $replies ) || in_array( false, $replies, true ) || ! in_array( end( $replies ), array( 1, true ), true ) ) { throw new \RuntimeException( 'Metrics storage failed.' ); }
+            return;
+        }
         if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache ) {
             $key = $wp_object_cache->build_key( 'metrics', 'harborcache' );
             $wp_object_cache->ch_command( array( 'ZREMRANGEBYSCORE', $key, '-inf', time() - self::max_time() ) );
@@ -241,14 +264,14 @@ class Metrics {
                 if ( null !== $analytics['persist_limit'] ) { $wp_object_cache->ch_command( array( 'ZREMRANGEBYRANK', $key, 0, -$analytics['persist_limit'] - 1 ) ); }
                 $wp_object_cache->ch_command( array( 'EXPIRE', $key, self::max_time() ) );
             }
-        } catch ( Exception $exception ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( $exception );
+        } catch ( \Throwable $exception ) {
+            if ( $pipeline_client ) { try { $pipeline_client->close(); } catch ( \Throwable $ignored ) {} }
+            self::log_failure();
         }
     }
 
     /**
-     * Removes recorded metrics after an hour
+     * Removes metrics older than the configured retention window.
      *
      * @return void
      */
@@ -265,9 +288,8 @@ class Metrics {
                 0,
                 time() - self::max_time()
             );
-        } catch ( Exception $exception ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( $exception );
+        } catch ( \Throwable $exception ) {
+            self::log_failure();
         }
     }
 
@@ -289,9 +311,8 @@ class Metrics {
                 '-inf',
                 '+inf'
             );
-        } catch ( Exception $exception ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( $exception );
+        } catch ( \Throwable $exception ) {
+            self::log_failure();
             return 0;
         }
     }

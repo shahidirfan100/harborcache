@@ -10,11 +10,16 @@ $config = array( 'client' => $client, 'prefix' => 'hc-safety-' . $mode . '-' . $
 $control = new Redis();
 $control->connect( '127.0.0.1', 6379 );
 $user = null;
-if ( 'restricted' === $mode ) {
-    $user = 'hc-restricted-' . $client;
+if ( in_array( $mode, array( 'restricted', 'metadata-denied', 'metrics-denied' ), true ) ) {
+    $user = 'hc-' . $mode . '-' . $client;
     $control->rawCommand( 'ACL', 'SETUSER', $user, 'reset', 'on', '>disposable-safety-only', '~*', '+@all', '-info', '-select' );
     $config['username'] = $user;
     $config['password'] = 'disposable-safety-only';
+    if ( 'metadata-denied' === $mode ) { $control->rawCommand( 'ACL', 'SETUSER', $user, '-sadd' ); }
+    if ( 'metrics-denied' === $mode ) {
+        $control->rawCommand( 'ACL', 'SETUSER', $user, '-zadd' );
+        $config['analytics'] = array( 'enabled' => true, 'sample_rate' => 100 );
+    }
 }
 if ( 'routing' === $mode ) {
     $config['servers'] = array( 'tcp://127.0.0.1:6379?role=master', 'tcp://127.0.0.1:6381?role=slave' );
@@ -32,8 +37,14 @@ function safety_gate( $name, $pass ) {
     echo "PASS $name\n";
 }
 try {
-    safety_gate( 'Selected real client connects', $cache instanceof HarborCache_Advanced_Cache && $cache->redis_status() );
-    if ( 'restricted' === $mode ) {
+    safety_gate( 'Selected real client loads', $cache instanceof HarborCache_Advanced_Cache );
+    if ( 'metadata-denied' === $mode ) {
+        safety_gate( 'Rejected metadata pipeline cannot enable persistent writes', ! $cache->redis_status() && $cache->set( 'fallback', 42, 'safety' ) && 42 === $cache->get( 'fallback', 'safety' ) );
+    } elseif ( 'metrics-denied' === $mode ) {
+        safety_gate( 'Data cache connects with metrics writes denied', $cache->redis_status() );
+        \HarborCache\Core\Metrics::record();
+        safety_gate( 'Rejected metrics pipeline leaves data caching available', $cache->redis_status() && $cache->set( 'survives', 42, 'safety', 60 ) && 42 === $cache->get( 'survives', 'safety', true ) );
+    } elseif ( 'restricted' === $mode ) {
         $probe = new \HarborCache\Core\Predis();
         $probe->connect();
         $probe->invalidate_namespace();
