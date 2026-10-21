@@ -10,6 +10,16 @@ if($mode==='transport'){fwrite(STDOUT,"BEGIN WordPress bootstrap\n");fflush(STDO
 require rtrim(getenv('WP_ROOT'),'/').'/wp-load.php';
 if($mode==='transport'){fwrite(STDOUT,"PASS WordPress bootstrap\n");fflush(STDOUT);}
 $c=$GLOBALS['wp_object_cache'];$checks=array();
+// Disposable CI configuration only: fail at the first unexpected Relay fallback.
+if ( 'relay' === $config['client'] && ! in_array( $mode, array( 'down', 'recovery' ), true ) ) {
+ class HC_Relay_Acceptance_Cache extends HarborCache_Advanced_Cache {
+  protected function handle_exception( $error ) {
+   throw new RuntimeException( 'Relay acceptance backend failure: ' . $error->getMessage(), 0, $error );
+  }
+ }
+ $c = new HC_Relay_Acceptance_Cache();
+ $GLOBALS['wp_object_cache'] = $c;
+}
 function gate($name,$pass){global $checks;$checks[]=array('test'=>$name,'pass'=>(bool)$pass);echo ($pass?'PASS ':'FAIL ').$name."\n";if(!$pass){throw new RuntimeException($name);}}
 function harborcache_test_css_scoped($path,$roots){
  $css=file_get_contents($path);if(false===$css){return false;}$css=preg_replace('~/\*.*?\*/~s','',$css);preg_match_all('/(?m)^[ \t]*([^@{}\r\n][^{}\r\n]*)\s*\{/',$css,$matches);
