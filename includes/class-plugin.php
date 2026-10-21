@@ -223,7 +223,7 @@ class Plugin {
     }
 
     /**
-     * Returns the link to Object Cache Pro.
+     * Legacy integration hook retained as a no-op for existing callers.
      *
      * @param string $medium
      * @param bool $as_html

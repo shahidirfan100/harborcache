@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.3)
+# HarborCache feature ledger (1.2.5)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. No proprietary Object Cache Pro implementation, license bypass, vendor account or vendor updater is included. This ledger describes implemented behavior and evidence for the 1.2.3 release; it does not certify complete Pro parity.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.5 updates documentation and release metadata; executable cache logic and dashboard assets remain unchanged from 1.2.4. No account, subscription or vendor updater is required.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -19,7 +19,7 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine with original code. 
 | Analytics | Local sampled measurements, retention, count limits, optional persistence across flushes and aggregate HTML footnote. Measurements are retained in Redis even when flush persistence is disabled. |
 | Logging | Callable, class or PSR-style object logger with level filtering and redacted failure context. Logger failures do not break caching. |
 | Tracing | Core cache operations and batches pass through instrumentation. Callable wrappers and OpenTelemetry provider/span lifecycle have contract tests. New Relic emits optional custom command events. Real OpenTelemetry SDK/OTLP HTTP export has local receiver evidence; real New Relic agent export remains untested. |
-| Extension points | Custom connector callable and cache subclass/factory exercised against Redis. These are HarborCache APIs, not compatibility with Pro's interfaces. |
+| Extension points | Custom connector callable and cache subclass/factory exercised against Redis. These follow HarborCache's documented API contracts. |
 | Native clients | PhpRedis and Relay connection paths; Relay Cluster constructor, cache/invalidation patterns, adaptive policy, listeners and native routing have API-contract fixtures. Real PhpRedis 6.3.0 standalone, cluster, replicas and Sentinel were validated on Windows with Redis 5. Real Relay 0.50.2 standalone values, counters, forced reads, option patches and concurrent processes passed on Linux. Native Relay topology/failover remains a separate gate. |
 | Values | PHP serialization live-tested. igbinary/LZF/LZ4/Zstandard adapters reject missing codec functions. Real Linux extension roundtrips passed for PHP/igbinary serialization with none/LZF/LZ4/Zstandard compression. |
 | Administration | Six responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
@@ -40,7 +40,7 @@ The 1.2.1 update removes obsolete Redis Cache AJAX handlers that were already di
 
 ## Configuration coverage
 
-Each listed key is validated and connected to behavior. Unknown keys are rejected. API shapes and defaults intentionally differ from Pro.
+Each listed key is validated and connected to behavior. Unknown keys are rejected. API shapes and defaults follow HarborCache's documented contracts.
 
 | Settings | HarborCache implementation |
 | --- | --- |
@@ -69,7 +69,7 @@ HarborCache adds scheme/path, gc_batch_size, gc_budget_ms, failure_mode, auto_up
 
 Linux CI now tests MySQL 8.0, WordPress 6.6/7.1.3 and eight selected PHP/Redis combinations, with real PhpRedis, codec extensions, TLS/ACL/socket, concurrent workers, Redis restart recovery, WooCommerce and multisite. Real Relay 0.50.2 standalone passed with default/adaptive policies. Short PHP-FPM HTTP requests and restart passed. Local Windows tests additionally cover native topology and responsive administration. Sustained traffic, native Relay shared-FPM/topology/failover, production tracing and wider site-specific application workflows remain gates; see ACCEPTANCE.md.
 
-Query Monitor and Debug Bar are optional integrations; the validation report identifies the actual versions and tests performed. Command instrumentation does not include every connection handshake/authentication command. New Relic native datastore instrumentation is implemented with an exactly-once callback guard, with a custom-event fallback for older agents. The included MU loader and Composer metadata support project deployments; no public Packagist listing is claimed. Local comparative benchmark results are provided with the release. No 100% coverage, premium service or exact Pro API compatibility is claimed.
+Query Monitor and Debug Bar are optional integrations; the validation report identifies the actual versions and tests performed. Command instrumentation does not include every connection handshake/authentication command. New Relic native datastore instrumentation is implemented with an exactly-once callback guard, with a custom-event fallback for older agents. The included MU loader and Composer metadata support project deployments; no public Packagist listing is claimed. Local comparative benchmark results are provided with the release. No 100% coverage, premium service or compatibility with another plugin's private APIs is claimed.
 
 Plugin Check does not grant WordPress.org approval. Preliminary name searches do not establish trademark clearance or reserve a directory slug. Complete the applicable deployment checks above for your server configuration before production deployment.
 
@@ -83,11 +83,11 @@ The WordPress dashboard widget shows current-request hits, misses, ratio, comman
 
 Request-cached validated configuration, five-minute analytics rollups, median/p95 request Redis time, allowlisted windows and CSV export, on-demand bounded group count/memory inspection, explicit per-node pings, Relay adaptive diagnostics, failure modes and an operations capability filter are implemented. Owned drop-in content checks repair the obsolete update action and preserve foreign files. Connection controls share dimensions and typography.
 
-Group inspection reports physical Redis keys and may be partial after 500 keys, 20 scan pages or a cooperative 200 ms budget. Node checks run only on demand. Query maintenance is opt-in bounded group recycling; it can expire valid query entries and does not replicate Pro selective stale-query discovery. Native PhpRedis Sentinel/replication is locally exercised; Relay native topology still needs real-extension testing. Standalone native Relay and codec evidence was added in 1.1.3; native Relay topology and production telemetry agent acceptance remain open. Optional REST and helper APIs are deliberately excluded.
+Group inspection reports physical Redis keys and may be partial after 500 keys, 20 scan pages or a cooperative 200 ms budget. Node checks run only on demand. Query maintenance is opt-in bounded group recycling; it can expire valid query entries and does not discover individual stale query entries. Native PhpRedis Sentinel/replication is locally exercised; Relay native topology still needs real-extension testing. Standalone native Relay and codec evidence was added in 1.1.3; native Relay topology and production telemetry agent acceptance remain open. Optional REST and helper APIs are deliberately excluded.
 
 ## Version 1.1.1 evidence
 
-Bounded key memoization, runtime-hit acceleration, inactive tracing bypass and standalone routing shortcuts preserve generation-based namespaces. Native bulk pipelines resolve metadata and expiration filters before queuing; TCP cluster connections no longer receive an enabling TLS context. See the accompanying performance report for measured wall time, PHP process CPU time, memory and deployment limitations. No claim of complete Object Cache Pro parity or universally lower CPU is made.
+Bounded key memoization, runtime-hit acceleration, inactive tracing bypass and standalone routing shortcuts preserve generation-based namespaces. Native bulk pipelines resolve metadata and expiration filters before queuing; TCP cluster connections no longer receive an enabling TLS context. See the accompanying performance report for measured wall time, PHP process CPU time, memory and deployment limitations. No universal speed or CPU advantage is claimed.
 
 
 ## Version 1.1.2 stabilization

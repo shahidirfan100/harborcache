@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.4
+Stable tag: 1.2.5
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -12,9 +12,9 @@ Persistent Redis object caching with scoped invalidation, local analytics, conne
 
 == Description ==
 
-HarborCache is a GPLv3 fork of Redis Object Cache 3.0.0 by Till Krüss and contributors, with original cache management and administration features. It requires a separately operated Redis server. No account, subscription or license key is required. Request analytics stay in your configured Redis namespace. External tracing is disabled by default.
+HarborCache provides persistent Redis object caching with a dashboard, local analytics, connection settings and scoped cache controls. It was developed around the day-to-day needs of the author's websites, with its own administration and cache-management workflow.
 
-This is the stable HarborCache release. It does not claim complete Object Cache Pro feature parity. See docs/FEATURES.md for verified configurations and deployment acceptance gates.
+It requires a separately operated Redis server. No account, subscription or license key is required. Request analytics stay in your configured Redis namespace. External tracing is disabled by default. See docs/FEATURES.md for implemented behavior, verified configurations and deployment acceptance gates.
 
 Features include persistent caching through Predis, PhpRedis, Relay or Credis; multisite group scopes; bounded TTLs; atomic namespace invalidation; bulk cache operations; typed values; optional serialization and compression; optional split-alloptions storage; request key prefetching; local sampled analytics; WP-CLI; protected administration forms; Site Health; Query Monitor; and Debug Bar support.
 
@@ -46,14 +46,14 @@ No. Your host must provide Redis or you must operate a Redis server.
 = Is a license key required? =
 No. All included local features are available without a license key.
 
-= Is this Object Cache Pro? =
-No. It uses the separate GPL Redis Object Cache engine with original additions. Proprietary Pro code, vendor services and support are not included.
+= What is HarborCache based on? =
+HarborCache's cache engine is a modified GPLv3 fork of Redis Object Cache 3.0.0 by Till Krüss and contributors. Its additional dashboard, configuration and cache-management work is by Shahid Irfan. Experience using existing Redis caching plugins helped shape the initial requirements. The upstream license and source attribution are retained; see docs/SOURCE.md.
 
 = Does flush delete other applications' data? =
 HarborCache's flush changes its namespace tokens. Old entries expire within the maximum TTL. It does not call FLUSHDB or FLUSHALL.
 
-= Can I move an existing Pro cache into this plugin? =
-Do not reuse its keys. Configure a distinct prefix and retire the previous drop-in through its owning plugin. The cache data formats are different.
+= Can I reuse another plugin's cache data? =
+Configure a distinct prefix and retire the previous drop-in through its owning plugin. Cache data formats and invalidation rules can differ; do not assume the stored entries are compatible.
 
 == Screenshots ==
 
@@ -66,6 +66,11 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.5 =
+* Clarify the Redis Object Cache fork attribution and describe HarborCache's own features directly.
+* Remove unnecessary product comparisons from current descriptions and clarify cache migration guidance.
+* Preserve cache behavior, compatibility hooks, dashboard styling and media assets.
 
 = 1.2.4 =
 * Resolve the plugin directory from its actual installation and install a verified drop-in with that path.
