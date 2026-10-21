@@ -8,7 +8,10 @@ trait HarborCache_Native {
 		try {
 			if ( $this->redis_status() && ( $client instanceof \Relay\Relay || $client instanceof \Relay\Cluster ) ) {
 				// Connection-local options need an active socket even when Relay can serve shared-cache replies.
-				if ( method_exists( $client, 'isConnected' ) && ! $client->isConnected() ) { $client->ping(); }
+				if ( method_exists( $client, 'isConnected' ) && ! $client->isConnected() ) {
+					$this->connect_using_relay( $this->build_parameters() );
+					$client = $this->redis_instance();
+				}
 				$option = $this->native_constant( 'OPT_USE_CACHE' ); $previous = $client->getOption( $option );
 				if ( false === $client->setOption( $option, false ) ) { throw new RuntimeException( 'Relay cannot bypass its local cache.' ); }
 			}

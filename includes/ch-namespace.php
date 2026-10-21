@@ -23,10 +23,9 @@ final class Namespace_Guard {
                 throw new \RuntimeException( 'Redis rejected a cache command.' );
             }
         }
-        if ( method_exists( $client, 'isConnected' ) && ! $client->isConnected() ) {
-            // Relay can release an idle socket while still serving valid shared-cache replies.
-            if ( $client instanceof \Relay\Relay || $client instanceof \Relay\Cluster ) { $client->ping(); }
-            else { throw new \RuntimeException( 'Redis connection was lost.' ); }
+        if ( method_exists( $client, 'isConnected' ) && ! $client->isConnected() && ! ( $client instanceof \Relay\Relay || $client instanceof \Relay\Cluster ) ) {
+            // Relay may serve a valid shared-cache miss without an attached socket; its errors are checked above.
+            throw new \RuntimeException( 'Redis connection was lost.' );
         }
         return null;
     }
