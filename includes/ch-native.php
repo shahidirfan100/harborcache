@@ -5,13 +5,24 @@ trait HarborCache_Native {
 	/** Forced reads must bypass Relay's process/shared cache as well as WordPress memory. */
 	private function relay_uncached_read( callable $call ) {
 		$client = $this->redis_instance(); $previous = null; $option = null;
-		if ( $client instanceof \Relay\Relay || $client instanceof \Relay\Cluster ) {
-			$option = $this->native_constant( 'OPT_USE_CACHE' ); $previous = $client->getOption( $option );
-			if ( false === $client->setOption( $option, false ) ) { throw new RuntimeException( 'Relay cannot bypass its local cache.' ); }
-		}
+		try {
+			if ( $this->redis_status() && ( $client instanceof \Relay\Relay || $client instanceof \Relay\Cluster ) ) {
+				// Connection-local options need an active socket even when Relay can serve shared-cache replies.
+				if ( method_exists( $client, 'isConnected' ) && ! $client->isConnected() ) { $client->ping(); }
+				$option = $this->native_constant( 'OPT_USE_CACHE' ); $previous = $client->getOption( $option );
+				if ( false === $client->setOption( $option, false ) ) { throw new RuntimeException( 'Relay cannot bypass its local cache.' ); }
+			}
+		} catch ( Throwable $error ) { $option = null; $this->handle_exception( $error ); }
 		$this->ch_relay_bypass = true;
 		try { return $call(); }
-		finally { $this->ch_relay_bypass = false; if ( null !== $option ) { $client->setOption( $option, $previous ); } }
+		finally {
+			$this->ch_relay_bypass = false;
+			$active = $this->redis_instance();
+			if ( null !== $option && $this->redis_status() && ( ! method_exists( $active, 'isConnected' ) || $active->isConnected() ) ) {
+				try { if ( false === $active->setOption( $option, $previous ) ) { throw new RuntimeException( 'Relay cannot restore its local cache mode.' ); } }
+				catch ( Throwable $error ) { $this->handle_exception( $error ); }
+			}
+		}
 	}
 
 	protected function connect_using_phpredis( $parameters ) {
@@ -30,7 +41,7 @@ trait HarborCache_Native {
 		} else { parent::connect_using_relay( $parameters ); }
 		$this->native_option( 'OPT_MAX_RETRIES', 0, false );
 		$options = $this->ch_config['relay'];
-		$this->native_option( 'OPT_USE_CACHE', $options['cache'] );
+		$this->native_option( 'OPT_USE_CACHE', $this->ch_relay_bypass ? false : $options['cache'] );
 		$this->native_option( 'OPT_CLIENT_INVALIDATIONS', $options['invalidations'] );
 		$this->native_option( 'OPT_IGNORE_PATTERNS', $options['ignored'] );
 		$this->native_option( 'OPT_ALLOW_PATTERNS', $options['allowed'] );
