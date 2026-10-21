@@ -193,12 +193,14 @@ class Metrics {
 
         try {
             if ( null !== $limit ) {
-                $raw_metrics = array_reverse( $wp_object_cache->redis_instance()->zrevrangebyscore(
+                $raw_metrics = $wp_object_cache->redis_instance()->zrevrangebyscore(
                     $wp_object_cache->build_key( 'metrics', 'harborcache' ),
                     time() - MINUTE_IN_SECONDS,
                     time() - $seconds,
                     array( 'withscores' => true, 'limit' => array( 0, max( 1, min( 1000, (int) $limit ) ) ) )
-                ), true );
+                );
+                if ( ! is_array( $raw_metrics ) ) { throw new \RuntimeException( 'Metrics read failed.' ); }
+                $raw_metrics = array_reverse( $raw_metrics, true );
             } else {
                 $raw_metrics = $wp_object_cache->redis_instance()->zrangebyscore(
                 $wp_object_cache->build_key( 'metrics', 'harborcache' ),
