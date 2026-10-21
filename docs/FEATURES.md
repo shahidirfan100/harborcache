@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.5)
+# HarborCache feature ledger (1.2.6)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.5 updates documentation and release metadata; executable cache logic and dashboard assets remain unchanged from 1.2.4. No account, subscription or vendor updater is required.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.6 adds targeted safety, initialization and routing changes while preserving the dashboard assets. No account, subscription or vendor updater is required.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -25,6 +25,16 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and c
 | Administration | Six responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
 | Shared servers | Shared mode hides memory/key totals which would include other applications; dedicated mode sums primary memory and selected-database key counts. Server command statistics are explicitly labeled. |
 | Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging, interrupted-write recovery and removal of incomplete canonical files, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
+
+## 1.2.6 safety and initialization changes
+
+Strict ownership checks now preserve a conflicting owner's metadata and root, including the lifecycle probe. The conflicting installation falls back under its configured failure policy; changing an installation's identity may require a distinct prefix or restoring its original identity. There is no automatic ownership takeover. Multisite identity uses the network's base table prefix when available.
+
+Namespace creation and rotation require a successful SET reply. Corrupt tokens are rejected rather than accepted or silently replaced. Known native command errors are distinguished from nil replies where the adapter exposes error/connection state; failed native read connections are discarded.
+
+Optional INFO is fetched on first version use, with at most one attempt per connection state. Denied server diagnostics do not by themselves disable valid data caching. Predis-generated database-zero parameters omit unnecessary SELECT, while nonzero database selection is preserved. Primary routing applies to the options and site-options groups, including bulk and Relay option-string reads. Other permitted replica reads can still observe replication lag.
+
+Normal fallback writes at most one concise redacted error per PHP request across cache instances. Explicit debug logging retains redacted exception traces. This is not a cross-request rate limiter or circuit breaker. The scoped PHP 7.4 TLS compatibility policy and explicit TLS settings remain unchanged. See VALIDATION-1.2.6.md for actual tests and limits; no universal speed claim is made.
 
 ## 1.2.0 release additions
 

@@ -119,6 +119,7 @@ jobs:
           find includes -name '*.php' -print0 | xargs -0 -n1 php -l > /tmp/syntax.log
           php tests/dropin-writer.php
           php tests/review-regressions.php
+          php tests/safety-regressions.php
           python3 tools/build-release.py --check
           php tests/conflict-notice.php
           wp core download --version="${{ matrix.wp || 'latest' }}" --path="$WP_ROOT"
@@ -155,6 +156,16 @@ jobs:
           docker start '${{ job.services.redis.id }}'
           for attempt in $(seq 1 30); do docker exec '${{ job.services.redis.id }}' redis-cli ping && break || sleep 1; done
           php tests/acceptance.php recovery | tee evidence/recovery.txt
+      - name: Restricted ACL and prefix isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          for client in predis phpredis; do
+            export HC_SAFETY_CLIENT="$client"
+            php tests/safety-live.php restricted | tee "evidence/restricted-$client.txt"
+            php tests/safety-live.php namespace | tee "evidence/namespace-$client.txt"
+          done
+          HC_SAFETY_CLIENT=phpredis php tests/safety-live.php reconnect | tee evidence/reconnect-phpredis.txt
       - name: Real ACL, trusted TLS, rejected certificate and Unix socket
         shell: bash
         run: |
@@ -256,12 +267,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p evidence /tmp/hc-baseline /tmp/hc-baseline-download
+          mkdir -p evidence /tmp/hc-baseline
           wp plugin deactivate harborcache --path="$WP_ROOT"
           wp plugin install redis-cache --version=3.0.0 --path="$WP_ROOT"
-          gh release download v1.1.5 --repo "$GITHUB_REPOSITORY" --pattern 'harborcache-1.1.5.zip' --dir /tmp/hc-baseline-download
-          cp /tmp/hc-baseline-download/harborcache-1.1.5.zip /tmp/hc-baseline.zip
-          echo '6010c441104746cfeeff27399c850732ca8b800c94ee3ded33ac659e91e2f741  /tmp/hc-baseline.zip' | sha256sum -c -
+          git fetch --depth=1 origin 44cf7cfdb1593172d530d0917fd19f8349863364
+          git show 44cf7cfdb1593172d530d0917fd19f8349863364:dist/harborcache-1.2.5.zip > /tmp/hc-baseline.zip
+          echo 'f137b1efd444acccd4dcddc5dba925da1c230d58a9d4bbadaeadc8b22f2de480  /tmp/hc-baseline.zip' | sha256sum -c -
           unzip -q /tmp/hc-baseline.zip -d /tmp/hc-baseline
           for round in $(seq 0 6); do
             for offset in 0 1 2; do
@@ -290,6 +301,16 @@ jobs:
           rm "$WP_ROOT/wp-content/object-cache.php"
           wp plugin activate harborcache --path="$WP_ROOT"
           php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
+      - name: Critical options with a controlled stale read node
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name hc-safety-read-node --network host redis:7 redis-server --bind 127.0.0.1 --port 6381 --save '' --appendonly no
+          for attempt in $(seq 1 30); do docker exec hc-safety-read-node redis-cli -p 6381 ping && break || sleep 1; done
+          for client in predis phpredis; do
+            HC_SAFETY_CLIENT="$client" php tests/safety-live.php routing | tee "evidence/critical-routing-$client.txt"
+          done
+          docker rm -f hc-safety-read-node
       - name: WooCommerce checkout, inventory and orders
         shell: bash
         run: |
@@ -340,6 +361,7 @@ jobs:
           php tests/acceptance.php | tee evidence/relay.txt
           export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-adaptive-ci","database":15,"relay":{"listeners":true,"adaptive":{"width":512,"depth":1}}}'
           php tests/acceptance.php | tee evidence/relay-adaptive.txt
+          HC_SAFETY_CLIENT=relay php tests/safety-live.php reconnect | tee evidence/reconnect-relay.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -20,7 +20,8 @@ def main():
     readme = (ROOT / "readme.txt").read_text(encoding="utf-8")
     version = re.search(r"^ \* Version: ([0-9.]+)$", header, re.M).group(1)
     assert f"Stable tag: {version}\n" in readme
-    assert readme.count(f"= {version} =") == 1, "Duplicate or missing release changelog"
+    changelog = readme.split("== Changelog ==\n", 1)[1].split("\n== ", 1)[0]
+    assert changelog.count(f"= {version} =") == 1, "Duplicate or missing release changelog"
     assert f"Text Domain: {SLUG}" in header
     dropin = (ROOT / "includes/object-cache.php").read_text(encoding="utf-8")
     assert f"Version: {version}\n" in dropin
@@ -41,7 +42,7 @@ def main():
         assert path.suffix.lower() in {".php", ".js", ".css", ".txt", ".md", ".json", ".xml", ".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".pot", ".po", ".mo", ".map"} or path.name in {"LICENSE", "COPYING"}, f"Unexpected distribution file: {rel}"
         included.append((path, rel))
     names = {rel for _, rel in included}
-    for required in ["harborcache.php", "readme.txt", "LICENSE.md", "vendor/predis/predis/LICENSE", "vendor/colinmollenhour/credis/LICENSE", "includes/ch-paths.php"]:
+    for required in ["harborcache.php", "readme.txt", "LICENSE.md", "vendor/predis/predis/LICENSE", "vendor/colinmollenhour/credis/LICENSE", "includes/ch-paths.php", "includes/ch-namespace.php"]:
         assert required in names, f"Missing runtime or license file: {required}"
     assert not any(rel.endswith(".markdown") or rel.startswith(("tests/", "tools/", "media/", "dist/", ".git")) or re.search(r"docs/(NAME-REVIEW|RELEASE-|VALIDATION-|COMPARISON-)", rel) for rel in names)
     # Prevent silent deletion of the readable source corresponding to runtime libraries.

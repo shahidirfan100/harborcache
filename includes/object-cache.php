@@ -2,7 +2,7 @@
 /**
  * Drop-In Name: HarborCache Drop-In
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.2.5
+ * Version: 1.2.6
  * Author: Shahid Irfan
  * Author URI: https://profiles.wordpress.org/shahidirfan100/
  * License: GPL-3.0-only
@@ -397,6 +397,7 @@ class WP_Object_Cache {
      * @var null|string
      */
     private $redis_version = null;
+    private $redis_info_attempted = false;
 
     /**
      * Track if Redis is available.
@@ -595,8 +596,7 @@ class WP_Object_Cache {
                 $this->diagnostics[ 'ping' ] = $this->redis->ping();
             }
 
-            $this->fetch_info();
-
+            if ( method_exists( $this->redis, 'clearLastError' ) ) { $this->redis->clearLastError(); }
             $this->redis_connected = true;
         } catch ( Throwable $exception ) {
             $this->handle_exception( $exception );
@@ -1059,6 +1059,9 @@ class WP_Object_Cache {
             }
             unset( $server );
         }
+        // A fresh database-zero connection needs no SELECT permission.
+        if ( 0 === (int) $parameters['database'] ) { unset( $parameters['database'] ); }
+        if ( isset( $options['parameters']['database'] ) && 0 === (int) $options['parameters']['database'] ) { unset( $options['parameters']['database'] ); }
         $this->redis = new Predis\Client( $servers ?: $parameters, $options );
         if ( defined( 'WP_REDIS_CLUSTER' ) ) { $this->redis->getConnection()->setRetryLimit( 0 ); }
         if ( isset( $options['replication'] ) && 'predis' === $options['replication'] && ! $this->redis->getConnection()->getSlaves() ) { $this->redis->getConnection()->discover(); }
@@ -1275,7 +1278,23 @@ class WP_Object_Cache {
      * @return null|string
      */
     public function redis_version() {
+        if ( ! $this->redis_info_attempted && $this->redis_status() ) {
+            $this->redis_info_attempted = true;
+            try {
+                $this->fetch_info();
+            } catch ( Throwable $exception ) {
+                $this->diagnostics['server_info'] = 'unavailable';
+                if ( method_exists( $this->redis, 'clearLastError' ) ) { $this->redis->clearLastError(); }
+                if ( method_exists( $this->redis, 'isConnected' ) && ! $this->redis->isConnected() ) { $this->handle_exception( $exception ); }
+            }
+        }
         return $this->redis_version;
+    }
+
+    protected function reset_server_info() {
+        $this->redis_version = null;
+        $this->redis_info_attempted = false;
+        unset( $this->diagnostics['server_info'] );
     }
 
     /**
@@ -3007,7 +3026,7 @@ class WP_Object_Cache {
         // When Redis is unavailable, fall back to the internal cache by forcing all groups to be "no redis" groups.
         $this->ignored_groups = array_unique( array_merge( $this->ignored_groups, $this->global_groups ) );
 
-        error_log( $exception ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        $this->log_exception( $exception );
 
         if ( function_exists( 'do_action' ) ) {
             /**
@@ -3025,6 +3044,10 @@ class WP_Object_Cache {
         }
 
         $this->errors[] = $exception->getMessage();
+    }
+
+    protected function log_exception( $exception ) {
+        error_log( $exception ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
     }
 
     /**

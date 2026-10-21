@@ -1,6 +1,6 @@
 # HarborCache – Object Cache with Redis
 
-Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release build: **1.2.5**.
+Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release build: **1.2.6**.
 
 HarborCache brings connection settings, local analytics, scoped invalidation and recovery controls into one administration workflow. It was developed around the day-to-day needs of the author's websites and continues as a separate project with its own interface and development direction.
 
@@ -8,11 +8,11 @@ HarborCache brings connection settings, local analytics, scoped invalidation and
 
 ## Install
 
-Install the [1.2.5 ZIP](dist/harborcache-1.2.5.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
+Install the [1.2.6 ZIP](dist/harborcache-1.2.6.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
 
 Requires WordPress 6.6+, PHP 7.4+ and a separately operated Redis service. Disable the existing object cache manager through its own controls first. Configure a distinct prefix in Settings → HarborCache, save the connection and enable the object cache. HarborCache refuses to overwrite another plugin's drop-in. Verify connection status and Site Health before using it on production.
 
-For upgrades, back up configuration and the owned drop-in. Upload the plugin, then update the HarborCache drop-in if prompted. See [configuration](docs/CONFIGURATION.md), [1.2.5 release notes](docs/RELEASE-1.2.5.md) and [acceptance gates](docs/ACCEPTANCE.md).
+For upgrades, back up configuration and the owned drop-in. Upload the plugin, then update the HarborCache drop-in if prompted. Prefix ownership conflicts now preserve the existing owner and use runtime-memory fallback; cloned sites should use a distinct prefix. See [configuration](docs/CONFIGURATION.md), [1.2.6 release notes](docs/RELEASE-1.2.6.md) and [acceptance gates](docs/ACCEPTANCE.md).
 
 ## Features
 
@@ -36,7 +36,7 @@ No license key or account is required. No plugin REST endpoints are included. Op
 
 ## Validation and deployment gates
 
-The 1.2.5 release describes HarborCache's purpose and development direction while retaining clear source attribution. Cache behavior and dashboard assets are preserved; see [1.2.5 validation](docs/VALIDATION-1.2.5.md). The 1.2.4 WordPress.org review fixes and their test evidence remain documented in [1.2.4 validation](docs/VALIDATION-1.2.4.md). Historical performance results remain in [the comparison](docs/COMPARISON-1.2.0.md); they do not predict performance on every server or guarantee WordPress.org approval.
+The 1.2.6 release protects namespace ownership, validates metadata replies, reduces startup work and keeps critical option reads on primaries. Dashboard assets remain unchanged; see [1.2.6 validation](docs/VALIDATION-1.2.6.md). Earlier release evidence remains in the versioned validation reports. Historical performance results in [the comparison](docs/COMPARISON-1.2.0.md) do not predict performance on every server or guarantee WordPress.org approval.
 
 Sustained production load, native Relay topology/failover and production tracing agents remain acceptance gates. HarborCache does not claim WordPress.org approval or universal performance leadership. See [acceptance gates](docs/ACCEPTANCE.md).
 

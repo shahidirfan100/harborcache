@@ -8,6 +8,7 @@
 namespace HarborCache\Core;
 
 use Exception;
+require_once __DIR__ . '/ch-namespace.php';
 
 defined( 'ABSPATH' ) || exit;
 
@@ -156,6 +157,8 @@ class Predis {
             }
             unset( $server );
         }
+        if ( 0 === (int) $parameters['database'] ) { unset( $parameters['database'] ); }
+        if ( isset( $options['parameters']['database'] ) && 0 === (int) $options['parameters']['database'] ) { unset( $options['parameters']['database'] ); }
         $this->redis = new \Predis\Client( $servers ?: $parameters, $options );
         $this->redis->connect();
     }
@@ -165,9 +168,14 @@ class Predis {
         if ( ! is_object( $this->redis ) ) {
             throw new \RuntimeException( 'The Redis connection is unavailable.' );
         }
+        $client = $this->redis;
+        $config = \HarborCache\Config::load();
+        if ( $client instanceof \Predis\Client && ( $config['servers'] || $config['sentinels'] ) ) { $client = $client->getClientBy( 'role', 'master' ); }
+        $command = static function ( $args ) use ( $client ) { return \HarborCache\Namespace_Guard::command( $client, $args ); };
+        if ( $config['strict'] ) { \HarborCache\Namespace_Guard::claim( $command, WP_REDIS_PREFIX . 'meta' ); }
         $token = bin2hex( random_bytes( 12 ) );
-        $result = $this->redis->set( WP_REDIS_PREFIX . 'meta:root', $token );
-        if ( true !== $result && 'OK' !== (string) $result ) {
+        $result = $command( array( 'SET', WP_REDIS_PREFIX . 'meta:root', $token ) );
+        if ( ! \HarborCache\Namespace_Guard::is_ok( $result ) ) {
             throw new \RuntimeException( 'Could not initialize the cache namespace.' );
         }
     }

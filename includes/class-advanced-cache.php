@@ -9,6 +9,7 @@ require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-native.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-topology.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-operations.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-relay-options.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-namespace.php';
 
 class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	use HarborCache_Cleanup;
@@ -44,6 +45,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_ignored_patterns = array();
 	private $ch_ignored_results = array();
 	public $ch_retries = 0;
+	private $ch_failure_reason = '';
 
 	public function __construct( $fail_gracefully = false ) {
 		$this->ch_config = \HarborCache\Config::load();
@@ -55,14 +57,12 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$this->ch_base = WP_REDIS_PREFIX . 'meta';
 		if ( $this->redis_status() ) {
 			try {
-				$this->ch_root = $this->ch_token( $this->ch_base . ':root' ); $this->ch_ready = '' !== $this->ch_root && $this->redis_status();
 				if ( $this->ch_config['strict'] ) {
-					global $table_prefix;
-					$identity = hash( 'sha256', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . ':' . $table_prefix . ':' . ( defined( 'AUTH_KEY' ) ? AUTH_KEY : \HarborCache\Paths::content() ) );
-					$this->ch_command( array( 'SET', $this->ch_base . ':owner', $identity, 'NX' ) );
-					$owner = $this->ch_metadata_get( $this->ch_base . ':owner' );
-					if ( is_string( $owner ) && $owner !== $identity ) { $this->flush_scope( 'all' ); $this->ch_command( array( 'SET', $this->ch_base . ':owner', $identity ) ); \HarborCache\Observer::log( $this->ch_config, 'warning', 'Cache prefix ownership changed; integrity namespace rotated.' ); }
+					\HarborCache\Namespace_Guard::claim( function ( $args ) {
+						return 'GET' === $args[0] ? $this->ch_metadata_get( $args[1] ) : $this->ch_command( $args );
+					}, $this->ch_base );
 				}
+				$this->ch_root = $this->ch_token( $this->ch_base . ':root' ); $this->ch_ready = '' !== $this->ch_root && $this->redis_status();
 			}
 			catch ( Throwable $error ) { $this->handle_exception( $error ); }
 		}
@@ -76,26 +76,52 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 
 	protected function handle_exception( $exception ) {
 		$this->ch_ready = false;
-		\HarborCache\Observer::log( $this->ch_config, 'error', 'HarborCache backend unavailable.', array( 'type' => get_class( $exception ) ) );
-		if ( 'debug' === $this->ch_config['failure_mode'] || ( $this->ch_initializing && 'strict' === $this->ch_config['failure_mode'] ) ) { throw new RuntimeException( 'HarborCache backend unavailable. Check connection settings and Redis service.' ); }
-		parent::handle_exception( new RuntimeException( 'HarborCache backend unavailable. Check connection settings and Redis service.' ) );
+		$conflict = $exception instanceof \HarborCache\Prefix_Conflict;
+		$this->ch_failure_reason = $conflict ? 'prefix-conflict' : 'backend-unavailable';
+		$message = $conflict ? 'Cache prefix belongs to another installation. Configure a distinct prefix or restore this installation identity.' : 'HarborCache backend unavailable. Check connection settings and Redis service.';
+		// Discard native sockets with potentially unread replies before a persistent pool can reuse them.
+		if ( $this->redis instanceof \Redis || $this->redis instanceof \RedisCluster || $this->redis instanceof \Relay\Relay || $this->redis instanceof \Relay\Cluster ) {
+			try { $this->redis->close(); } catch ( Throwable $ignored ) {}
+		}
+		if ( 'debug' === $this->ch_config['failure_mode'] || ( $this->ch_initializing && 'strict' === $this->ch_config['failure_mode'] ) ) { throw new RuntimeException( $message ); }
+		parent::handle_exception( new RuntimeException( $message ) );
+	}
+
+	protected function log_exception( $exception ) {
+		static $logged = false;
+		$debug = $this->ch_config['debug'] || 'debug' === $this->ch_config['failure_mode'];
+		if ( ! $debug && $logged ) { return; }
+		$logged = true;
+		\HarborCache\Observer::log( $this->ch_config, 'error', $exception->getMessage(), array( 'reason' => $this->ch_failure_reason ) );
+		error_log( $debug ? $exception : '[HarborCache] ' . $exception->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 	}
 
 	protected function redis_pipeline() {
+		if ( ! $this->redis_connected ) { throw new RuntimeException( 'Redis is unavailable.' ); }
 		$client = $this->redis_instance();
 		$pipeline = $client instanceof \Predis\Client && ( $this->ch_config['servers'] || $this->ch_config['sentinels'] ) ? $client->getClientBy( 'role', 'master' )->pipeline() : parent::redis_pipeline();
 		return new \HarborCache\Pipeline( $pipeline, $this );
 	}
 	protected function redis_call( $method, ...$args ) {
+		if ( ! $this->redis_connected ) { throw new RuntimeException( 'Redis is unavailable.' ); }
 		$readonly = in_array( strtolower( $method ), array( 'get', 'mget', 'pttl' ), true );
 		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
 			if ( $readonly ) { ++$this->ch_routes['primary']; }
-			if ( ! $this->ch_config['save_commands'] && ! $this->ch_config['debug'] && ! $this->ch_config['retries'] && ( null === $this->ch_config['tracer'] || 'none' === $this->ch_config['tracer'] ) ) { return parent::redis_call( $method, ...$args ); }
-			return $this->observe_command( strtoupper( $method ), function () use ( $method, $args ) { return parent::redis_call( $method, ...$args ); }, $readonly );
+			if ( ! $this->ch_config['save_commands'] && ! $this->ch_config['debug'] && ! $this->ch_config['retries'] && ( null === $this->ch_config['tracer'] || 'none' === $this->ch_config['tracer'] ) ) {
+				$result = parent::redis_call( $method, ...$args );
+			} else {
+				$result = $this->observe_command( strtoupper( $method ), function () use ( $method, $args ) { return parent::redis_call( $method, ...$args ); }, $readonly );
+			}
+			if ( false === $result ) { \HarborCache\Namespace_Guard::checked_reply( $this->redis_instance(), $result ); }
+			return $result;
 		}
 		if ( ! $readonly ) { $this->mark_write( $args[0] ?? '' ); }
 		return $this->observe_command( strtoupper( $method ), function () use ( $method, $args, $readonly ) {
-			$call = function () use ( $method, $args ) { return parent::redis_call( $method, ...$args ); };
+			$call = function () use ( $method, $args ) {
+				$result = parent::redis_call( $method, ...$args );
+				if ( false === $result ) { \HarborCache\Namespace_Guard::checked_reply( $this->redis_instance(), $result ); }
+				return $result;
+			};
 			$client = $this->redis_instance();
 			if ( ! $readonly && $client instanceof \Predis\Client && ( $this->ch_config['servers'] || $this->ch_config['sentinels'] ) ) { return $client->getClientBy( 'role', 'master' )->$method( ...$args ); }
 			return $readonly ? $this->routed_read( $method, $args, $call ) : $call();
@@ -123,6 +149,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 					if ( $delay > 0 ) { usleep( $delay * 1000 ); }
 					$this->ch_reconnecting = true;
 					$this->reset_read_topology();
+					if ( method_exists( $this, 'reset_server_info' ) ) { $this->reset_server_info(); }
 					try {
 						if ( is_callable( $this->ch_config['connector'] ) ) { $this->redis = call_user_func( $this->ch_config['connector'], $this->ch_config ); }
 						elseif ( $this->redis instanceof \Predis\Client ) { $this->redis->disconnect(); $this->redis->connect(); }
@@ -154,9 +181,9 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$call = function () use ( $args ) {
 			$client = $this->redis_instance();
 			if ( $client instanceof \Predis\Client ) {
-				if ( $this->ch_config['servers'] || $this->ch_config['sentinels'] ) { return $client->getClientBy( 'role', 'master' )->executeRaw( $args ); }
-				if ( defined( 'WP_REDIS_CLUSTER' ) && in_array( strtoupper( $args[0] ), array( 'PING', 'INFO', 'SLOWLOG', 'CONFIG' ), true ) ) { return $client->getClientBy( 'slot', 0 )->executeRaw( $args ); }
-				return $client->executeRaw( $args );
+				if ( $this->ch_config['servers'] || $this->ch_config['sentinels'] ) { return \HarborCache\Namespace_Guard::command( $client->getClientBy( 'role', 'master' ), $args ); }
+				if ( defined( 'WP_REDIS_CLUSTER' ) && in_array( strtoupper( $args[0] ), array( 'PING', 'INFO', 'SLOWLOG', 'CONFIG' ), true ) ) { return \HarborCache\Namespace_Guard::command( $client->getClientBy( 'slot', 0 ), $args ); }
+				return \HarborCache\Namespace_Guard::command( $client, $args );
 			}
 			if ( $client instanceof \RedisCluster || ( class_exists( '\Relay\Cluster' ) && $client instanceof \Relay\Cluster ) ) {
 				$route = in_array( strtoupper( $args[0] ), array( 'EVAL', 'EVALSHA' ), true ) ? $args[3] : ( $args[1] ?? 'harborcache' );
@@ -179,7 +206,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		};
 		try {
 			$result = $this->observe_command( strtoupper( $args[0] ), $call, in_array( strtoupper( $args[0] ), array( 'GET', 'HGETALL', 'SMEMBERS', 'INFO', 'PING', 'TTL', 'PTTL', 'EXISTS' ), true ) );
-			return false === $result ? null : $result;
+			return \HarborCache\Namespace_Guard::checked_reply( $client, $result );
 		} finally {
 			++$this->cache_calls;
 			$this->cache_time += microtime( true ) - $start;
@@ -195,11 +222,13 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		if ( isset( $this->ch_tokens[ $key ] ) ) { return $this->ch_tokens[ $key ]; }
 		try {
 		$value = $this->ch_metadata_get( $key );
-		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) {
+		if ( null === $value ) {
 			$value = bin2hex( random_bytes( 12 ) );
-			if ( null === $this->ch_command( array( 'SET', $key, $value, 'NX' ) ) ) { $value = $this->ch_metadata_get( $key ); }
-			if ( ! is_string( $value ) ) { throw new RuntimeException( 'Cache namespace initialization failed.' ); }
+			$reply = $this->ch_command( array( 'SET', $key, $value, 'NX' ) );
+			if ( null === $reply ) { $value = $this->ch_metadata_get( $key ); }
+			elseif ( ! \HarborCache\Namespace_Guard::is_ok( $reply ) ) { throw new RuntimeException( 'Cache namespace initialization failed.' ); }
 		}
+		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { throw new RuntimeException( 'Cache namespace metadata is invalid.' ); }
 		return $this->ch_tokens[ $key ] = $value;
 		} catch ( Throwable $error ) { $this->handle_exception( $error ); return ''; }
 	}
@@ -280,7 +309,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		return $ignored;
 	}
 
-	private function ch_rotate( $key ) { $value = bin2hex( random_bytes( 12 ) ); $this->ch_command( array( 'SET', $key, $value ) ); $this->ch_tokens[ $key ] = $value; $this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0; return $value; }
+	private function ch_rotate( $key ) { $value = bin2hex( random_bytes( 12 ) ); if ( ! \HarborCache\Namespace_Guard::is_ok( $this->ch_command( array( 'SET', $key, $value ) ) ) ) { throw new RuntimeException( 'Cache namespace rotation failed.' ); } $this->ch_tokens[ $key ] = $value; $this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0; return $value; }
 
 	public function flush() {
 		$this->flush_runtime();
