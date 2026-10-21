@@ -90,7 +90,6 @@ class Plugin {
     public function add_actions_and_filters() {
         add_action( 'deactivate_plugin', [ $this, 'on_deactivation' ] );
         add_action( 'admin_init', [ $this, 'maybe_update_dropin' ] );
-        add_action( 'admin_init', [ $this, 'maybe_redirect' ] );
         add_action( 'init', [ $this, 'init' ] );
 
         add_action( is_multisite() ? 'network_admin_menu' : 'admin_menu', [ $this, 'add_admin_menu_page' ] );
@@ -109,13 +108,11 @@ class Plugin {
         add_action( 'wp_dashboard_setup', [ $this, 'setup_dashboard_widget' ] );
         add_action( 'wp_network_dashboard_setup', [ $this, 'setup_dashboard_widget' ] );
 
-        add_action( 'wp_ajax_roc_dismiss_notice', [ $this, 'ajax_dismiss_notice' ] );
-        add_action( 'wp_ajax_roc_flush_cache', [ $this, 'ajax_flush_cache' ] );
 
         add_filter( 'gettext_redis-cache', [ $this, 'get_text' ], 10, 2 );
 
         add_filter( 'plugin_row_meta', [ $this, 'add_plugin_row_meta' ], 10, 2 );
-        add_filter( sprintf( '%splugin_action_links_%s', is_multisite() ? 'network_admin_' : '', WP_REDIS_BASENAME ), [ $this, 'add_plugin_actions_links' ] );
+        add_filter( sprintf( '%splugin_action_links_%s', is_multisite() ? 'network_admin_' : '', HARBORCACHE_BASENAME ), [ $this, 'add_plugin_actions_links' ] );
 
         add_action( 'wp_head', [ $this, 'register_shutdown_hooks' ] );
 
@@ -135,8 +132,12 @@ class Plugin {
      * @return void
      */
     public function init() {
-        if ( is_admin() && ! wp_next_scheduled( 'rediscache_discard_metrics' ) ) {
-            wp_schedule_event( time(), 'hourly', 'rediscache_discard_metrics' );
+        if ( ! Metrics::is_enabled() ) {
+            if ( wp_next_scheduled( 'harborcache_metrics_discard' ) ) {
+                wp_clear_scheduled_hook( 'harborcache_metrics_discard' );
+            }
+        } elseif ( is_admin() && ! wp_next_scheduled( 'harborcache_metrics_discard' ) ) {
+            wp_schedule_event( time(), 'hourly', 'harborcache_metrics_discard' );
         }
     }
 
@@ -222,7 +223,7 @@ class Plugin {
     }
 
     /**
-     * Returns the link to Object Cache Pro.
+     * Legacy integration hook retained as a no-op for existing callers.
      *
      * @param string $medium
      * @param bool $as_html
@@ -296,7 +297,7 @@ class Plugin {
      * @return bool
      */
     public function object_cache_dropin_exists() {
-        return file_exists( WP_CONTENT_DIR . '/object-cache.php' );
+        return file_exists( \HarborCache\Paths::content( 'object-cache.php' ) );
     }
 
     /**
@@ -309,8 +310,8 @@ class Plugin {
             return false;
         }
 
-        $dropin = get_plugin_data( WP_CONTENT_DIR . '/object-cache.php' );
-        $plugin = get_plugin_data( WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php' );
+        $dropin = get_plugin_data( \HarborCache\Paths::content( 'object-cache.php' ) );
+        $plugin = get_plugin_data( HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php' );
 
         /**
          * Filters the drop-in validation state
@@ -338,8 +339,8 @@ class Plugin {
             return false;
         }
 
-        $dropin = get_plugin_data( WP_CONTENT_DIR . '/object-cache.php' );
-        $plugin = get_plugin_data( WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php' );
+        $dropin = get_plugin_data( \HarborCache\Paths::content( 'object-cache.php' ) );
+        $plugin = get_plugin_data( HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php' );
 
         if ( $dropin['PluginURI'] === $plugin['PluginURI'] ) {
             return version_compare( $dropin['Version'], $plugin['Version'], '<' );
@@ -581,42 +582,6 @@ class Plugin {
     }
 
     /**
-     * Dismisses the admin notice for the current user
-     *
-     * @return void
-     */
-    public function ajax_dismiss_notice() {
-        if ( isset( $_POST['notice'] ) ) {
-            check_ajax_referer( 'roc_dismiss_notice' );
-
-            $notice = sprintf(
-                'roc_dismissed_%s',
-                sanitize_key( $_POST['notice'] )
-            );
-
-            update_user_meta( get_current_user_id(), $notice, '1' );
-        }
-
-        wp_die();
-    }
-
-    /**
-     * Flushes object cache
-     *
-     * @return void
-     */
-    public function ajax_flush_cache() {
-        if ( ! \HarborCache\Console::allowed() ) { wp_die( esc_html__( 'You do not have permission to manage HarborCache.', 'harborcache-object-cache-with-redis' ), '', array( 'response' => 403 ) ); }
-        if ( ! wp_verify_nonce( $_POST['nonce'] ?? '' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-            wp_die( esc_html__( 'Invalid Nonce.', 'harborcache-object-cache-with-redis' ) );
-        } else if ( wp_cache_flush() ) {
-            wp_die( esc_html__( 'Object cache flushed.', 'harborcache-object-cache-with-redis' ) );
-        } else {
-            wp_die( esc_html__( 'Object cache could not be flushed.', 'harborcache-object-cache-with-redis' ) );
-        }
-    }
-
-    /**
      * Displays a redis cache pro admin notice
      *
      * @return void
@@ -691,8 +656,7 @@ class Plugin {
         );
 
         if ( ! WP_DEBUG_DISPLAY ) {
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            printf( "\n<!-- %s -->\n", $message );
+            printf( "\n<!-- %s -->\n", esc_html( $message ) );
 
             return;
         }
@@ -709,7 +673,7 @@ class Plugin {
 
         printf(
             "<!--\n%s\n\n%s\n-->\n",
-            $message, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            esc_html( $message ),
             esc_html( $debug )
         );
     }
@@ -803,7 +767,7 @@ class Plugin {
     }
 
     /**
-     * Test if we can write in the WP_CONTENT_DIR and modify the `object-cache.php` drop-in
+     * Test writing in the configured content directory and modifying the cache drop-in.
      *
      * @return true|WP_Error
      */
@@ -822,19 +786,19 @@ class Plugin {
         $dropin_check = ! defined( 'WP_REDIS_DISABLE_DROPIN_CHECK' ) || ! WP_REDIS_DISABLE_DROPIN_CHECK;
 
         if ( ! $dropin_check ) {
-            if ( ! $wp_filesystem->exists( WP_CONTENT_DIR . '/object-cache.php' ) ) {
+            if ( ! $wp_filesystem->exists( \HarborCache\Paths::content( 'object-cache.php' ) ) ) {
                 return true;
             }
 
-            if ( ! $wp_filesystem->is_writable( WP_CONTENT_DIR . '/object-cache.php' ) ) {
+            if ( ! $wp_filesystem->is_writable( \HarborCache\Paths::content( 'object-cache.php' ) ) ) {
                 return new WP_Error( 'writable', __( 'Object cache drop-in is not writable.', 'harborcache-object-cache-with-redis' ) );
             }
 
             return true;
         }
 
-        $cachefile = WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php';
-        $testfile = WP_CONTENT_DIR . '/object-cache.tmp';
+        $cachefile = HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php';
+        $testfile = \HarborCache\Paths::content( 'object-cache.tmp' );
 
         if ( ! $wp_filesystem->exists( $cachefile ) ) {
             return new WP_Error( 'exists', __( 'Object cache file doesn’t exist.', 'harborcache-object-cache-with-redis' ) );
@@ -846,7 +810,7 @@ class Plugin {
             }
         }
 
-        if ( ! $wp_filesystem->is_writable( WP_CONTENT_DIR ) ) {
+        if ( ! $wp_filesystem->is_writable( \HarborCache\Paths::content() ) ) {
             return new WP_Error( 'writable', __( 'Content directory is not writable.', 'harborcache-object-cache-with-redis' ) );
         }
 
@@ -860,7 +824,7 @@ class Plugin {
 
         $meta = get_file_data( $testfile, [ 'Version' => 'Version' ] );
 
-        if ( $meta['Version'] !== WP_REDIS_VERSION ) {
+        if ( $meta['Version'] !== HARBORCACHE_VERSION ) {
             return new WP_Error( 'version', __( 'Couldn’t verify test file contents.', 'harborcache-object-cache-with-redis' ) );
         }
 
@@ -891,20 +855,6 @@ class Plugin {
      *
      * @return void
      */
-    public function maybe_redirect() {
-        if ( ! get_transient( '_rediscache_activation_redirect' ) ) {
-            return;
-        }
-
-        if ( ! $this->current_user_can_manage_redis() ) {
-            return;
-        }
-
-        delete_transient( '_rediscache_activation_redirect' );
-
-        wp_safe_redirect( network_admin_url( $this->page ) );
-    }
-
     /**
      * Updates the `object-cache.php` drop-in
      *
@@ -918,11 +868,10 @@ class Plugin {
         }
 
         if ( $this->initialize_filesystem( '', true ) ) {
-            $result = $wp_filesystem->copy(
-                WP_REDIS_PLUGIN_PATH . '/includes/object-cache.php',
-                WP_CONTENT_DIR . '/object-cache.php',
-                true,
-                FS_CHMOD_FILE
+            $result = \HarborCache\Dropin_Writer::replace(
+                $wp_filesystem,
+                HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php',
+                \HarborCache\Paths::content( 'object-cache.php' )
             );
 
             /**
@@ -940,10 +889,6 @@ class Plugin {
      *
      * @return void
      */
-    public static function on_activation() {
-        set_transient( '_rediscache_activation_redirect', 1, 30 );
-    }
-
     /**
      * Plugin deactivation hook
      *
@@ -1021,10 +966,17 @@ class Plugin {
      * @return void
      */
     public function litespeed_disable_objectcache() {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        if ( isset( $_POST['LSCWP_CTRL'], $_POST['LSCWP_NONCE'], $_POST['object'] ) ) {
+        /* phpcs:disable WordPress.Security.NonceVerification.Missing -- Preserve the upstream LiteSpeed integration: this does not run a HarborCache action or persist settings; it only prevents LiteSpeed from replacing the active object-cache drop-in. */
+        if ( isset( $_POST['LSCWP_CTRL'], $_POST['LSCWP_NONCE'], $_POST['object'] )
+            && is_scalar( $_POST['LSCWP_CTRL'] )
+            && is_scalar( $_POST['LSCWP_NONCE'] )
+            && is_scalar( $_POST['object'] )
+            && '' !== sanitize_text_field( wp_unslash( (string) $_POST['LSCWP_CTRL'] ) )
+            && '' !== sanitize_text_field( wp_unslash( (string) $_POST['LSCWP_NONCE'] ) )
+            && '' !== sanitize_text_field( wp_unslash( (string) $_POST['object'] ) ) ) {
             $_POST['object'] = '0';
         }
+        /* phpcs:enable WordPress.Security.NonceVerification.Missing */
     }
 
     /**

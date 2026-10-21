@@ -1,8 +1,8 @@
-# Deployment acceptance and next releases
+# HarborCache 1.2.0 MVP acceptance and release plan
 
-## Version 1.1.3
+## Existing Linux acceptance baseline
 
-The Linux acceptance workflow is checked into .github/workflows/acceptance.yml in the GitHub repository; tests are excluded from the installable ZIP. It creates disposable MySQL and Redis services. The previous limitation of having no Linux staging environment has been addressed with GitHub-hosted Linux runners. These are isolated acceptance tests, not measurements of autoscareer.com.
+The Linux acceptance workflow in `.github/workflows/acceptance.yml` creates disposable MySQL and Redis services. These historical 1.1.3 gates remain active for the 1.2.0 MVP; they are isolated acceptance tests, not measurements of autoscareer.com.
 
 | Gate | Recorded evidence |
 | --- | --- |
@@ -11,15 +11,31 @@ The Linux acceptance workflow is checked into .github/workflows/acceptance.yml i
 | Transports | Predis/PhpRedis ACL credentials, trusted TLS, rejection of an untrusted certificate and Unix socket. |
 | Concurrency and recovery | Four PHP processes increment one counter; independent option fields updated across a barrier; real Redis stop/start, fresh-worker recovery, activation/deactivation/reactivation and cron. |
 | Applications | Real WooCommerce product/cart/checkout/order update/stock reduction and restoration; real multisite local/global groups, separate options and selected-site invalidation. These are API-level integration flows, not browser payment-gateway tests. |
-| Performance | Seven rotating Linux runs compare Redis Object Cache 3.0.0, packaged HarborCache 1.1.2 and current HarborCache with identical sequential work. Batch p50/p95/p99, PHP/Redis CPU, memory, command counts and optional analytics recording are retained. They do not predict production traffic. |
+| Performance baseline | Seven rotating Linux runs compare Redis Object Cache 3.0.0, HarborCache 1.1.5 and HarborCache 1.2.0 with identical sequential work. Batch p50/p95/p99, PHP/Redis CPU, memory, command counts and optional analytics recording are retained. They do not predict production traffic. |
 | Local regression and interface | Windows WordPress/SQLite/PHP 8.5/Redis tests cover cache types, counters, bulk operations, cleanup, primary/replica/Sentinel/cluster behavior, lifecycle, failed file operations, guarded controls, first-request upgrade and responsive dashboard layouts. |
 
-Real Relay 0.50.2 passed 65 checks both with its default cache policy and a configured adaptive policy, including concurrent option patches and explicit forced-read bypass checks. PHP-FPM served 160 successful requests at concurrency eight and preserved the shared counter across an FPM restart. These are short standalone CLI/HTTP checks, not sustained load or native Relay shared-FPM/topology certification. The final validation report retains the measurements. Native Relay topology/adaptive failover, production tracing delivery and sustained workload certification must not be inferred from standalone CLI or short HTTP tests.
+The earlier 1.1.3 Relay run passed 65 checks under its default and adaptive policies. During the 1.2.0 fresh-worker test, Relay's shared cache exposed a stale miss for HarborCache namespace metadata, which could make newly created cache objects use different roots. HarborCache now reads root, generation and cleanup guard tokens with Relay's local cache temporarily bypassed. The final 1.2.0 run passed 75 checks under each Relay policy, including fresh-client key agreement, concurrent option patches, bounded cleanup and forced-read bypass. PHP-FPM served 160 successful requests at concurrency eight and retained the counter after a restart. These are short functional checks, not sustained traffic or Relay topology-promotion certification. See the [validation report](VALIDATION-1.2.0.md) for the final run and limits.
+
+## 1.2.0 MVP gates
+
+The approved MVP preserves the serialized cache-key format and WordPress cache API while adding fresh-worker replacement, stable namespace agreement, non-persistent wildcard-group and independent alloptions-patch checks. Its Linux performance job compares Redis Object Cache 3.0.0, the packaged 1.1.5 baseline and the 1.2.0 release build with seven rotating workload rounds. A second probe times group invalidation with 100 and 5,000 keys. It records tail timings and Redis command counts; runner timings are evidence for those workloads, not promises about another server.
+
+The hot-path change removes a temporary layout array from repeated cache-key checks. Keep it only if the benchmark does not show a repeatable regression. Dashboard changes make counts locale-formatted and raise type sizes across the overview, chart, settings form and dashboard widget while retaining the established HarborCache colors and equal connection-control dimensions. The UI release gate includes keyboard focus, 200% zoom, narrow layout, legible labels and version-free screenshots.
+
+## 1.2.1 WordPress.org review remediation
+
+The reviewer report for the 1.1.5 submission identified a directly supplied POST nonce, raw request paths in a prefetch hash, unprefixed Redis Cache AJAX actions, and dashboard chart styling that affected controls outside HarborCache. The 1.2.1 release removes the unused legacy AJAX routes, sanitizes the request path before hashing, scopes chart styles and scripts to the HarborCache page/widget, loads dashboard assets only when the widget is visible, and limits drop-in recovery notices to HarborCache settings screens. It also gives the metrics cron event a HarborCache-specific name and removes the older scheduled event on upgrade.
+
+Acceptance requires a clean activation with WP_DEBUG enabled, no legacy AJAX actions registered by HarborCache, no global recovery notice on unrelated admin screens, no dashboard asset enqueue when the widget is hidden, no CSS selector outside the HarborCache roots, passing full acceptance, exact-slug Plugin Check, official readme validation and a rebuilt package whose drop-in reports version 1.2.1. The official readme form was not verified in this environment; see [validation evidence](VALIDATION-1.2.1.md). Passing the available checks supports resubmission but cannot guarantee the review team's decision.
+
+## 1.2.2 Runtime identity isolation
+
+HarborCache uses its own `HARBORCACHE_*` file, path and version constants throughout the plugin and drop-in. It still reads existing `WP_REDIS_*` connection values for configuration compatibility, but it no longer advertises itself as the Redis Cache plugin through that plugin's file/path constants. The drop-in finds its own files under the HarborCache slug or supported legacy folder. Acceptance requires clean activation with and without the owned drop-in, no duplicate-constant warnings, unchanged connection/key configuration, the current install ZIP passing exact-slug Plugin Check, all Linux acceptance jobs passing, and a successful readme/package check. Review approval remains the WordPress.org Plugins Team's decision.
 
 ## Remaining gates, in order
 
 1. Measure sustained normal traffic on an isolated copy of the actual site: PHP-FPM CPU/RSS, Redis CPU/RSS, tail latency, cache churn, large options and analytics on/off. Short runner tests cannot establish long-running memory stability or capacity.
-2. Exercise real Relay adaptive behavior, cluster/replica/Sentinel promotion and partition recovery with concurrent readers/writers. Preserve primary metadata and same-request read-after-write behavior. Real standalone extension evidence is distinct from native topology certification.
+2. Exercise Relay adaptive behavior, cluster/replica/Sentinel promotion and partition recovery with concurrent readers/writers. Preserve primary metadata and same-request read-after-write behavior. Standalone extension evidence is distinct from native topology certification.
 3. Verify New Relic with a real configured agent/account and OpenTelemetry against the intended production collector, including duplicate-instrumentation checks. Local real SDK/OTLP HTTP delivery has passed; account delivery cannot be tested without that integration.
 4. Expand application coverage to the site's payment gateway, queues, cron, publishing plugins and deployment/rollback process. Legacy WP_REDIS_SHARDS/RedisArray paths are inherited but not certified with HarborCache's generation namespace; use the documented standalone/replication/Sentinel/cluster configurations.
 5. Complete WordPress.org submission/review and verified update distribution. Plugin Check, GPL notices and readme validation support submission; they do not grant directory approval or trademark clearance.
@@ -28,11 +44,14 @@ Real Relay 0.50.2 passed 65 checks both with its default cache policy and a conf
 
 | Version | Work | Acceptance gate |
 | --- | --- | --- |
-| 1.1.3 | Measured cache-path improvements, native counter/forced-read correctness and Linux/MySQL/transport/codec/application acceptance | Published reproducible CI and local validation; preserve namespace and existing controls |
-| 1.2.0 | Complete real Relay adaptive/topology invalidation and native failover; production tracing integrations | Real agents/extensions, concurrent writers/readers, controlled promotion/partition and duplicate-span checks |
-| 1.3.0 | Further hot-path and prefetch tuning; selective stale-query reclamation | Sustained workload CPU/RSS and latency evidence without premature invalidation or cross-site leakage |
-| 1.4.0 | Wider site/application matrix and deployment/update/rollback distribution | Site-specific workflows, package parity and directory review |
+| 1.2.0 MVP | Fresh-worker and ignored-group correctness, Relay metadata consistency, measured hot-path change, group-invalidation comparison, readable dashboard and refreshed assets | Linux matrix and real Relay default/adaptive acceptance pass; workload comparison shows no material regression; package, Plugin Check and readme validation pass |
+| 1.2.1 | Resolve the WordPress.org pre-review findings around sanitization, legacy hooks, cron naming and dashboard asset scope | Debug activation, isolated dashboard assets, full local acceptance, exact-slug Plugin Check and readme/package validation pass |
+| 1.2.2 | Isolate HarborCache runtime metadata/path constants from Redis Cache's identity while retaining supported configuration inputs | Clean activation with the owned drop-in, no metadata constant collisions, preserved connection and namespace behavior, zero Plugin Check issues and passing Linux acceptance |
+| 1.2.3 | Recover interrupted drop-in transactions without loading partial PHP files or replacing a foreign cache drop-in | Partial destination restores the verified backup; failed first install or rollback leaves the canonical drop-in absent; foreign files remain byte-identical; exact package and WordPress checks pass |
+| 1.3.0 | Relay adaptive behavior under shared PHP-FPM; native cluster/Sentinel/replica promotion and failover; sampled flush/miss attribution; production tracing integrations | Real agents/extensions, concurrent writers/readers, controlled promotion/partition, duplicate-span checks and measured attribution overhead with values excluded |
+| 1.4.0 | Further hot-path and prefetch tuning; selective stale-query reclamation | Sustained workload CPU/RSS and latency evidence without premature invalidation or cross-site leakage |
+| 1.5.0 | Wider site/application matrix and deployment/update/rollback distribution | Site-specific workflows, package parity and directory review |
 
 Default analytics samples 10%, retained history is bounded and browser charts do not poll. Prefetch, query recycling, debug recording and external tracing remain off by default. On-demand node/group probes do not run on every frontend request. These controls limit optional work; they are not universal CPU guarantees.
 
-Install 1.1.3, preserve the existing connection settings, and refresh the owned drop-in. Confirm Connected and version 1.1.3 in Diagnostics. No package was uploaded to autoscareer.com during this acceptance run. Never inject outages, failover or synthetic load into a shared production Redis service.
+For the 1.2.0 release, install first on an isolated staging copy, preserve the existing connection settings, and refresh the owned drop-in. Confirm Connected and the drop-in version in Diagnostics before exercising application flows. No package was uploaded to autoscareer.com during this acceptance run. Never inject outages, failover or synthetic load into a shared production Redis service.

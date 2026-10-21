@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HarborCache – Object Cache with Redis
  * Description: Fast Redis object caching for WordPress with clear insights, analytics and safe cache controls.
- * Version: 1.1.5
+ * Version: 1.2.5
  * Text Domain: harborcache-object-cache-with-redis
  * Domain Path: /languages
  * Network: true
@@ -19,38 +19,37 @@
 
 defined( 'ABSPATH' ) || exit;
 // A second object cache manager cannot safely share the legacy engine constants.
-if ( ( defined( 'WP_REDIS_FILE' ) && WP_REDIS_FILE !== __FILE__ ) || ( defined( 'WP_REDIS_PLUGIN_PATH' ) && realpath( WP_REDIS_PLUGIN_PATH ) !== realpath( __DIR__ ) ) ) {
- add_action( 'admin_notices', static function () { echo '<div class="notice notice-error"><p>' . esc_html__( 'Deactivate the other Redis object cache plugin before activating HarborCache.', 'harborcache-object-cache-with-redis' ) . '</p></div>'; } );
+if ( ( defined( 'WP_REDIS_FILE' ) && WP_REDIS_FILE !== __FILE__ ) || ( defined( 'WP_REDIS_PLUGIN_PATH' ) && realpath( WP_REDIS_PLUGIN_PATH ) !== realpath( __DIR__ ) ) || ( defined( 'HARBORCACHE_PLUGIN_PATH' ) && realpath( HARBORCACHE_PLUGIN_PATH ) !== realpath( __DIR__ ) ) ) {
+ add_action( 'admin_notices', static function () {
+  $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+  if ( ! $screen || ! in_array( $screen->id, array( 'plugins', 'plugins-network' ), true ) ) { return; }
+  if ( ! current_user_can( 'activate_plugins' ) && ! current_user_can( 'manage_network_plugins' ) ) { return; }
+  echo '<div class="notice notice-error"><p>' . esc_html__( 'Deactivate the other Redis object cache plugin before activating HarborCache.', 'harborcache-object-cache-with-redis' ) . '</p></div>';
+ } );
  return;
 }
-require_once __DIR__ . '/includes/ch-config.php';
+define( 'HARBORCACHE_FILE', __FILE__ );
+if ( ! defined( 'HARBORCACHE_PLUGIN_PATH' ) ) {
+    define( 'HARBORCACHE_PLUGIN_PATH', untrailingslashit( plugin_dir_path( HARBORCACHE_FILE ) ) );
+}
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php';
 try { \HarborCache\Config::apply(); \HarborCache\Config::load(); }
 catch ( \Throwable $harborcache_error ) { error_log( 'HarborCache configuration is invalid. Review HARBORCACHE_CONFIG and wp-content/harborcache-config.php.' ); return; } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 require_once __DIR__ . '/includes/class-console.php';
 \HarborCache\Console::boot();
 
-define( 'WP_REDIS_FILE', __FILE__ );
-define( 'WP_REDIS_BASENAME', plugin_basename( WP_REDIS_FILE ) );
-define( 'WP_REDIS_PLUGIN_DIR', plugin_dir_url( WP_REDIS_FILE ) );
+define( 'HARBORCACHE_BASENAME', plugin_basename( HARBORCACHE_FILE ) );
+define( 'HARBORCACHE_PLUGIN_DIR', plugin_dir_url( HARBORCACHE_FILE ) );
 
-if ( ! defined( 'WP_REDIS_PLUGIN_PATH' ) ) {
-    define( 'WP_REDIS_PLUGIN_PATH', __DIR__ );
-}
+$harborcache_meta = get_file_data( HARBORCACHE_FILE, [ 'Version' => 'Version' ] );
 
-$harborcache_meta = get_file_data( WP_REDIS_FILE, [ 'Version' => 'Version' ] );
+define( 'HARBORCACHE_VERSION', $harborcache_meta['Version'] );
 
-define( 'WP_REDIS_VERSION', $harborcache_meta['Version'] );
-
-require_once WP_REDIS_PLUGIN_PATH . '/includes/class-autoloader.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-autoloader.php';
 
 $harborcache_autoloader = new HarborCache\Core\Autoloader();
 $harborcache_autoloader->register();
-$harborcache_autoloader->add_namespace( 'HarborCache\Core', WP_REDIS_PLUGIN_PATH . '/includes' );
-
-register_activation_hook(
-    WP_REDIS_FILE,
-    [ HarborCache\Core\Plugin::class, 'on_activation' ]
-);
+$harborcache_autoloader->add_namespace( 'HarborCache\Core', HARBORCACHE_PLUGIN_PATH . '/includes' );
 
 HarborCache\Core\Plugin::instance();
 

@@ -2,7 +2,7 @@
 /**
  * Drop-In Name: HarborCache Drop-In
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.1.5
+ * Version: 1.2.5
  * Author: Shahid Irfan
  * Author URI: https://profiles.wordpress.org/shahidirfan100/
  * License: GPL-3.0-only
@@ -15,25 +15,21 @@
 // WordPress drop-ins require wp_cache_* names; WP_REDIS_* constants preserve the upstream configuration API.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
 defined( 'ABSPATH' ) || exit;
-if ( ! defined( 'WP_REDIS_PLUGIN_PATH' ) ) {
-    $harborcache_plugins_dir = defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR : WP_CONTENT_DIR . '/plugins';
-    $harborcache_plugin_path = $harborcache_plugins_dir . '/harborcache-object-cache-with-redis';
-    if ( defined( 'HARBORCACHE_PLUGIN_PATH' ) ) {
-        $harborcache_plugin_path = HARBORCACHE_PLUGIN_PATH;
-    } elseif ( ! is_readable( $harborcache_plugin_path . '/includes/ch-config.php' ) ) {
-        $harborcache_plugin_path = $harborcache_plugins_dir . '/harborcache';
-    }
-    define( 'WP_REDIS_PLUGIN_PATH', $harborcache_plugin_path );
-    unset( $harborcache_plugins_dir, $harborcache_plugin_path );
+if ( ! defined( 'HARBORCACHE_PLUGIN_PATH' ) ) {
+    // The verified installer embeds the actual plugin path; no folder-name assumptions.
+    $harborcache_plugin_path = null; // HARBORCACHE_PLUGIN_PATH_PLACEHOLDER
+    if ( ! is_string( $harborcache_plugin_path ) || ! is_readable( $harborcache_plugin_path . '/includes/ch-config.php' ) ) { return; }
+    define( 'HARBORCACHE_PLUGIN_PATH', $harborcache_plugin_path );
+    unset( $harborcache_plugin_path );
 }
-if ( ! is_readable( WP_REDIS_PLUGIN_PATH . '/includes/ch-config.php' ) ) { return; }
+if ( ! is_readable( HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php' ) ) { return; }
 if ( ( defined( 'HARBORCACHE_DISABLED' ) && HARBORCACHE_DISABLED ) || ( defined( 'WP_REDIS_DISABLED' ) && WP_REDIS_DISABLED ) ) { return; }
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-config.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php';
 try { \HarborCache\Config::apply(); }
 catch ( Throwable $harborcache_error ) { error_log( 'HarborCache configuration is invalid. Review HARBORCACHE_CONFIG and wp-content/harborcache-config.php.' ); return; } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 
 // phpcs:disable Generic.WhiteSpace.ScopeIndent.IncorrectExact, Generic.WhiteSpace.ScopeIndent.Incorrect
-if ( is_readable( WP_REDIS_PLUGIN_PATH . '/includes/class-advanced-cache.php' ) && ( ! defined( 'WP_REDIS_DISABLED' ) || ! WP_REDIS_DISABLED ) ) :
+if ( is_readable( HARBORCACHE_PLUGIN_PATH . '/includes/class-advanced-cache.php' ) && ( ! defined( 'WP_REDIS_DISABLED' ) || ! WP_REDIS_DISABLED ) ) :
 
 /**
  * Determines whether the object cache implementation supports a particular feature.
@@ -261,9 +257,16 @@ function wp_cache_init() {
         define( 'WP_REDIS_PREFIX', WP_CACHE_KEY_SALT );
     }
 
-    // Set unique prefix for sites hosted on Cloudways
-    if ( ! defined( 'WP_REDIS_PREFIX' ) && isset( $_SERVER['cw_allowed_ip'] ) )  {
-        define( 'WP_REDIS_PREFIX', getenv( 'HTTP_X_APP_USER' ) );
+    // Set a unique prefix for sites hosted on Cloudways, after validating both server-provided values.
+    $harborcache_cloudways_ip = isset( $_SERVER['cw_allowed_ip'] ) && is_scalar( $_SERVER['cw_allowed_ip'] )
+        ? sanitize_text_field( wp_unslash( (string) $_SERVER['cw_allowed_ip'] ) )
+        : '';
+    $harborcache_cloudways_user = getenv( 'HTTP_X_APP_USER' );
+    $harborcache_cloudways_user = is_string( $harborcache_cloudways_user )
+        ? sanitize_text_field( $harborcache_cloudways_user )
+        : '';
+    if ( ! defined( 'WP_REDIS_PREFIX' ) && '' !== $harborcache_cloudways_ip && '' !== $harborcache_cloudways_user ) {
+        define( 'WP_REDIS_PREFIX', $harborcache_cloudways_user );
     }
 
     if ( ! ( $wp_object_cache instanceof WP_Object_Cache ) ) {
@@ -797,12 +800,12 @@ class WP_Object_Cache {
 
                 // Passing an SSL context enables TLS even for tcp seeds in PhpRedis.
                 $tls_cluster = 'tls' === $parameters['scheme'] || (bool) preg_grep( '/^tls:\/\//i', $args['cluster'] );
-                if ( $tls_cluster && version_compare( $version, '5.3.0', '>=' ) && defined( 'WP_REDIS_SSL_CONTEXT' ) && ! empty( WP_REDIS_SSL_CONTEXT ) ) {
+                if ( $tls_cluster && version_compare( $version, '5.3.0', '>=' ) ) {
                     if ( ! array_key_exists( 'password', $args ) ) {
                         $args['password'] = null;
                     }
 
-                    $args['ssl'] = WP_REDIS_SSL_CONTEXT;
+                    $args['ssl'] = \HarborCache\Config::tls_options( defined( 'WP_REDIS_SSL_CONTEXT' ) ? WP_REDIS_SSL_CONTEXT : array(), 'phpredis' );
                 }
 
                 $this->redis = new RedisCluster( null, ...array_values( $args ) );
@@ -836,8 +839,8 @@ class WP_Object_Cache {
                     str_replace( 'tls://', '', $parameters['host'] )
                 );
 
-                if ( version_compare( $version, '5.3.0', '>=' ) && defined( 'WP_REDIS_SSL_CONTEXT' ) && ! empty( WP_REDIS_SSL_CONTEXT ) ) {
-                    $args['others']['stream'] = WP_REDIS_SSL_CONTEXT;
+                if ( version_compare( $version, '5.3.0', '>=' ) ) {
+                    $args['others']['stream'] = \HarborCache\Config::tls_options( defined( 'WP_REDIS_SSL_CONTEXT' ) ? WP_REDIS_SSL_CONTEXT : array(), 'phpredis' );
                 }
             }
 
@@ -969,16 +972,8 @@ class WP_Object_Cache {
         if ( ! class_exists( 'Predis\Client' ) ) {
             $predis = '/vendor/predis/predis/autoload.php';
 
-            $pluginDir = defined( 'WP_PLUGIN_DIR' ) ? WP_PLUGIN_DIR . '/harborcache' : null;
-            $contentDir = defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR . '/plugins/harborcache' : null;
-            $pluginPath = defined( 'WP_REDIS_PLUGIN_PATH' ) ? WP_REDIS_PLUGIN_PATH : null;
-
-            if ( $pluginDir && is_readable( $pluginDir . $predis ) ) {
-                require_once $pluginDir . $predis;
-            } elseif ( $contentDir && is_readable( $contentDir . $predis ) ) {
-                require_once $contentDir . $predis;
-            } elseif ( $pluginPath && is_readable( $pluginPath . $predis ) ) {
-                require_once $pluginPath . $predis;
+            if ( is_readable( HARBORCACHE_PLUGIN_PATH . $predis ) ) {
+                require_once HARBORCACHE_PLUGIN_PATH . $predis;
             } else {
                 throw new Exception(
                     'Predis library not found. Re-install HarborCache plugin or delete the object-cache.php.'
@@ -1088,7 +1083,7 @@ class WP_Object_Cache {
     protected function connect_using_credis( $parameters ) {
         $client = 'Credis';
 
-        $creds_path = WP_REDIS_PLUGIN_PATH . '/vendor/colinmollenhour/credis/';
+        $creds_path = HARBORCACHE_PLUGIN_PATH . '/vendor/colinmollenhour/credis/';
 
         $to_load = [];
 
@@ -2582,14 +2577,13 @@ class WP_Object_Cache {
      * @return void
      */
     public function stats() {
-        // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
     ?>
         <p>
             <strong>Redis Status:</strong>
-            <?php echo $this->redis_status() ? 'Connected' : 'Not connected'; ?>
+            <?php echo esc_html( $this->redis_status() ? 'Connected' : 'Not connected' ); ?>
             <br />
             <strong>Redis Client:</strong>
-            <?php echo $this->diagnostics['client'] ?: 'Unknown'; ?>
+            <?php echo esc_html( $this->diagnostics['client'] ?? 'Unknown' ); ?>
             <br />
             <strong>Cache Hits:</strong>
             <?php echo (int) $this->cache_hits; ?>
@@ -2598,10 +2592,9 @@ class WP_Object_Cache {
             <?php echo (int) $this->cache_misses; ?>
             <br />
             <strong>Cache Size:</strong>
-            <?php echo number_format_i18n( strlen( serialize( $this->cache ) ) / 1024, 2 ); ?> KB
+            <?php echo esc_html( number_format_i18n( strlen( serialize( $this->cache ) ) / 1024, 2 ) ); ?> KB
         </p>
     <?php
-        // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
     }
 
     /**
@@ -3055,8 +3048,8 @@ class WP_Object_Cache {
         }
 
         // Load custom Redis error template, if present.
-        if ( file_exists( WP_CONTENT_DIR . '/redis-error.php' ) ) {
-            require_once WP_CONTENT_DIR . '/redis-error.php';
+        if ( file_exists( \HarborCache\Paths::content( 'redis-error.php' ) ) ) {
+            require_once \HarborCache\Paths::content( 'redis-error.php' );
             die();
         }
 
@@ -3067,7 +3060,7 @@ class WP_Object_Cache {
         $message = '<h1>' . __( 'Error establishing a Redis connection', 'harborcache-object-cache-with-redis' ) . "</h1>\n";
 
         if ( $verbose ) {
-            $message .= "<p><code>" . $exception->getMessage() . "</code></p>\n";
+            $message .= "<p><code>" . esc_html( $exception->getMessage() ) . "</code></p>\n";
 
             $message .= '<p>' . sprintf(
                 // translators: %s = Formatted wp-config.php file name.
@@ -3094,8 +3087,7 @@ class WP_Object_Cache {
             '<code>/wp-content/</code>'
         ) . "</p>\n";
 
-        // phpcs:disable WordPress.Security.EscapeOutput
-        wp_die( $message );
+        wp_die( wp_kses_post( $message ) );
         // phpcs:enable
     }
 
@@ -3158,7 +3150,7 @@ class WP_Object_Cache {
     }
 }
 
-require_once WP_REDIS_PLUGIN_PATH . '/includes/class-advanced-cache.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-advanced-cache.php';
 endif;
 // phpcs:enable Generic.WhiteSpace.ScopeIndent.IncorrectExact, Generic.WhiteSpace.ScopeIndent.Incorrect
 

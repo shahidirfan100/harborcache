@@ -1,11 +1,11 @@
 <?php
 /**
  * Loads a HarborCache installation from wp-content/mu-plugins.
- * Version: 1.1.5
+ * Version: 1.2.5
  * License: GPL-3.0-only
  */
 defined( 'ABSPATH' ) || exit;
-$harborcache_loader_path = defined( 'HARBORCACHE_PLUGIN_PATH' ) ? HARBORCACHE_PLUGIN_PATH : WP_PLUGIN_DIR . '/harborcache-object-cache-with-redis';
-if ( ! defined( 'HARBORCACHE_PLUGIN_PATH' ) && ! is_readable( $harborcache_loader_path . '/harborcache.php' ) ) { $harborcache_loader_path = WP_PLUGIN_DIR . '/harborcache'; }
-if ( is_readable( $harborcache_loader_path . '/harborcache.php' ) ) { require_once $harborcache_loader_path . '/harborcache.php'; }
+// Set HARBORCACHE_PLUGIN_PATH in wp-config.php for an optional MU-only installation.
+$harborcache_loader_path = defined( 'HARBORCACHE_PLUGIN_PATH' ) ? HARBORCACHE_PLUGIN_PATH : '';
+if ( '' !== $harborcache_loader_path && is_readable( $harborcache_loader_path . '/harborcache.php' ) ) { require_once $harborcache_loader_path . '/harborcache.php'; }
 unset( $harborcache_loader_path );

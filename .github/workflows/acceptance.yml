@@ -3,10 +3,75 @@ on:
   workflow_dispatch:
   push:
     branches: [main, 'codex/**']
-    paths: ['**.php', 'tests/**', '.github/workflows/acceptance.yml']
+    paths: ['**.php', 'assets/**', 'tests/**', 'tools/**', '.distignore', 'dist/**', 'readme.txt', '.github/workflows/acceptance.yml']
 permissions:
   contents: read
 jobs:
+  review-layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: local-ci-only
+          MYSQL_DATABASE: harborcache
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=5s --health-timeout=5s --health-retries=30
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      WP_ROOT: /tmp/hc-review-core
+      HC_CONTENT: /tmp/hc-review-content
+      HC_EXTENSIONS: /tmp/hc-review-extensions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, redis
+          coverage: none
+          tools: wp-cli
+      - name: Exact ZIP in relocated content and plugin directories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence "$HC_CONTENT" "$HC_EXTENSIONS"
+          python3 tools/build-release.py --verify | tee evidence/package.json
+          wp core download --path="$WP_ROOT"
+          cp -a "$WP_ROOT/wp-content/themes" "$HC_CONTENT/themes"
+          wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
+          wp config set WP_CONTENT_DIR "$HC_CONTENT" --path="$WP_ROOT"
+          wp config set WP_CONTENT_URL http://localhost/content-moved --path="$WP_ROOT"
+          wp config set WP_PLUGIN_DIR "$HC_EXTENSIONS" --path="$WP_ROOT"
+          wp config set WP_PLUGIN_URL http://localhost/extensions-moved --path="$WP_ROOT"
+          wp config set WP_DEBUG true --raw --path="$WP_ROOT"
+          wp config set WP_DEBUG_LOG true --raw --path="$WP_ROOT"
+          wp config set WP_DEBUG_DISPLAY false --raw --path="$WP_ROOT"
+          wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
+          wp core install --path="$WP_ROOT" --url=http://localhost --title='HarborCache review' --admin_user=ci --admin_password=ci-disposable-only --admin_email=ci@example.org --skip-email
+          unzip -q dist/harborcache-*.zip -d "$HC_EXTENSIONS"
+          wp plugin activate harborcache-object-cache-with-redis --path="$WP_ROOT"
+          wp plugin install plugin-check --activate --path="$WP_ROOT"
+          wp plugin check harborcache-object-cache-with-redis --slug=harborcache-object-cache-with-redis --format=json --require="$HC_EXTENSIONS/plugin-check/cli.php" --path="$WP_ROOT" | tee evidence/plugin-check.json
+          wp harborcache enable --path="$WP_ROOT"
+          wp eval-file tests/review-wordpress.php --path="$WP_ROOT" | tee evidence/custom-layout.txt
+          wp eval '$active=get_option("active_plugins"); $active=array_map(static function($p){return str_replace("harborcache-object-cache-with-redis/","cache-renamed/",$p);},$active); update_option("active_plugins",$active);' --path="$WP_ROOT"
+          mv "$HC_EXTENSIONS/harborcache-object-cache-with-redis" "$HC_EXTENSIONS/cache-renamed"
+          wp eval 'if($GLOBALS["wp_object_cache"] instanceof HarborCache_Advanced_Cache){throw new RuntimeException("Expected safe fallback after a directory move");} echo "PASS Safe WordPress bootstrap after rename\n";' --path="$WP_ROOT" | tee evidence/rename-fallback.txt
+          wp harborcache update --path="$WP_ROOT"
+          wp eval-file tests/review-wordpress.php --path="$WP_ROOT" | tee evidence/renamed-layout.txt
+          wp plugin deactivate cache-renamed --path="$WP_ROOT"
+          test ! -e "$HC_CONTENT/object-cache.php"
+          wp plugin uninstall cache-renamed --path="$WP_ROOT"
+          if test -s "$HC_CONTENT/debug.log"; then cat "$HC_CONTENT/debug.log"; exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wordpress-review-layout
+          path: evidence
   wordpress:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -52,6 +117,10 @@ jobs:
         run: |
           set -euo pipefail
           find includes -name '*.php' -print0 | xargs -0 -n1 php -l > /tmp/syntax.log
+          php tests/dropin-writer.php
+          php tests/review-regressions.php
+          python3 tools/build-release.py --check
+          php tests/conflict-notice.php
           wp core download --version="${{ matrix.wp || 'latest' }}" --path="$WP_ROOT"
           wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
           wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
@@ -59,7 +128,7 @@ jobs:
           mkdir -p "$WP_ROOT/wp-content/plugins/harborcache"
           rsync -a --exclude=.git --exclude=media --exclude=dist --exclude=tests --exclude=.github ./ "$WP_ROOT/wp-content/plugins/harborcache/"
           wp plugin activate harborcache --path="$WP_ROOT"
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
       - name: Native and PHP clients, codecs, concurrent workers and WordPress flows
         shell: bash
         run: |
@@ -90,10 +159,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          run_transport_acceptance() {
+            local label="$1"
+            local logfile="$2"
+            shift 2
+            echo "BEGIN transport probe: $label"
+            timeout --signal=TERM --kill-after=10s 90s php "$@" | tee "$logfile"
+            echo "PASS transport probe: $label"
+          }
           docker exec '${{ job.services.redis.id }}' redis-cli ACL SETUSER hc-ci on '>disposable-ci-only' '~*' '+@all'
           for client in predis phpredis; do
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"username\":\"hc-ci\",\"password\":\"disposable-ci-only\"}"
-            php tests/acceptance.php | tee "evidence/acl-$client.txt"
+            run_transport_acceptance "ACL $client" "evidence/acl-$client.txt" tests/acceptance.php transport
           done
           mkdir -p /tmp/hc-redis
           chmod 777 /tmp/hc-redis
@@ -101,13 +178,20 @@ jobs:
           chmod 644 /tmp/hc-redis/*.pem
           docker run -d --name hc-tls -p 6380:6380 -v /tmp/hc-redis:/hc redis:${{ matrix.redis }} redis-server --port 0 --tls-port 6380 --tls-cert-file /hc/cert.pem --tls-key-file /hc/key.pem --tls-ca-cert-file /hc/cert.pem --tls-auth-clients no --unixsocket /hc/redis.sock --unixsocketperm 777
           for attempt in $(seq 1 30); do test -S /tmp/hc-redis/redis.sock && break || sleep 1; done
+          if ! test -S /tmp/hc-redis/redis.sock; then docker logs hc-tls; exit 1; fi
+          HC_TLS_CA=/tmp/hc-redis/cert.pem timeout --signal=TERM --kill-after=2s 15s php tests/phpredis-tls-smoke.php
           for client in predis phpredis; do
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"cafile\":\"/tmp/hc-redis/cert.pem\",\"verify_peer\":true,\"verify_peer_name\":true}}"
-            php tests/acceptance.php | tee "evidence/tls-$client.txt"
+            run_transport_acceptance "trusted TLS $client" "evidence/tls-$client.txt" tests/acceptance.php transport
+            if [[ '${{ matrix.php }}' == '7.4' && "$client" == phpredis ]]; then
+              for round in $(seq 1 5); do
+                run_transport_acceptance "PHP 7.4 trusted TLS repeat $round" "evidence/tls-php74-repeat-$round.txt" tests/acceptance.php transport
+              done
+            fi
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"scheme\":\"tls\",\"port\":6380,\"tls_options\":{\"verify_peer\":true,\"verify_peer_name\":true}}"
-            php tests/acceptance.php down | tee "evidence/untrusted-tls-$client.txt"
+            run_transport_acceptance "untrusted TLS rejection $client" "evidence/untrusted-tls-$client.txt" tests/acceptance.php down
             export HC_TEST_CONFIG="{\"client\":\"$client\",\"host\":\"/tmp/hc-redis/redis.sock\"}"
-            php tests/acceptance.php | tee "evidence/socket-$client.txt"
+            run_transport_acceptance "Unix socket $client" "evidence/socket-$client.txt" tests/acceptance.php transport
           done
       - name: WordPress lifecycle and scheduled event execution
         shell: bash
@@ -116,7 +200,7 @@ jobs:
           wp cron event run --due-now --path="$WP_ROOT" | tee evidence/cron.txt
           wp plugin deactivate harborcache --path="$WP_ROOT" | tee evidence/deactivate.txt
           wp plugin activate harborcache --path="$WP_ROOT" | tee evidence/reactivate.txt
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           export HC_TEST_CONFIG='{"client":"phpredis"}'
           php tests/acceptance.php recovery | tee evidence/lifecycle-recovery.txt
       - uses: actions/upload-artifact@v4
@@ -164,7 +248,7 @@ jobs:
           mkdir -p "$WP_ROOT/wp-content/plugins/harborcache"
           rsync -a --exclude=.git --exclude=media --exclude=dist --exclude=tests --exclude=.github ./ "$WP_ROOT/wp-content/plugins/harborcache/"
           wp plugin activate harborcache --path="$WP_ROOT"
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
 
       - name: Equal-workload Linux performance comparison
         env:
@@ -175,9 +259,9 @@ jobs:
           mkdir -p evidence /tmp/hc-baseline /tmp/hc-baseline-download
           wp plugin deactivate harborcache --path="$WP_ROOT"
           wp plugin install redis-cache --version=3.0.0 --path="$WP_ROOT"
-          gh release download v1.1.2 --repo "$GITHUB_REPOSITORY" --pattern 'harborcache-1.1.2.zip' --dir /tmp/hc-baseline-download
-          cp /tmp/hc-baseline-download/harborcache-1.1.2.zip /tmp/hc-baseline.zip
-          echo 'f9f578f8504e7ad7cb3833024e99504666932e57a3f7d53a63ab4add39957adb  /tmp/hc-baseline.zip' | sha256sum -c -
+          gh release download v1.1.5 --repo "$GITHUB_REPOSITORY" --pattern 'harborcache-1.1.5.zip' --dir /tmp/hc-baseline-download
+          cp /tmp/hc-baseline-download/harborcache-1.1.5.zip /tmp/hc-baseline.zip
+          echo '6010c441104746cfeeff27399c850732ca8b800c94ee3ded33ac659e91e2f741  /tmp/hc-baseline.zip' | sha256sum -c -
           unzip -q /tmp/hc-baseline.zip -d /tmp/hc-baseline
           for round in $(seq 0 6); do
             for offset in 0 1 2; do
@@ -185,18 +269,27 @@ jobs:
               engine=${engines[$(((round+offset)%3))]}
               case "$engine" in
                 free) source="$WP_ROOT/wp-content/plugins/redis-cache" ;;
-                baseline) source=/tmp/hc-baseline/harborcache ;;
+                baseline) source=/tmp/hc-baseline/harborcache-object-cache-with-redis ;;
                 harbor) source="$GITHUB_WORKSPACE" ;;
               esac
-              cp "$source/includes/object-cache.php" "$WP_ROOT/wp-content/object-cache.php"
+              php tests/install-dropin.php "$source"
               php tests/benchmark.php "$engine" "$source" "$round" 0 | tee -a evidence/benchmark.jsonl
             done
           done
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          for engine in free baseline harbor; do
+            case "$engine" in
+              free) source="$WP_ROOT/wp-content/plugins/redis-cache" ;;
+              baseline) source=/tmp/hc-baseline/harborcache-object-cache-with-redis ;;
+              harbor) source="$GITHUB_WORKSPACE" ;;
+            esac
+            php tests/install-dropin.php "$source"
+            php tests/benchmark-flush.php "$engine" "$source" 5 | tee -a evidence/group-flush.jsonl
+          done
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           for sampling in 10 100; do php tests/benchmark.php harbor "$GITHUB_WORKSPACE" 100 "$sampling" | tee -a evidence/benchmark-sampling.jsonl; done
           rm "$WP_ROOT/wp-content/object-cache.php"
           wp plugin activate harborcache --path="$WP_ROOT"
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
       - name: WooCommerce checkout, inventory and orders
         shell: bash
         run: |
@@ -210,7 +303,7 @@ jobs:
           set -euo pipefail
           wp core multisite-convert --title='HarborCache network' --path="$WP_ROOT"
           wp plugin activate harborcache --network --path="$WP_ROOT"
-          cp includes/object-cache.php "$WP_ROOT/wp-content/object-cache.php"
+          php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           php tests/applications.php multisite | tee evidence/multisite.txt
       - name: Concurrent PHP-FPM HTTP smoke and recovery
         shell: bash
@@ -243,9 +336,9 @@ jobs:
           set -euo pipefail
           mkdir -p evidence
           php --ri relay | tee evidence/relay-extension.txt
-          export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-ci","relay":{"listeners":true}}'
+          export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-ci","database":15,"debug":true,"relay":{"listeners":true}}'
           php tests/acceptance.php | tee evidence/relay.txt
-          export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-adaptive-ci","relay":{"listeners":true,"adaptive":{"width":512,"depth":1}}}'
+          export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-adaptive-ci","database":15,"relay":{"listeners":true,"adaptive":{"width":512,"depth":1}}}'
           php tests/acceptance.php | tee evidence/relay-adaptive.txt
       - uses: actions/upload-artifact@v4
         if: always()

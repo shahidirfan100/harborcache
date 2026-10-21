@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.5
+Stable tag: 1.2.5
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -12,9 +12,9 @@ Persistent Redis object caching with scoped invalidation, local analytics, conne
 
 == Description ==
 
-HarborCache is a GPLv3 fork of Redis Object Cache 3.0.0 by Till Krüss and contributors, with original cache management and administration features. It requires a separately operated Redis server. No account, subscription or license key is required. Request analytics stay in your configured Redis namespace. External tracing is disabled by default.
+HarborCache provides persistent Redis object caching with a dashboard, local analytics, connection settings and scoped cache controls. It was developed around the day-to-day needs of the author's websites, with its own administration and cache-management workflow.
 
-This is the stable HarborCache release. It does not claim complete Object Cache Pro feature parity. See docs/FEATURES.md for verified configurations and deployment acceptance gates.
+It requires a separately operated Redis server. No account, subscription or license key is required. Request analytics stay in your configured Redis namespace. External tracing is disabled by default. See docs/FEATURES.md for implemented behavior, verified configurations and deployment acceptance gates.
 
 Features include persistent caching through Predis, PhpRedis, Relay or Credis; multisite group scopes; bounded TTLs; atomic namespace invalidation; bulk cache operations; typed values; optional serialization and compression; optional split-alloptions storage; request key prefetching; local sampled analytics; WP-CLI; protected administration forms; Site Health; Query Monitor; and Debug Bar support.
 
@@ -28,7 +28,7 @@ Redis is a registered trademark of Redis Ltd. No affiliation or endorsement is i
 
 == Installation ==
 
-1. Upload the harborcache folder to your plugins directory and activate it.
+1. Install HarborCache from Plugins > Add New, or upload the installable ZIP, then activate it.
 2. Open Settings > HarborCache, or Network Admin > Settings > HarborCache.
 3. Configure your Redis host, port, database and credentials on the Connection tab.
 4. Save configuration, then choose Enable Object Cache on the Overview tab.
@@ -46,14 +46,14 @@ No. Your host must provide Redis or you must operate a Redis server.
 = Is a license key required? =
 No. All included local features are available without a license key.
 
-= Is this Object Cache Pro? =
-No. It uses the separate GPL Redis Object Cache engine with original additions. Proprietary Pro code, vendor services and support are not included.
+= What is HarborCache based on? =
+HarborCache's cache engine is a modified GPLv3 fork of Redis Object Cache 3.0.0 by Till Krüss and contributors. Its additional dashboard, configuration and cache-management work is by Shahid Irfan. Experience using existing Redis caching plugins helped shape the initial requirements. The upstream license and source attribution are retained; see docs/SOURCE.md.
 
 = Does flush delete other applications' data? =
 HarborCache's flush changes its namespace tokens. Old entries expire within the maximum TTL. It does not call FLUSHDB or FLUSHALL.
 
-= Can I move an existing Pro cache into this plugin? =
-Do not reuse its keys. Configure a distinct prefix and retire the previous drop-in through its owning plugin. The cache data formats are different.
+= Can I reuse another plugin's cache data? =
+Configure a distinct prefix and retire the previous drop-in through its owning plugin. Cache data formats and invalidation rules can differ; do not assume the stored entries are compatible.
 
 == Screenshots ==
 
@@ -66,6 +66,42 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.5 =
+* Clarify the Redis Object Cache fork attribution and describe HarborCache's own features directly.
+* Remove unnecessary product comparisons from current descriptions and clarify cache migration guidance.
+* Preserve cache behavior, compatibility hooks, dashboard styling and media assets.
+
+= 1.2.4 =
+* Resolve the plugin directory from its actual installation and install a verified drop-in with that path.
+* Remove legacy directory guesses from Predis and preserve recovery when a plugin folder moves.
+* Escape diagnostic and error output at rendering time.
+* Default PHP 7.4 PhpRedis TLS connections to verified TLS 1.2 to avoid a known TLS 1.3 stream hang; preserve explicit TLS policies.
+* Exclude development reports and unused vendor documentation from the install ZIP while retaining source and licenses.
+
+= 1.2.3 =
+* Recover verified backups when an interrupted update leaves a partial drop-in at the destination.
+* Remove incomplete drop-in files after failed first installs or failed rollback copies so WordPress can start without persistent caching.
+* Preserve foreign cache drop-ins and show a specific recovery message when HarborCache cannot safely replace a file.
+* Add automated coverage for interrupted writes, backup recovery and failed filesystem operations.
+
+= 1.2.2 =
+* Give HarborCache-owned plugin metadata and drop-in paths distinct HARBORCACHE-prefixed constants.
+* Preserve WP_REDIS_* connection configuration as an input compatibility layer without claiming Redis Cache plugin identity.
+* Resolve the drop-in path from HarborCache’s own installation directory and update the comparison harness to use the correct engine constants.
+
+= 1.2.1 =
+* Scope chart styles and scripts to HarborCache’s admin page and visible dashboard widget.
+* Sanitize request paths used to build prefetch identifiers.
+* Remove unused legacy AJAX handlers and their unsanitized nonce path.
+* Namespace the metrics cleanup cron event and migrate the earlier HarborCache event.
+* Keep the cache API, Redis key format and saved connection settings compatible.
+
+= 1.2.0 =
+* Reduce temporary allocations in the repeated cache-key layout check without changing key or namespace semantics.
+* Format dashboard counters for quick reading and increase dashboard, chart, settings and widget text sizes.
+* Add fresh-worker replacement, ignored-group storage and group-flush scaling coverage.
+* Compare group invalidation and cache workloads against Redis Object Cache 3.0.0 and HarborCache 1.1.5 in Linux CI.
 
 = 1.1.5 =
 * Restore the complete HarborCache – Object Cache with Redis name used by the installed plugin.
@@ -133,6 +169,15 @@ Do not reuse its keys. Configure a distinct prefix and retire the previous drop-
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.2 =
+Separate HarborCache metadata from Redis Cache globals. Existing connection settings and cache data are preserved; update the HarborCache drop-in after upgrading.
+
+= 1.2.1 =
+Fix WordPress.org review findings around request sanitization and dashboard style isolation. Existing connection settings and the cache namespace are preserved.
+
+= 1.2.0 =
+Performance and dashboard readability improvements with expanded correctness and Linux comparison coverage. Existing connection settings and key namespace are preserved.
 
 = 1.1.5 =
 Restore the full plugin identity so WordPress recognizes this as an update to HarborCache – Object Cache with Redis. Refresh the owned drop-in after upgrading.

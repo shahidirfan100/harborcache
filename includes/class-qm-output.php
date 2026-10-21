@@ -117,6 +117,6 @@ class QM_Output extends QM_Output_Html {
             return;
         }
 
-        require_once WP_REDIS_PLUGIN_PATH . '/includes/ui/query-monitor.php';
+        require_once HARBORCACHE_PLUGIN_PATH . '/includes/ui/query-monitor.php';
     }
 }

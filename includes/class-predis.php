@@ -39,7 +39,7 @@ class Predis {
 
         // Load bundled Predis library.
         if ( ! class_exists( '\Predis\Client' ) ) {
-            require_once WP_REDIS_PLUGIN_PATH . '/vendor/predis/predis/autoload.php';
+            require_once HARBORCACHE_PLUGIN_PATH . '/vendor/predis/predis/autoload.php';
         }
 
         $servers = false;

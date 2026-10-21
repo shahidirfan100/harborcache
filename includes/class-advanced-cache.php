@@ -1,14 +1,14 @@
 <?php
 /** Original extensions to the GPL Redis Object Cache engine. */
 defined( 'ABSPATH' ) || exit;
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-codec.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-observer.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-cleanup.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-routing.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-native.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-topology.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-operations.php';
-require_once WP_REDIS_PLUGIN_PATH . '/includes/ch-relay-options.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-codec.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-observer.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-cleanup.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-routing.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-native.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-topology.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-operations.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-relay-options.php';
 
 class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	use HarborCache_Cleanup;
@@ -58,9 +58,9 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 				$this->ch_root = $this->ch_token( $this->ch_base . ':root' ); $this->ch_ready = '' !== $this->ch_root && $this->redis_status();
 				if ( $this->ch_config['strict'] ) {
 					global $table_prefix;
-					$identity = hash( 'sha256', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . ':' . $table_prefix . ':' . ( defined( 'AUTH_KEY' ) ? AUTH_KEY : WP_CONTENT_DIR ) );
+					$identity = hash( 'sha256', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . ':' . $table_prefix . ':' . ( defined( 'AUTH_KEY' ) ? AUTH_KEY : \HarborCache\Paths::content() ) );
 					$this->ch_command( array( 'SET', $this->ch_base . ':owner', $identity, 'NX' ) );
-					$owner = $this->ch_command( array( 'GET', $this->ch_base . ':owner' ) );
+					$owner = $this->ch_metadata_get( $this->ch_base . ':owner' );
 					if ( is_string( $owner ) && $owner !== $identity ) { $this->flush_scope( 'all' ); $this->ch_command( array( 'SET', $this->ch_base . ':owner', $identity ) ); \HarborCache\Observer::log( $this->ch_config, 'warning', 'Cache prefix ownership changed; integrity namespace rotated.' ); }
 				}
 			}
@@ -186,13 +186,18 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		}
 	}
 
+	private function ch_metadata_get( $key ) {
+		$read = function () use ( $key ) { return $this->ch_command( array( 'GET', $key ) ); };
+		return 'relay' === $this->ch_config['client'] ? $this->relay_uncached_read( $read ) : $read();
+	}
+
 	private function ch_token( $key ) {
 		if ( isset( $this->ch_tokens[ $key ] ) ) { return $this->ch_tokens[ $key ]; }
 		try {
-		$value = $this->ch_command( array( 'GET', $key ) );
+		$value = $this->ch_metadata_get( $key );
 		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) {
 			$value = bin2hex( random_bytes( 12 ) );
-			if ( null === $this->ch_command( array( 'SET', $key, $value, 'NX' ) ) ) { $value = $this->ch_command( array( 'GET', $key ) ); }
+			if ( null === $this->ch_command( array( 'SET', $key, $value, 'NX' ) ) ) { $value = $this->ch_metadata_get( $key ); }
 			if ( ! is_string( $value ) ) { throw new RuntimeException( 'Cache namespace initialization failed.' ); }
 		}
 		return $this->ch_tokens[ $key ] = $value;
@@ -206,8 +211,18 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		try {
 		if ( 'harborcache' === $group && 'metrics' === $key ) { return $this->ch_base . ( $this->ch_config['analytics']['persist'] ? '' : ':' . $this->ch_root ) . ':analytics:metrics'; }
 		$group = $group ?: 'default';
-		$state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] );
-		if ( $state !== $this->ch_layout_state ) { $this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0; $this->ch_layout_state = $state; }
+		if (
+			null === $this->ch_layout_state ||
+			$this->ch_layout_state[0] !== $this->ch_config['serializer'] ||
+			$this->ch_layout_state[1] !== $this->ch_config['compression'] ||
+			$this->ch_layout_state[2] !== $this->ch_config['split_alloptions'] ||
+			$this->ch_layout_state[3] !== $this->ch_config['client']
+		) {
+			$this->ch_derived = array();
+			$this->ch_prefixes = array();
+			$this->ch_derived_count = 0;
+			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] );
+		}
 		$layout = $this->ch_config['split_alloptions'] && 'relay' === $this->ch_config['client'] ? ':relay-options-v1' : '';
 		$context = $this->ch_scope( $group ) . ':' . $group;
 		$cacheable = is_string( $key ) || is_int( $key );
@@ -355,7 +370,8 @@ LUA;
 
 	private function ch_prefetch_id() {
 		$user = function_exists( 'get_current_user_id' ) ? get_current_user_id() : 0;
-		return $this->ch_base . ':prefetch:' . hash( 'sha256', $this->blog_prefix . ':' . $user . ':' . ( $_SERVER['REQUEST_URI'] ?? '/' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Hashed, never output or executed.
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
+		return $this->ch_base . ':prefetch:' . hash( 'sha256', $this->blog_prefix . ':' . $user . ':' . $request_uri );
 	}
 	public function track_prefetch( $key, $value, $group, $force, $found, $time ) {
 		if ( $this->ch_prefetching || ! $found || in_array( $group, $this->ch_config['non_prefetchable_groups'], true ) || $this->is_ignored_group( $group ) ) { return; }
@@ -460,7 +476,15 @@ LUA;
 			$san_key = $this->sanitize_key_part( $key ); $san_group = $this->sanitize_key_part( $group ?: 'default' );
 			$context = $this->ch_scope( $san_group ) . ':' . $san_group;
 			$derived = $this->ch_derived[ $context ][ $san_key ] ?? null;
-			if ( null !== $derived && $this->ch_layout_state === array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] ) && array_key_exists( $derived, $this->cache ) ) {
+			if (
+				null !== $derived &&
+				isset( $this->ch_layout_state[0] ) &&
+				$this->ch_layout_state[0] === $this->ch_config['serializer'] &&
+				$this->ch_layout_state[1] === $this->ch_config['compression'] &&
+				$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
+				$this->ch_layout_state[3] === $this->ch_config['client'] &&
+				array_key_exists( $derived, $this->cache )
+			) {
 				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $derived ] ) ? clone $this->cache[ $derived ] : $this->cache[ $derived ];
 			}
 		}
