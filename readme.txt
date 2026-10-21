@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.5
+Stable tag: 1.2.6
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,15 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard charts and statistics widget.
 
 == Changelog ==
+
+= 1.2.6 =
+* Preserve another installation's cache-prefix ownership during startup and enable/reconnect checks.
+* Reject invalid namespace metadata and failed initialization/rotation replies without silently creating a replacement namespace.
+* Fetch optional Redis server information lazily and avoid unnecessary SELECT 0 in Predis connections.
+* Keep options and site-options reads on primary nodes, including bulk reads and Relay option strings.
+* Discard native connections after failed reads and preserve nonzero database selection during safe reconnects.
+* Log concise, redacted fallback errors once per request by default; keep detailed redacted traces available in debug mode.
+* Preserve dashboard styling, media, configuration defaults and existing cache key formats.
 
 = 1.2.5 =
 * Clarify the Redis Object Cache fork attribution and describe HarborCache's own features directly.
@@ -169,6 +178,9 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.6 =
+Refresh the owned drop-in after upgrading. Prefix conflicts now use request-memory fallback. Configure a distinct prefix for a cloned site or restore its original identity. Existing cache key formats and dashboard styling are preserved.
 
 = 1.2.2 =
 Separate HarborCache metadata from Redis Cache globals. Existing connection settings and cache data are preserved; update the HarborCache drop-in after upgrading.

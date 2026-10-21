@@ -84,7 +84,7 @@ trait HarborCache_Cleanup {
 	}
 
 	private function cleanup_delete_batch( $node, array $keys ) {
-		$command = $this->ch_config['async_flush'] && version_compare( $this->redis_version(), '4.0', '>=' ) ? 'UNLINK' : 'DEL';
+		$command = $this->ch_config['async_flush'] && version_compare( (string) $this->redis_version(), '4.0', '>=' ) ? 'UNLINK' : 'DEL';
 		if ( $node instanceof \Predis\Client ) {
 			$this->observe_command( 'PIPELINE', static function () use ( $node, $keys, $command ) {
 				$pipeline = $node->pipeline();

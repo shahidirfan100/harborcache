@@ -12,7 +12,7 @@ define( 'WP_REDIS_CLIENT', 'phpredis' );
 define( 'WP_REDIS_HOST', $host );
 define( 'WP_REDIS_PORT', $port );
 define( 'WP_REDIS_PREFIX', $prefix );
-if ( 'free' === $engine || 'baseline' === $engine ) {
+if ( 'free' === $engine ) {
 	define( 'WP_REDIS_PLUGIN_PATH', $source );
 	define( 'WP_REDIS_FILE', rtrim( $source, '/\\' ) . DIRECTORY_SEPARATOR . ( 'free' === $engine ? 'redis-cache.php' : 'harborcache.php' ) );
 } else {

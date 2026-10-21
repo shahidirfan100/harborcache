@@ -1,4 +1,7 @@
 <?php
+// Match the disposable site's request context when exercising HTTP-aware application code in CLI.
+$_SERVER['HTTP_HOST'] = 'localhost';
+$_SERVER['REQUEST_URI'] = '/';
 define('WP_HTTP_BLOCK_EXTERNAL',true);
 define('HARBORCACHE_CONFIG',array('client'=>'phpredis','prefix'=>'hc-app-ci','analytics'=>array('enabled'=>false),'split_alloptions'=>true));
 require rtrim(getenv('WP_ROOT'),'/').'/wp-load.php';

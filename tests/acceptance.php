@@ -10,6 +10,17 @@ if($mode==='transport'){fwrite(STDOUT,"BEGIN WordPress bootstrap\n");fflush(STDO
 require rtrim(getenv('WP_ROOT'),'/').'/wp-load.php';
 if($mode==='transport'){fwrite(STDOUT,"PASS WordPress bootstrap\n");fflush(STDOUT);}
 $c=$GLOBALS['wp_object_cache'];$checks=array();
+// Disposable CI configuration only: fail at the first unexpected Relay fallback.
+if ( 'relay' === $config['client'] && ! in_array( $mode, array( 'down', 'recovery' ), true ) ) {
+ set_error_handler( static function ( $severity, $message, $file, $line ) { throw new ErrorException( $message, 0, $severity, $file, $line ); }, E_WARNING );
+ class HC_Relay_Acceptance_Cache extends HarborCache_Advanced_Cache {
+  protected function handle_exception( $error ) {
+   throw new RuntimeException( 'Relay acceptance backend failure: ' . $error->getMessage(), 0, $error );
+  }
+ }
+ $c = new HC_Relay_Acceptance_Cache();
+ $GLOBALS['wp_object_cache'] = $c;
+}
 function gate($name,$pass){global $checks;$checks[]=array('test'=>$name,'pass'=>(bool)$pass);echo ($pass?'PASS ':'FAIL ').$name."\n";if(!$pass){throw new RuntimeException($name);}}
 function harborcache_test_css_scoped($path,$roots){
  $css=file_get_contents($path);if(false===$css){return false;}$css=preg_replace('~/\*.*?\*/~s','',$css);preg_match_all('/(?m)^[ \t]*([^@{}\r\n][^{}\r\n]*)\s*\{/',$css,$matches);
@@ -54,7 +65,14 @@ gate('Connected to configured Redis transport',$c->redis_status());
 if($mode==='recovery'){gate('New worker recovers after restart',$c->set('recovered',42,'ci-outage',60)&&42===$c->get('recovered','ci-outage',true));exit;}
 gate('Advanced implementation loaded',$c instanceof HarborCache_Advanced_Cache);
 if($config['client']==='relay'){
- $c->set('external',1,'ci-force',60);$c->get('external','ci-force',true);$key_method=new ReflectionMethod($c,'build_key');$key_method->setAccessible(true);$rawkey=$key_method->invoke($c,'external','ci-force');$other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($rawkey,60,'N2');$cache_mode=$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE);gate('Forced Relay read bypasses shared cache',2===$c->get('external','ci-force',true));gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));$other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
+ $c->set('external',1,'ci-force',60);$c->get('external','ci-force',true);$rawkey=$c->build_key('external','ci-force');
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($rawkey,60,'N2');
+ if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
+ $cache_mode=$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE);
+ gate('Forced Relay read bypasses shared cache',2===$c->get('external','ci-force',true));
+ if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
+ gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));
+ $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
 }
 $values=array(false,null,true,0,-1,PHP_INT_MAX,PHP_INT_MIN,1.25,'','001','1e3','b:0;',array('nested'=>array(false,null)),(object)array('v'=>1),str_repeat('large-value-',10000));
 foreach($values as $i=>$value){gate('Write type '.$i,$c->set('type-'.$i,$value,'ci-types',60));$c->flush_runtime();$actual=$c->get('type-'.$i,'ci-types',true,$found);gate('Roundtrip type '.$i,$found&&serialize($actual)===serialize($value));}

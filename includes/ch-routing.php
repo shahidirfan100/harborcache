@@ -25,8 +25,16 @@ trait HarborCache_Routing {
 	private function routed_read( $method, array $args, callable $primary ) {
 		$client = $this->redis_instance();
 		if ( $client instanceof \Predis\Client && ( $this->ch_config['servers'] || $this->ch_config['sentinels'] ) ) { $primary = function () use ( $client, $method, $args ) { return $client->getClientBy( 'role', 'master' )->$method( ...$args ); }; }
-		if ( $this->ch_relay_bypass ) { ++$this->ch_routes['primary']; return $this->native_read( $primary, true ); }
 		$keys = is_array( $args[0] ?? null ) ? $args[0] : array( $args[0] ?? '' );
+		$critical = false;
+		foreach ( $keys as $key ) {
+			if ( is_string( $key ) && ( false !== strpos( $key, ':g:options:' ) || false !== strpos( $key, ':g:site-options:' ) ) ) { $critical = true; break; }
+		}
+		if ( $this->ch_relay_bypass || $critical ) {
+			if ( $this->ch_native_nodes ) { return $this->native_topology_read( $method, $args, true ); }
+			++$this->ch_routes['primary'];
+			return $this->native_read( $primary, true );
+		}
 		$own_write = array_intersect_key( $this->ch_written, array_fill_keys( $keys, true ) );
 		if ( $this->ch_native_nodes ) { return $this->native_topology_read( $method, $args, (bool) $own_write ); }
 		if ( $client instanceof \RedisCluster || ( class_exists( '\Relay\Cluster' ) && $client instanceof \Relay\Cluster ) ) { return $this->native_read( $primary, (bool) $own_write ); }

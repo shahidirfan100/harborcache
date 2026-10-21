@@ -75,11 +75,21 @@ trait HarborCache_Topology {
 	private function native_topology_read( $method, array $args, $own_write ) {
 		$mode = $this->ch_config['replication_strategy']; $primary = $this->redis;
 		$replicas = array_keys( array_filter( $this->ch_native_nodes, static function ( $node ) { return 'replica' === $node['role']; } ) );
-		if ( $own_write || ! $replicas || ( 'distribute' === $mode && 0 === random_int( 0, count( $replicas ) ) ) ) { if ( ! $own_write && ! $replicas && 'distribute_replicas' === $mode ) { throw new RuntimeException( 'No native read replica available.' ); } ++$this->ch_routes['primary']; return $primary->$method( ...$args ); }
+		if ( $own_write || ! $replicas || ( 'distribute' === $mode && 0 === random_int( 0, count( $replicas ) ) ) ) { if ( ! $own_write && ! $replicas && 'distribute_replicas' === $mode ) { throw new RuntimeException( 'No native read replica available.' ); } ++$this->ch_routes['primary']; return $this->native_data_read( $primary, $method, $args ); }
 		if ( 'concentrate' === $mode ) { if ( null === $this->ch_concentrated ) { $this->ch_concentrated = random_int( 0, count( $replicas ) - 1 ); } $replicas = array( $replicas[ $this->ch_concentrated % count( $replicas ) ] ); } else { shuffle( $replicas ); }
-		foreach ( $replicas as $i ) { try { if ( ! isset( $this->ch_native_clients[$i] ) ) { $this->ch_native_clients[$i] = $this->native_client( $this->ch_native_nodes[$i] ); } ++$this->ch_routes['replica']; return $this->ch_native_clients[$i]->$method( ...$args ); } catch ( Throwable $error ) { unset( $this->ch_native_clients[$i] ); } }
+		foreach ( $replicas as $i ) { try { if ( ! isset( $this->ch_native_clients[$i] ) ) { $this->ch_native_clients[$i] = $this->native_client( $this->ch_native_nodes[$i] ); } ++$this->ch_routes['replica']; return $this->native_data_read( $this->ch_native_clients[$i], $method, $args ); } catch ( Throwable $error ) { unset( $this->ch_native_clients[$i] ); } }
 		if ( 'distribute_replicas' === $mode ) { throw new RuntimeException( 'Native read replicas unavailable.' ); }
-		++$this->ch_routes['primary']; return $primary->$method( ...$args );
+		++$this->ch_routes['primary']; return $this->native_data_read( $primary, $method, $args );
+	}
+	private function native_data_read( $client, $method, array $args ) {
+		try {
+			$result = $client->$method( ...$args );
+			if ( false === $result ) { \HarborCache\Namespace_Guard::checked_reply( $client, $result ); }
+			return $result;
+		} catch ( Throwable $error ) {
+			try { $client->close(); } catch ( Throwable $ignored ) {}
+			throw $error;
+		}
 	}
 	private function native_topology_nodes() {
 		$nodes = array( $this->redis ); foreach ( $this->ch_native_nodes as $i => $node ) { if ( $i === $this->ch_native_primary ) { continue; } try { $nodes[] = $this->ch_native_clients[$i] ?? ( $this->ch_native_clients[$i] = $this->native_client( $node ) ); } catch ( Throwable $error ) { $nodes[] = null; } } return $nodes;
