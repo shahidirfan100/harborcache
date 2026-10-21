@@ -44,6 +44,17 @@ try {
         safety_gate( 'Data cache connects with metrics writes denied', $cache->redis_status() );
         \HarborCache\Core\Metrics::record();
         safety_gate( 'Rejected metrics write leaves data caching available', $cache->redis_status() && $cache->set( 'survives', 42, 'safety', 60 ) && 42 === $cache->get( 'survives', 'safety', true ) );
+        $control->rawCommand( 'ACL', 'SETUSER', $user, '+zadd' );
+        foreach ( array( 'zrangebyscore', 'zrevrangebyscore', 'zcount', 'zremrangebyscore' ) as $command ) {
+            $control->rawCommand( 'ACL', 'SETUSER', $user, '-' . $command );
+            if ( 'zrangebyscore' === $command ) { \HarborCache\Core\Metrics::get(); }
+            elseif ( 'zrevrangebyscore' === $command ) { \HarborCache\Core\Metrics::get( null, 10 ); }
+            elseif ( 'zcount' === $command ) { \HarborCache\Core\Metrics::count(); }
+            else { \HarborCache\Core\Metrics::discard(); }
+            $cache->get( 'absent-' . $command, 'safety', true, $found );
+            safety_gate( 'Rejected metrics ' . $command . ' cannot poison a later data miss', ! $found && $cache->redis_status() );
+            $control->rawCommand( 'ACL', 'SETUSER', $user, '+' . $command );
+        }
     } elseif ( 'restricted' === $mode ) {
         $probe = new \HarborCache\Core\Predis();
         $probe->connect();
