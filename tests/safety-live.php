@@ -79,6 +79,8 @@ try {
                 }
             }
             $fresh = new HarborCache_Advanced_Cache();
+            // Core registers additional global groups during bootstrap; mirror that registration.
+            $fresh->add_global_groups( $cache->global_groups );
             foreach ( array( 'options', 'site-options' ) as $group ) {
                 safety_gate( 'Critical single read uses primary ' . $group, array( 'source' => 'primary' ) === $fresh->get( 'notoptions', $group, true ) );
                 $bulk = $fresh->get_multiple( array( 'alloptions', 'notoptions' ), $group, true );

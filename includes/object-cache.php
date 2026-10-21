@@ -1243,11 +1243,9 @@ class WP_Object_Cache {
             }
         }
 
-        if ( isset( $info['redis_version'] ) ) {
-            $this->redis_version = $info['redis_version'];
-        } elseif ( isset( $info['Server']['redis_version'] ) ) {
-            $this->redis_version = $info['Server']['redis_version'];
-        }
+        $version = is_array( $info ) ? ( $info['redis_version'] ?? $info['Server']['redis_version'] ?? null ) : null;
+        if ( ! is_string( $version ) || '' === $version ) { throw new RuntimeException( 'Redis server information is unavailable.' ); }
+        $this->redis_version = $version;
     }
 
     /**

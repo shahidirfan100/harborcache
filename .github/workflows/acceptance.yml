@@ -56,6 +56,7 @@ jobs:
           wp plugin activate harborcache-object-cache-with-redis --path="$WP_ROOT"
           wp plugin install plugin-check --activate --path="$WP_ROOT"
           wp plugin check harborcache-object-cache-with-redis --slug=harborcache-object-cache-with-redis --format=json --require="$HC_EXTENSIONS/plugin-check/cli.php" --path="$WP_ROOT" | tee evidence/plugin-check.json
+          python3 tools/check-plugin-report.py evidence/plugin-check.json
           wp harborcache enable --path="$WP_ROOT"
           wp eval-file tests/review-wordpress.php --path="$WP_ROOT" | tee evidence/custom-layout.txt
           wp eval '$active=get_option("active_plugins"); $active=array_map(static function($p){return str_replace("harborcache-object-cache-with-redis/","cache-renamed/",$p);},$active); update_option("active_plugins",$active);' --path="$WP_ROOT"

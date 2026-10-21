@@ -180,7 +180,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 == Upgrade Notice ==
 
 = 1.2.6 =
-Refresh the owned drop-in after upgrading. Prefix conflicts now use runtime-memory fallback instead of taking over another installation's namespace. Configure a distinct prefix for a cloned site or restore its original installation identity. Normal fallback may log one concise error per request; it is not a cross-request circuit breaker.
+Refresh the owned drop-in after upgrading. Prefix conflicts now use request-memory fallback. Configure a distinct prefix for a cloned site or restore its original identity. Existing cache key formats and dashboard styling are preserved.
 
 = 1.2.2 =
 Separate HarborCache metadata from Redis Cache globals. Existing connection settings and cache data are preserved; update the HarborCache drop-in after upgrading.

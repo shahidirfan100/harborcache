@@ -24,6 +24,7 @@ class HC_Safety_Driver {
     public $values = array();
     public $info_calls = 0;
     public $deny_info = false;
+    public $false_info = false;
     public $fail_root_write = false;
     public $deny_root_read = false;
     public $last_error = '';
@@ -32,6 +33,7 @@ class HC_Safety_Driver {
     public function info( ...$args ) {
         ++$this->info_calls;
         if ( $this->deny_info ) { throw new RuntimeException( 'INFO denied' ); }
+        if ( $this->false_info ) { $this->last_error = 'NOPERM INFO'; return false; }
         return array( 'redis_version' => '7.0.0' );
     }
     public function getLastError() { return $this->last_error; }
@@ -105,6 +107,10 @@ try {
     $first = $cache->redis_version();
     $second = $cache->redis_version();
     $check( 'Denied INFO is attempted once and leaves data caching connected', null === $first && null === $second && $cache->redis_status() && 1 === $client->info_calls );
+    $client = $driver();
+    $client->false_info = true;
+    $cache = new HarborCache_Advanced_Cache();
+    $check( 'False INFO replies cannot poison later cache misses', null === $cache->redis_version() && '' === $client->last_error && $cache->redis_status() );
 
     $client = $driver();
     $client->values['hc-safety:meta:owner'] = str_repeat( 'f', 64 );

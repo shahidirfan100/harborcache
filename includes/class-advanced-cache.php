@@ -83,7 +83,10 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		if ( $this->redis instanceof \Redis || $this->redis instanceof \RedisCluster || $this->redis instanceof \Relay\Relay || $this->redis instanceof \Relay\Cluster ) {
 			try { $this->redis->close(); } catch ( Throwable $ignored ) {}
 		}
-		if ( 'debug' === $this->ch_config['failure_mode'] || ( $this->ch_initializing && 'strict' === $this->ch_config['failure_mode'] ) ) { throw new RuntimeException( $message ); }
+		if ( 'debug' === $this->ch_config['failure_mode'] || ( $this->ch_initializing && 'strict' === $this->ch_config['failure_mode'] ) ) {
+			if ( $conflict ) { throw new RuntimeException( 'Cache prefix belongs to another installation. Configure a distinct prefix or restore this installation identity.' ); }
+			throw new RuntimeException( 'HarborCache backend unavailable. Check connection settings and Redis service.' );
+		}
 		parent::handle_exception( new RuntimeException( $message ) );
 	}
 
