@@ -266,6 +266,7 @@ class Metrics {
             }
         } catch ( \Throwable $exception ) {
             if ( $pipeline_client ) { try { $pipeline_client->close(); } catch ( \Throwable $ignored ) {} }
+            elseif ( isset( $client ) && $client instanceof \Redis ) { $client->clearLastError(); }
             self::log_failure();
         }
     }
