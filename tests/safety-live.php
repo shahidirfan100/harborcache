@@ -3,6 +3,9 @@
 define( 'WP_HTTP_BLOCK_EXTERNAL', true );
 $mode = $argv[1] ?? 'namespace';
 $client = getenv( 'HC_SAFETY_CLIENT' ) ?: 'phpredis';
+if ( 'relay' === $client ) {
+    set_error_handler( static function ( $severity, $message, $file, $line ) { throw new ErrorException( $message, 0, $severity, $file, $line ); }, E_WARNING );
+}
 $config = array( 'client' => $client, 'prefix' => 'hc-safety-' . $mode . '-' . $client, 'analytics' => array( 'enabled' => false ), 'split_alloptions' => false );
 $control = new Redis();
 $control->connect( '127.0.0.1', 6379 );
@@ -109,6 +112,12 @@ try {
             for ( $i = 0; $i < 20; ++$i ) {
                 $cache->set( 'reply-' . $i, $i, 'safety', 60 );
                 safety_gate( 'Replies remain aligned after reconnect ' . $i, $i === $cache->get( 'reply-' . $i, 'safety', true ) );
+            }
+            if ( 'relay' === $client ) {
+                $cache->redis_instance()->close();
+                safety_gate( 'Forced Relay read reconnects to the configured database without warnings', 0 === $cache->get( 'reply-0', 'safety', true ) );
+                if ( ! $cache->redis_instance()->isConnected() ) { $cache->redis_instance()->ping(); }
+                safety_gate( 'Forced Relay read restores the configured cache mode', true === $cache->redis_instance()->getOption( \Relay\Relay::OPT_USE_CACHE ) );
             }
         } finally { $control->del( $key ); }
     } else { throw new RuntimeException( 'Unknown safety mode' ); }
