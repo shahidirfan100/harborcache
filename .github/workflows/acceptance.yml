@@ -281,7 +281,7 @@ jobs:
           unzip -q /tmp/hc-baseline.zip -d /tmp/hc-baseline
           mkdir -p "$WP_ROOT/wp-content/mu-plugins" evidence/profiles
           cp tests/benchmark-loader.php "$WP_ROOT/wp-content/mu-plugins/hc-benchmark.php"
-          php -i > evidence/php-configuration.txt
+          php -r '$keys=["opcache.enable_cli","opcache.jit","opcache.validate_timestamps","memory_limit","xdebug.mode","redis.pconnect.echo_check_liveness","redis.pconnect.pool_detect_dirty"]; $ini=[];foreach($keys as $key){$ini[$key]=ini_get($key);}echo json_encode(["php"=>PHP_VERSION,"extensions"=>get_loaded_extensions(),"ini"=>$ini]);' > evidence/php-configuration.json
           for lane in engine full; do
           for round in $(seq 0 29); do
             for offset in 0 1 2; do
