@@ -19,6 +19,7 @@
 /docs/RELEASE-*.md
 /docs/VALIDATION-*.md
 /docs/COMPARISON-*.md
+/docs/PERFORMANCE-*.md
 /docs/*.json
 /docs/*.jsonl
 /vendor/**/README*

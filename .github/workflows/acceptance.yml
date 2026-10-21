@@ -121,6 +121,7 @@ jobs:
           php tests/dropin-writer.php
           php tests/review-regressions.php
           php tests/safety-regressions.php
+          php tests/metrics-failure.php
           python3 tools/build-release.py --check
           php tests/conflict-notice.php
           wp core download --version="${{ matrix.wp || 'latest' }}" --path="$WP_ROOT"
@@ -164,9 +165,11 @@ jobs:
           for client in predis phpredis; do
             export HC_SAFETY_CLIENT="$client"
             php tests/safety-live.php restricted | tee "evidence/restricted-$client.txt"
+            php tests/safety-live.php metadata-denied | tee "evidence/metadata-denied-$client.txt"
             php tests/safety-live.php namespace | tee "evidence/namespace-$client.txt"
           done
           HC_SAFETY_CLIENT=phpredis php tests/safety-live.php reconnect | tee evidence/reconnect-phpredis.txt
+          HC_SAFETY_CLIENT=phpredis php tests/safety-live.php metrics-denied | tee evidence/metrics-denied-phpredis.txt
       - name: Real ACL, trusted TLS, rejected certificate and Unix socket
         shell: bash
         run: |
@@ -245,8 +248,8 @@ jobs:
         with:
           php-version: 8.3
           extensions: mysqli, redis, igbinary, lzf, lz4, zstd, relay, msgpack
-          ini-values: relay.maxmemory=32M
-          coverage: none
+          ini-values: relay.maxmemory=32M, xdebug.mode=off
+          coverage: xdebug
           tools: wp-cli
       - name: Syntax and isolated MySQL installation
         shell: bash
@@ -271,11 +274,16 @@ jobs:
           mkdir -p evidence /tmp/hc-baseline
           wp plugin deactivate harborcache --path="$WP_ROOT"
           wp plugin install redis-cache --version=3.0.0 --path="$WP_ROOT"
-          git fetch --depth=1 origin 44cf7cfdb1593172d530d0917fd19f8349863364
-          git show 44cf7cfdb1593172d530d0917fd19f8349863364:dist/harborcache-1.2.5.zip > /tmp/hc-baseline.zip
-          echo 'f137b1efd444acccd4dcddc5dba925da1c230d58a9d4bbadaeadc8b22f2de480  /tmp/hc-baseline.zip' | sha256sum -c -
+          export XDEBUG_MODE=off
+          git fetch --depth=1 origin 6d235793ec8ad5bcbd9885b35c8043d6915fcea9
+          git show 6d235793ec8ad5bcbd9885b35c8043d6915fcea9:dist/harborcache-1.2.6.zip > /tmp/hc-baseline.zip
+          echo '44c4483c357cfb0260c23e3e3005385c2c4a50daecbcf395128082a7984fe2e9  /tmp/hc-baseline.zip' | sha256sum -c -
           unzip -q /tmp/hc-baseline.zip -d /tmp/hc-baseline
-          for round in $(seq 0 6); do
+          mkdir -p "$WP_ROOT/wp-content/mu-plugins" evidence/profiles
+          cp tests/benchmark-loader.php "$WP_ROOT/wp-content/mu-plugins/hc-benchmark.php"
+          php -r '$keys=["opcache.enable_cli","opcache.jit","opcache.validate_timestamps","memory_limit","xdebug.mode","redis.pconnect.echo_check_liveness","redis.pconnect.pool_detect_dirty"]; $ini=[];foreach($keys as $key){$ini[$key]=ini_get($key);}echo json_encode(["php"=>PHP_VERSION,"extensions"=>get_loaded_extensions(),"ini"=>$ini]);' > evidence/php-configuration.json
+          for lane in engine full; do
+          for round in $(seq 0 29); do
             for offset in 0 1 2; do
               engines=(free baseline harbor)
               engine=${engines[$(((round+offset)%3))]}
@@ -285,9 +293,17 @@ jobs:
                 harbor) source="$GITHUB_WORKSPACE" ;;
               esac
               php tests/install-dropin.php "$source"
-              php tests/benchmark.php "$engine" "$source" "$round" 0 | tee -a evidence/benchmark.jsonl
+              php tests/benchmark.php "$engine" "$source" "$round" 0 "$lane" | tee -a evidence/benchmark.jsonl
             done
           done
+          done
+          for engine in baseline harbor; do
+            if [ "$engine" = baseline ]; then source=/tmp/hc-baseline/harborcache-object-cache-with-redis; else source="$GITHUB_WORKSPACE"; fi
+            php tests/install-dropin.php "$source"
+            XDEBUG_MODE=profile php -d xdebug.output_dir="$GITHUB_WORKSPACE/evidence/profiles" -d xdebug.profiler_output_name="cachegrind.$engine.%p" tests/benchmark.php "$engine" "$source" 500 0 full > "evidence/profile-$engine.json"
+          done
+          gzip evidence/profiles/cachegrind.*
+          python3 tools/profile-summary.py evidence/profiles | tee evidence/profile-summary.jsonl
           for engine in free baseline harbor; do
             case "$engine" in
               free) source="$WP_ROOT/wp-content/plugins/redis-cache" ;;

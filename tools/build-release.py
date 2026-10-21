@@ -19,6 +19,7 @@ def main():
     header = (ROOT / "harborcache.php").read_text(encoding="utf-8")
     readme = (ROOT / "readme.txt").read_text(encoding="utf-8")
     version = re.search(r"^ \* Version: ([0-9.]+)$", header, re.M).group(1)
+    assert f"define( 'HARBORCACHE_VERSION', '{version}' );" in header
     assert f"Stable tag: {version}\n" in readme
     changelog = readme.split("== Changelog ==\n", 1)[1].split("\n== ", 1)[0]
     assert changelog.count(f"= {version} =") == 1, "Duplicate or missing release changelog"

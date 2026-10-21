@@ -67,8 +67,6 @@ class Plugin {
      * Constructor
      */
     private function __construct() {
-        require_once ABSPATH . 'wp-admin/includes/plugin.php';
-
         if ( is_multisite() ) {
             $this->page = 'settings.php?page=harborcache';
             $this->screen = 'settings_page_harborcache-network';
@@ -96,14 +94,6 @@ class Plugin {
 
         add_action( 'admin_notices', [ $this, 'show_admin_notices' ] );
         add_action( 'network_admin_notices', [ $this, 'show_admin_notices' ] );
-
-        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_styles' ] );
-        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
-        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_redis_metrics' ] );
-
-        add_action( 'admin_bar_menu', [ $this, 'render_admin_bar' ], 998 );
-
-        add_action( 'load-settings_page_harborcache', [ $this, 'do_admin_actions' ] );
 
         add_action( 'wp_dashboard_setup', [ $this, 'setup_dashboard_widget' ] );
         add_action( 'wp_network_dashboard_setup', [ $this, 'setup_dashboard_widget' ] );
@@ -233,29 +223,17 @@ class Plugin {
         return '';
     }
 
-    /**
-     * Enqueues admin style resources
-     *
-     * @return void
-     */
+    /** Compatibility callback; Console::assets() loads the dashboard styles. */
     public function enqueue_admin_styles() {
         return;
     }
 
-    /**
-     * Enqueues admin script resources
-     *
-     * @return void
-     */
+    /** Compatibility callback; Console::assets() loads the dashboard scripts. */
     public function enqueue_admin_scripts() {
         return;
     }
 
-    /**
-     * Enqueues scripts to display recorded metrics
-     *
-     * @return void
-     */
+    /** Compatibility callback; Console::assets() loads the metrics chart. */
     public function enqueue_redis_metrics() {
         return;
     }
@@ -306,6 +284,7 @@ class Plugin {
      * @return bool
      */
     public function validate_object_cache_dropin() {
+        if ( ! function_exists( 'get_plugin_data' ) ) { require_once ABSPATH . 'wp-admin/includes/plugin.php'; }
         if ( ! $this->object_cache_dropin_exists() ) {
             return false;
         }
@@ -335,6 +314,7 @@ class Plugin {
      * @return bool
      */
     public function object_cache_dropin_outdated() {
+        if ( ! function_exists( 'get_plugin_data' ) ) { require_once ABSPATH . 'wp-admin/includes/plugin.php'; }
         if ( ! $this->object_cache_dropin_exists() ) {
             return false;
         }
@@ -581,20 +561,12 @@ class Plugin {
         return;
     }
 
-    /**
-     * Displays a redis cache pro admin notice
-     *
-     * @return void
-     */
+    /** Compatibility callback; HarborCache does not display this promotion. */
     public function pro_notice() {
         return;
     }
 
-    /**
-     * Displays a redis cache pro admin notice specifically for WooCommerce
-     *
-     * @return void
-     */
+    /** Compatibility callback; HarborCache does not display this WooCommerce promotion. */
     public function wc_pro_notice() {
         return;
     }

@@ -7,8 +7,6 @@
 
 namespace HarborCache\Core;
 
-use Exception;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -128,12 +126,32 @@ class Metrics {
      * @return void
      */
     public static function record() {
-        if ( ! self::is_active() ) { return; }
         $config = \HarborCache\Config::load();
         if ( empty( $config['analytics']['enabled'] ) || random_int( 1, 10000 ) > (float) $config['analytics']['sample_rate'] * 100 ) { return; }
-        $metrics = new self();
-        $metrics->collect();
-        $metrics->save();
+        try {
+            if ( ! self::is_active() ) { return; }
+            $metrics = new self();
+            $metrics->collect();
+            $metrics->save();
+        } catch ( \Throwable $error ) { self::log_failure( $error ); }
+    }
+
+    private static function log_failure( $error ) {
+        global $wp_object_cache;
+        try {
+            $client = $wp_object_cache->redis_instance();
+            if ( $client instanceof \Redis ) {
+                // Server error replies are complete; transport failures may leave an unread reply.
+                $server_error = $client->getLastError() || preg_match( '/^(?:ERR|NOPERM|NOAUTH|WRONGTYPE|OOM|READONLY|MISCONF|NOSCRIPT|BUSY|LOADING)\b/', $error->getMessage() );
+                if ( $server_error ) { $client->clearLastError(); }
+                elseif ( $error instanceof \RedisException ) { $client->close(); }
+            }
+        } catch ( \Throwable $ignored ) {}
+        static $logged = false;
+        if ( $logged ) { return; }
+        $logged = true;
+        if ( class_exists( '\HarborCache\Observer' ) ) { \HarborCache\Observer::log( \HarborCache\Config::load(), 'warning', 'Request metrics are unavailable.' ); }
+        error_log( '[HarborCache] Request metrics are unavailable.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
     }
 
     /**
@@ -175,12 +193,14 @@ class Metrics {
 
         try {
             if ( null !== $limit ) {
-                $raw_metrics = array_reverse( $wp_object_cache->redis_instance()->zrevrangebyscore(
+                $raw_metrics = $wp_object_cache->redis_instance()->zrevrangebyscore(
                     $wp_object_cache->build_key( 'metrics', 'harborcache' ),
                     time() - MINUTE_IN_SECONDS,
                     time() - $seconds,
                     array( 'withscores' => true, 'limit' => array( 0, max( 1, min( 1000, (int) $limit ) ) ) )
-                ), true );
+                );
+                if ( ! is_array( $raw_metrics ) ) { throw new \RuntimeException( 'Metrics read failed.' ); }
+                $raw_metrics = array_reverse( $raw_metrics, true );
             } else {
                 $raw_metrics = $wp_object_cache->redis_instance()->zrangebyscore(
                 $wp_object_cache->build_key( 'metrics', 'harborcache' ),
@@ -189,9 +209,9 @@ class Metrics {
                 [ 'withscores' => true ]
                 );
             }
-        } catch ( Exception $exception ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( $exception );
+            if ( ! is_array( $raw_metrics ) ) { throw new \RuntimeException( 'Metrics read failed.' ); }
+        } catch ( \Throwable $exception ) {
+            self::log_failure( $exception );
 
             return [];
         }
@@ -227,28 +247,29 @@ class Metrics {
         $analytics = \HarborCache\Config::load()['analytics'];
         if ( ! $analytics['enabled'] ) { return; }
         try {
+        $client = $wp_object_cache->redis_instance();
         if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache ) {
             $key = $wp_object_cache->build_key( 'metrics', 'harborcache' );
             $wp_object_cache->ch_command( array( 'ZREMRANGEBYSCORE', $key, '-inf', time() - self::max_time() ) );
         }
-            $wp_object_cache->redis_instance()->zadd(
+            $saved = $client->zadd(
                 $wp_object_cache->build_key( 'metrics', 'harborcache' ),
                 $this->timestamp,
                 // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
                 serialize( $this )
             );
+            if ( false === $saved ) { throw new \RuntimeException( 'Metrics write failed.' ); }
             if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache ) {
                 if ( null !== $analytics['persist_limit'] ) { $wp_object_cache->ch_command( array( 'ZREMRANGEBYRANK', $key, 0, -$analytics['persist_limit'] - 1 ) ); }
                 $wp_object_cache->ch_command( array( 'EXPIRE', $key, self::max_time() ) );
             }
-        } catch ( Exception $exception ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( $exception );
+        } catch ( \Throwable $exception ) {
+            self::log_failure( $exception );
         }
     }
 
     /**
-     * Removes recorded metrics after an hour
+     * Removes metrics older than the configured retention window.
      *
      * @return void
      */
@@ -260,14 +281,14 @@ class Metrics {
         }
 
         try {
-            $wp_object_cache->redis_instance()->zremrangebyscore(
+            $removed = $wp_object_cache->redis_instance()->zremrangebyscore(
                 $wp_object_cache->build_key( 'metrics', 'harborcache' ),
                 0,
                 time() - self::max_time()
             );
-        } catch ( Exception $exception ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( $exception );
+            if ( false === $removed ) { throw new \RuntimeException( 'Metrics cleanup failed.' ); }
+        } catch ( \Throwable $exception ) {
+            self::log_failure( $exception );
         }
     }
 
@@ -284,14 +305,15 @@ class Metrics {
         }
 
         try {
-            return $wp_object_cache->redis_instance()->zcount(
+            $count = $wp_object_cache->redis_instance()->zcount(
                 $wp_object_cache->build_key( 'metrics', 'harborcache' ),
                 '-inf',
                 '+inf'
             );
-        } catch ( Exception $exception ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( $exception );
+            if ( ! is_int( $count ) ) { throw new \RuntimeException( 'Metrics count failed.' ); }
+            return $count;
+        } catch ( \Throwable $exception ) {
+            self::log_failure( $exception );
             return 0;
         }
     }

@@ -8,9 +8,11 @@ final class Codec {
 	private $serializer;
 	private $compression;
 	private $decoder;
+	private $decode_error;
 
 	public function __construct( array $config ) {
 		$this->serializer = $config['serializer'];
+		$this->decode_error = static function () { throw new \RuntimeException( 'Corrupt serialized cache value.' ); };
 		$this->compression = $config['compression'];
 		if ( ! in_array( $this->serializer, array( 'php', 'igbinary' ), true ) || ( 'igbinary' === $this->serializer && ! function_exists( 'igbinary_serialize' ) ) ) {
 			throw new \RuntimeException( 'Configured serializer is unavailable.' );
@@ -57,8 +59,8 @@ final class Codec {
 		if ( ! is_string( $data ) ) {
 			throw new \RuntimeException( 'Value decoding failed.' );
 		}
-		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Convert malformed serialization warnings into recoverable cache misses.
-		set_error_handler( static function () { throw new \RuntimeException( 'Corrupt serialized cache value.' ); } );
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Let callers handle malformed serialization as an exception.
+		set_error_handler( $this->decode_error );
 		try {
 			return 'php' === $this->serializer ? unserialize( $data ) : igbinary_unserialize( $data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
 		} finally {
