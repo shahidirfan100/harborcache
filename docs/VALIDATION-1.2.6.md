@@ -5,7 +5,7 @@ Baseline: HarborCache 1.2.5, commit `44cf7cfdb1593172d530d0917fd19f8349863364`. 
 ## Local checks completed
 
 - The initial focused fault fixtures reproduced ten failures on the unmodified baseline.
-- Sixteen targeted safety checks now pass, including ownership preservation in startup/probe, corrupt/malformed metadata, denied/false optional INFO replies, critical-option routing, native socket discard, network identity and log behavior.
+- Seventeen targeted safety checks now pass, including ownership preservation in startup/probe, corrupt/malformed metadata, denied/false optional INFO replies, critical-option routing, nested Relay bypass state, native socket discard, network identity and log behavior.
 - Twelve existing drop-in recovery checks, nine fresh-process review regressions and the conflict-notice check pass.
 - PHP 8.5 syntax checks passed for the current includes and test files. No warnings or deprecations were emitted by the targeted checks after adapting test-only reflection calls for PHP 8.5.
 - The rebuilt ZIP passed local WordPress 7.1.3 / PHP 8.4.26 installation, activation and Plugin Check without findings. The test uses relocated content/plugins directories and verifies the installed drop-in before and after a plugin-directory rename; both sets of seven runtime assertions pass. Deactivation and uninstall preserve a foreign drop-in. Expected offline logs contain only the exact concise backend message; unexpected warnings or traces fail the check.

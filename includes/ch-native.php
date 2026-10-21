@@ -16,10 +16,11 @@ trait HarborCache_Native {
 				if ( false === $client->setOption( $option, false ) ) { throw new RuntimeException( 'Relay cannot bypass its local cache.' ); }
 			}
 		} catch ( Throwable $error ) { $option = null; $this->handle_exception( $error ); }
+		$outer_bypass = $this->ch_relay_bypass;
 		$this->ch_relay_bypass = true;
 		try { return $call(); }
 		finally {
-			$this->ch_relay_bypass = false;
+			$this->ch_relay_bypass = $outer_bypass;
 			$active = $this->redis_instance();
 			if ( null !== $option && $this->redis_status() && ( ! method_exists( $active, 'isConnected' ) || $active->isConnected() ) ) {
 				try { if ( false === $active->setOption( $option, $previous ) ) { throw new RuntimeException( 'Relay cannot restore its local cache mode.' ); } }

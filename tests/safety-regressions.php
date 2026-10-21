@@ -70,6 +70,14 @@ class HC_Routing_Fixture {
     public function read( $keys ) { return $this->routed_read( is_array( $keys ) ? 'mget' : 'get', array( $keys ), static function () { return 'primary'; } ); }
 }
 
+class HC_Nested_Bypass_Fixture {
+    use HarborCache_Native;
+    public $ch_relay_bypass = false;
+    public function redis_instance() { return new stdClass(); }
+    public function redis_status() { return false; }
+    public function read( callable $call ) { return $this->relay_uncached_read( $call ); }
+}
+
 class HC_Native_Read_Fixture {
     use HarborCache_Topology;
     public function read( $client ) { return $this->native_data_read( $client, 'get', array( 'key' ) ); }
@@ -141,6 +149,12 @@ try {
     $check( 'A rejected metadata read cannot masquerade as a cache miss', ! $cache->redis_status() && str_repeat( 'b', 24 ) === $client->values['hc-safety:meta:root'] );
 
     $routes = new HC_Routing_Fixture();
+    $nested = new HC_Nested_Bypass_Fixture();
+    $nested_state = $nested->read( static function () use ( $nested ) {
+        $inner = $nested->read( static function () use ( $nested ) { return $nested->ch_relay_bypass; } );
+        return $inner && $nested->ch_relay_bypass;
+    } );
+    $check( 'Nested Relay metadata reads preserve the outer forced-read bypass', $nested_state && ! $nested->ch_relay_bypass );
     $check( 'Options reads use the primary before any request write', 'primary' === $routes->read( 'hc:meta:token:site-1:epoch:g:options:version:v:key' ) );
     $check( 'Network option reads use the primary', 'primary' === $routes->read( 'hc:meta:token:global:epoch:g:site-options:version:v:key' ) );
     $check( 'Bulk containing critical options uses the primary', 'primary' === $routes->read( array( 'other', 'hc:meta:token:site-1:epoch:g:options:version:v:key' ) ) );
