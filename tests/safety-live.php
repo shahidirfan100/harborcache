@@ -43,7 +43,7 @@ try {
     } elseif ( 'metrics-denied' === $mode ) {
         safety_gate( 'Data cache connects with metrics writes denied', $cache->redis_status() );
         \HarborCache\Core\Metrics::record();
-        safety_gate( 'Rejected metrics pipeline leaves data caching available', $cache->redis_status() && $cache->set( 'survives', 42, 'safety', 60 ) && 42 === $cache->get( 'survives', 'safety', true ) );
+        safety_gate( 'Rejected metrics write leaves data caching available', $cache->redis_status() && $cache->set( 'survives', 42, 'safety', 60 ) && 42 === $cache->get( 'survives', 'safety', true ) );
     } elseif ( 'restricted' === $mode ) {
         $probe = new \HarborCache\Core\Predis();
         $probe->connect();

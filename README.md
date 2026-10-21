@@ -36,7 +36,7 @@ No license key or account is required. No plugin REST endpoints are included. Op
 
 ## Validation and deployment gates
 
-The 1.2.7 release reuses key contexts, reduces bootstrap work and batches supported metadata and metrics commands while preserving ownership and critical-option safety. Dashboard assets remain unchanged; see [1.2.7 validation](docs/VALIDATION-1.2.7.md). Earlier release evidence remains in the versioned validation reports. Historical performance results in [the comparison](docs/COMPARISON-1.2.0.md) do not predict performance on every server or guarantee WordPress.org approval.
+The 1.2.7 release reuses key contexts, reduces bootstrap work and batches supported metadata commands while preserving ownership and critical-option safety. Dashboard assets remain unchanged; see [1.2.7 validation](docs/VALIDATION-1.2.7.md). Earlier release evidence remains in the versioned validation reports. Historical performance results in [the comparison](docs/COMPARISON-1.2.0.md) do not predict performance on every server or guarantee WordPress.org approval.
 
 Sustained production load, native Relay topology/failover and production tracing agents remain acceptance gates. HarborCache does not claim WordPress.org approval or universal performance leadership. See [acceptance gates](docs/ACCEPTANCE.md).
 

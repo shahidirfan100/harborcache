@@ -70,7 +70,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 = 1.2.7 =
 * Reuse key contexts within a site and invalidate them when global groups or the current site change.
 * Batch independent metadata commands on supported single-node clients without changing cache key formats.
-* Skip drop-in inspection for unsampled requests and batch native request-metrics storage.
+* Skip drop-in inspection for unsampled requests and reduce byte-statistics allocations.
 * Contain metrics failures with concise redacted logs and reuse corruption-handling callbacks.
 * Reduce bootstrap work while retaining compatibility methods and the existing dashboard.
 * Add matched full-plugin and engine benchmarks, CPU profiling and regression coverage.

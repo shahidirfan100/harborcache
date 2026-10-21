@@ -1,6 +1,6 @@
 # HarborCache feature ledger (1.2.7)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.7 reduces repeated key-context and bootstrap work, batches supported metadata/metrics operations and contains metrics failures while preserving the 1.2.6 safety fixes and dashboard assets. No account, subscription or vendor updater is required.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.7 reduces repeated key-context and bootstrap work, batches supported metadata operations and contains metrics failures while preserving the 1.2.6 safety fixes and dashboard assets. No account, subscription or vendor updater is required.
 
 | Area | Behavior and evidence |
 | --- | --- |

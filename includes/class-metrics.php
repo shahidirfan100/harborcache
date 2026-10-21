@@ -233,23 +233,8 @@ class Metrics {
         global $wp_object_cache;
         $analytics = \HarborCache\Config::load()['analytics'];
         if ( ! $analytics['enabled'] ) { return; }
-        $pipeline_client = null;
         try {
         $client = $wp_object_cache->redis_instance();
-        if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache && $client instanceof \Redis ) {
-            $key = $wp_object_cache->build_key( 'metrics', 'harborcache' );
-            $pipeline_client = $client;
-            $pipeline = $client->pipeline();
-            $pipeline->zremrangebyscore( $key, '-inf', time() - self::max_time() );
-            $pipeline->zadd( $key, $this->timestamp, serialize( $this ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
-            if ( null !== $analytics['persist_limit'] ) { $pipeline->zremrangebyrank( $key, 0, -$analytics['persist_limit'] - 1 ); }
-            $pipeline->expire( $key, self::max_time() );
-            $replies = $pipeline->exec();
-            $pipeline_client = null;
-            $expected = null === $analytics['persist_limit'] ? 3 : 4;
-            if ( ! is_array( $replies ) || $expected !== count( $replies ) || in_array( false, $replies, true ) || ! in_array( end( $replies ), array( 1, true ), true ) ) { throw new \RuntimeException( 'Metrics storage failed.' ); }
-            return;
-        }
         if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache ) {
             $key = $wp_object_cache->build_key( 'metrics', 'harborcache' );
             $wp_object_cache->ch_command( array( 'ZREMRANGEBYSCORE', $key, '-inf', time() - self::max_time() ) );
@@ -265,8 +250,10 @@ class Metrics {
                 $wp_object_cache->ch_command( array( 'EXPIRE', $key, self::max_time() ) );
             }
         } catch ( \Throwable $exception ) {
-            if ( $pipeline_client ) { try { $pipeline_client->close(); } catch ( \Throwable $ignored ) {} }
-            elseif ( isset( $client ) && $client instanceof \Redis ) { $client->clearLastError(); }
+            if ( isset( $client ) && $client instanceof \Redis ) {
+                if ( $client->getLastError() ) { $client->clearLastError(); }
+                else { try { $client->close(); } catch ( \Throwable $ignored ) {} }
+            }
             self::log_failure();
         }
     }
