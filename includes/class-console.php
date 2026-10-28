@@ -674,7 +674,6 @@ final class Console {
 
 	public static function render() {
 		if ( ! self::allowed() ) { return; }
-		self::connection_check();
 
 		$tabs = array(
 			'overview'    => __( 'Status', 'harborcache-object-cache-with-redis' ),
@@ -690,6 +689,7 @@ final class Console {
 		$status = 'overview' === $view ? self::status( true ) : self::status();
 		$config = Config::load();
 		$probe  = self::stored_probe();
+		if ( $probe ) { self::connection_check(); }
 		$state  = $status['state'];
 		$label  = self::state_label( $status );
 
