@@ -1,54 +1,84 @@
 {
-  "version": "1.2.0",
-  "capturedAt": "2026-10-14T09:00:09.559Z",
-  "pluginListingName": "HarborCache – Object Cache with Redis",
-  "environment": "Local WordPress fixture on Windows with PHP 8.5 and Redis. Chart history contains seeded demonstration samples. Screenshots omit the plugin version; no customer data or production performance claims.",
+  "version": "1.2.9",
+  "capturedAt": "2026-10-28T14:03:48.230Z",
+  "pluginListingName": "HarborCache - Object Cache with Redis",
+  "environment": "GitHub Actions ubuntu-24.04 with the exact harborcache-1.2.9.zip release, WordPress 7.1.3, PHP 8.3.36, PhpRedis 6.3.0, Redis 7.4.12 and MySQL 8.0. Headless Chromium at device scale factor 1. Analytics history is seeded demonstration data, disclosed in README.md; every other value comes from the live fixture.",
+  "captureWorkflow": ".github/workflows/screenshots.yml",
+  "captureRun": "https://github.com/shahidirfan100/harborcache/actions/runs/40701459910",
   "javascriptErrors": [],
+  "consoleErrors": [],
   "files": [
     {
       "file": "screenshot-1.png",
-      "view": "overview",
-      "viewport": 1440
+      "view": "status",
+      "selector": "#harborcache",
+      "viewport": 1440,
+      "width": 1180,
+      "height": 1480
     },
     {
       "file": "screenshot-2.png",
       "view": "analytics",
-      "viewport": 1440
+      "selector": "#harborcache",
+      "viewport": 1440,
+      "width": 1180,
+      "height": 2864
     },
     {
       "file": "screenshot-3.png",
-      "view": "connection",
-      "viewport": 1440
+      "view": "settings",
+      "selector": "#harborcache",
+      "viewport": 1440,
+      "width": 1180,
+      "height": 1108
     },
     {
       "file": "screenshot-4.png",
-      "view": "groups",
-      "viewport": 1440
+      "view": "cache",
+      "selector": "#harborcache",
+      "viewport": 1440,
+      "width": 1180,
+      "height": 1732
     },
     {
       "file": "screenshot-5.png",
-      "view": "tools",
-      "viewport": 1440
+      "view": "diagnostics",
+      "selector": "#harborcache",
+      "viewport": 1440,
+      "width": 1180,
+      "height": 1019
     },
     {
       "file": "screenshot-6.png",
-      "view": "diagnostics",
-      "viewport": 1440
+      "view": "raw report",
+      "selector": "section.ch-panel:has(#ch-diagnostics)",
+      "viewport": 1440,
+      "width": 1180,
+      "height": 2464
     },
     {
       "file": "screenshot-7.png",
       "view": "dashboard widget",
-      "viewport": 1440
+      "selector": "#harborcache_status",
+      "viewport": 1440,
+      "width": 605,
+      "height": 880
     },
     {
       "file": "screenshot-mobile.png",
-      "view": "connection",
-      "viewport": 375
+      "view": "settings",
+      "selector": "#harborcache",
+      "viewport": 375,
+      "width": 353,
+      "height": 1616
     },
     {
       "file": "screenshot-widget-mobile.png",
       "view": "dashboard widget",
-      "viewport": 375
+      "selector": "#harborcache_status",
+      "viewport": 375,
+      "width": 353,
+      "height": 980
     }
   ]
 }
