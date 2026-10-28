@@ -20,9 +20,13 @@ For a request touching 30 groups, the steady-state metadata cost is 2 commands a
 
 ## Verification
 
-- New `tests/metadata-count.php`: warms 30 groups, creates a new cache instance, reads all 30 and asserts metadata stays at or below 8 commands and total commands at or below 40.
-- Existing group flush, scope flush, cleanup, concurrent worker, ACL, outage, codec, WordPress, WooCommerce and multisite checks run unchanged.
-- Add the final run ID and any limits in `VALIDATION-1.2.9.md`.
+The `Linux acceptance` workflow passed all ten jobs on run [40692090577](https://github.com/shahidirfan100/harborcache/actions/runs/40692090577): eight PHP/Redis/WordPress combinations, the relocated-ZIP review and the integrations/benchmark job. Plugin Check reported no errors or warnings for the exact 1.2.9 ZIP.
+
+`tests/metadata-count.php` warmed 30 groups, created a new cache instance and read all 30. Metadata inside the read loop was 2 commands (one `HGETALL`, one `SMEMBERS`) and total commands were 32. The prefix owner and root add 2 before the loop. The previous protocol used about 63 metadata commands for the same groups.
+
+A rejected `SADD` now disables persistent writes on the first write attempt and falls back to request memory. Read-only requests are not disabled by a registry denial.
+
+See `VALIDATION-1.2.9.md` for the command count, engine table and limits.
 
 ## Rollback
 
