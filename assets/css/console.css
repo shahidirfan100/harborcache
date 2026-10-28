@@ -44,11 +44,14 @@
 #harborcache .ch-advanced[open] > summary { border-bottom: 1px solid var(--ch-border); }
 #harborcache .ch-advanced > .ch-form-grid { padding: 0 20px; margin-top: 20px; }
 #harborcache .ch-advanced > fieldset.ch-settings-section { margin: 20px; }
-#harborcache .ch-test-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+#harborcache .ch-test-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; padding: 0 24px; }
+#harborcache .ch-settings > .ch-actions { padding: 0 24px; }
 #harborcache .ch-test-status { color: var(--ch-muted); font-size: 15px; }
 #harborcache .ch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
-#harborcache .ch-action { display: inline-block; margin: 0; }
-#harborcache .ch-action label { margin-right: 8px; }
+#harborcache .ch-action { display: inline-block; margin: 0; vertical-align: middle; }
+#harborcache .ch-actions .ch-action { margin: 0; }
+#harborcache td .ch-action { margin: 0 8px 8px 0; }
+#harborcache .ch-action label { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; }
 #harborcache.ch-console .button { box-sizing: border-box; min-height: 44px; padding: 10px 14px; font-size: 15px; line-height: 22px; font-weight: 600; white-space: normal; text-align: center; }
 #harborcache.ch-console .button:not(.button-primary) { color: var(--ch-accent); border-color: var(--ch-accent); background: #f7fbfa; }
 #harborcache.ch-console .button-primary { background: var(--ch-accent); border-color: var(--ch-accent); color: #fff; }
@@ -95,6 +98,7 @@
   #harborcache .ch-identity img { width: 32px; height: 32px; }
   #harborcache .ch-tabs a { padding: 0 10px; }
   #harborcache .ch-panel, #harborcache .ch-settings-section, #harborcache .ch-settings fieldset.ch-settings-section { padding: 16px; }
+  #harborcache .ch-settings > .ch-actions, #harborcache .ch-test-form { padding: 0 16px; }
   #harborcache .ch-details > div { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {

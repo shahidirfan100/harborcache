@@ -1,0 +1,118 @@
+name: Capture listing screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [screenshots]
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: local-ci-only
+          MYSQL_DATABASE: harborcache
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=5s --health-timeout=5s --health-retries=30
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      WP_ROOT: /tmp/hc-screenshots
+      HC_BASE_URL: http://127.0.0.1:8080
+      HC_ADMIN_USER: ci
+      HC_ADMIN_PASS: ci-disposable-only
+      HC_OUT: media-capture
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, redis, igbinary
+          coverage: none
+          tools: wp-cli
+
+      - name: Install WordPress with the release ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HC_OUT"
+          python3 tools/build-release.py --verify
+          wp core download --path="$WP_ROOT"
+          wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
+          wp config set WP_DEBUG false --raw --path="$WP_ROOT"
+          wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
+          wp core install --path="$WP_ROOT" --url="$HC_BASE_URL" --title='HarborCache demo' --admin_user="$HC_ADMIN_USER" --admin_password="$HC_ADMIN_PASS" --admin_email=ci@example.org --skip-email
+          unzip -q dist/harborcache-*.zip -d "$WP_ROOT/wp-content/plugins"
+          cp tests/screenshot-config.php "$WP_ROOT/wp-content/harborcache-config.php"
+          wp plugin activate harborcache-object-cache-with-redis --path="$WP_ROOT"
+          wp harborcache enable --path="$WP_ROOT"
+          wp harborcache status --path="$WP_ROOT" | tee "$HC_OUT/status-before-seed.json"
+          wp eval-file tests/screenshot-seed.php --path="$WP_ROOT"
+          wp eval 'echo wp_json_encode(array("wordpress"=>get_bloginfo("version"),"php"=>PHP_VERSION,"plugin"=>HARBORCACHE_VERSION,"client"=>HarborCache\Config::load()["client"],"siteurl"=>home_url()));' --path="$WP_ROOT" > "$HC_OUT/environment.json"
+          cat "$HC_OUT/environment.json"
+
+      - name: Serve WordPress
+        shell: bash
+        run: |
+          set -euo pipefail
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8080 -t "$WP_ROOT" > /tmp/php-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS "$HC_BASE_URL/wp-login.php" > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/php-server.log
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: Warm the captured pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          HC_WARM=1 node tools/capture-screenshots.mjs
+
+      - name: Reseed analytics history immediately before capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          HC_METRICS_ONLY=1 wp eval-file tests/screenshot-seed.php --path="$WP_ROOT"
+
+      - name: Capture screenshots
+        shell: bash
+        env:
+          HC_RESEED_CMD: 'HC_METRICS_ONLY=1 wp eval-file tests/screenshot-seed.php --path=/tmp/hc-screenshots'
+        run: |
+          set -euo pipefail
+          node tools/capture-screenshots.mjs | tee "$HC_OUT/capture.log"
+          cat "$HC_OUT/capture-report.json"
+
+      - name: Check the served pages stayed clean
+        if: always()
+        shell: bash
+        run: |
+          if test -s /tmp/php-server.log; then tail -n 40 /tmp/php-server.log; fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: listing-screenshots
+          path: media-capture/
