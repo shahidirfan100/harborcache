@@ -36,7 +36,7 @@ New installs select PhpRedis when the extension is loaded. Existing installation
 
 In the 1.2.8 acceptance run, operation PHP CPU was 10.7% above Redis Object Cache 3.0.0 and 5.6% below 1.2.6. The 5% target remains open; `VALIDATION-1.2.8.md` holds the table and limits.
 
-The dashboard widget keeps the request table, sampled summary, chart and links, with separate request-memory and Redis counters. The Status page builds one snapshot per request. A single-node first-use group registration is one Lua command instead of SADD plus three EXPIRE commands. Configuration defaults are cached per request, and the connection probe class loads only when an admin action needs it.
+The dashboard widget keeps the request table, sampled summary, chart and links, with separate request-memory and Redis counters. The Status page builds one snapshot per request and shows the runtime entry count; it no longer serializes the whole request cache for a byte figure, which stays in Diagnostics. A single-node first-use group registration is one Lua command instead of SADD plus three EXPIRE commands. Configuration defaults are cached per request, and the connection probe class loads only when an admin action needs it.
 
 ## 1.2.6 safety and initialization changes
 

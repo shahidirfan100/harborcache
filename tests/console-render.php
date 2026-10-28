@@ -42,6 +42,7 @@ hc_console_gate( 'Five tabs, no Tools drawer', false === strpos( $all, '>Tools<'
 hc_console_gate( 'The state has a live region', false !== strpos( $overview, 'class="ch-status' ) && false !== strpos( $overview, 'role="status"' ) );
 hc_console_gate( 'The connected header state is rendered', false !== strpos( $overview, 'class="ch-status is-connected"' ) && false !== strpos( $overview, '>Connected<' ) );
 hc_console_gate( 'Old composite metric labels are gone', false === strpos( $overview, 'Combined hit ratio' ) && false === strpos( $overview, 'Runtime cache (bytes)' ) );
+hc_console_gate( 'Status shows the request entry count', false !== strpos( $overview, 'Cache entries' ) );
 hc_console_gate( 'Clear buttons carry the action-specific confirmation', false === strpos( $all, 'data-ch-confirm="1"' ) );
 hc_console_gate( 'Settings exposes a saved-connection test', false !== strpos( $settings, 'id="ch-test-form"' ) && false !== strpos( $settings, 'Test saved connection' ) );
 hc_console_gate( 'Advanced settings are collapsed', false !== strpos( $settings, 'Advanced settings' ) && false !== strpos( $settings, '<details' ) );
@@ -53,6 +54,7 @@ hc_console_gate( 'Widget keeps the request table', false !== strpos( $widget, 'C
 hc_console_gate( 'Widget keeps the sampled summary', false !== strpos( $widget, 'sampled requests' ) || false !== strpos( $widget, 'No recent samples' ) );
 hc_console_gate( 'Widget keeps both dashboard links', false !== strpos( $widget, 'Open cache dashboard' ) && false !== strpos( $widget, 'View analytics' ) );
 hc_console_gate( 'Widget separates request-memory and Redis counters', false !== strpos( $widget, 'From request memory' ) && false !== strpos( $widget, 'From Redis' ) );
+hc_console_gate( 'Widget shows the runtime entry count', false !== strpos( $widget, 'Runtime entries' ) );
 hc_console_gate( 'Widget has no em dash', false === strpos( $widget, "\xE2\x80\x94" ) );
 
 echo 'RESULT ' . ( $hc_failures ? 'FAILED' : 'PASSED' ) . ' with ' . $hc_failures . " failure(s)\n";

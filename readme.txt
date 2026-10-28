@@ -73,7 +73,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Installed, loaded, connected and disabled are separate states, so a new connection no longer reports a bare "Not active".
 * A failed save keeps the submitted connection values visible instead of replacing them with the saved ones.
 * New installs use PhpRedis when the extension is available; existing Predis installs can switch from the notice.
-* Request-cache byte estimation is skipped on screens that do not show it.
+* Exact runtime-cache memory is measured only in Diagnostics; the dashboard and widget show the entry count instead of serializing the request cache.
 * Restore the dashboard widget request table, sampled summary, chart and links, with separate request-memory and Redis counters.
 * Compute one status snapshot per Status page, register group metadata with one Redis command on a single node, cache configuration defaults and load the connection probe only when an admin action needs it.
 * Clear actions name their scope, and clearing request memory no longer asks for a cache invalidation.

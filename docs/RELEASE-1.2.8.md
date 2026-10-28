@@ -26,9 +26,9 @@
 
 - The widget keeps the request table, sampled summary, chart and both dashboard links, with separate request-memory and Redis counters.
 - The Status page builds one status snapshot per request instead of two.
+- The Status page and widget show the runtime entry count instead of serializing the whole request cache for a byte figure. Exact memory stays in Diagnostics.
 - A single-node first-use group registration is one Lua command instead of SADD plus three EXPIRE commands.
 - Configuration defaults are cached per request, and the connection probe class loads only when an admin action needs it.
-- The widget does not serialize the runtime cache to show its numbers.
 
 ## Client selection
 

@@ -593,6 +593,7 @@ final class Console {
 				'runtime_hits' => array( __( 'From request memory', 'harborcache-object-cache-with-redis' ), '', 0 ),
 				'store_hits'   => array( __( 'From Redis', 'harborcache-object-cache-with-redis' ), '', 0 ),
 				'store_misses' => array( __( 'Redis misses', 'harborcache-object-cache-with-redis' ), '', 0 ),
+				'entries'      => array( __( 'Runtime entries', 'harborcache-object-cache-with-redis' ), '', 0 ),
 				'calls'        => array( __( 'Redis commands', 'harborcache-object-cache-with-redis' ), '', 0 ),
 				'milliseconds' => array( __( 'Redis time', 'harborcache-object-cache-with-redis' ), ' ms', 1 ),
 			);
@@ -686,7 +687,7 @@ final class Console {
 		if ( 'groups' === $view || 'tools' === $view ) { $view = 'cache'; }
 		if ( ! isset( $tabs[ $view ] ) ) { $view = 'overview'; }
 
-		$status = 'overview' === $view ? self::status( true ) : self::status();
+		$status = self::status();
 		$config = Config::load();
 		$probe  = self::stored_probe();
 		if ( $probe ) { self::connection_check(); }
@@ -731,10 +732,8 @@ final class Console {
 
 			if ( 'connected' === $state ) {
 				echo '<div class="ch-metrics">';
-				foreach ( array( 'ratio' => __( 'Cache hit ratio', 'harborcache-object-cache-with-redis' ), 'calls' => __( 'Redis commands', 'harborcache-object-cache-with-redis' ), 'milliseconds' => __( 'Redis time', 'harborcache-object-cache-with-redis' ), 'bytes' => __( 'Memory used', 'harborcache-object-cache-with-redis' ) ) as $key => $metric_label ) {
-					if ( 'bytes' === $key ) {
-						$value = null === $status[ $key ] ? __( 'Not measured', 'harborcache-object-cache-with-redis' ) : number_format_i18n( $status[ $key ] / 1024, 0 ) . ' KiB';
-					} elseif ( 'milliseconds' === $key ) {
+				foreach ( array( 'ratio' => __( 'Cache hit ratio', 'harborcache-object-cache-with-redis' ), 'calls' => __( 'Redis commands', 'harborcache-object-cache-with-redis' ), 'milliseconds' => __( 'Redis time', 'harborcache-object-cache-with-redis' ), 'entries' => __( 'Cache entries', 'harborcache-object-cache-with-redis' ) ) as $key => $metric_label ) {
+					if ( 'milliseconds' === $key ) {
 						$value = number_format_i18n( (float) $status[ $key ], 1 ) . ' ms';
 					} elseif ( 'ratio' === $key ) {
 						$value = number_format_i18n( (float) $status[ $key ], 1 ) . '%';
@@ -749,7 +748,7 @@ final class Console {
 					number_format_i18n( (int) ( $status['runtime_hits'] ?? 0 ) ),
 					number_format_i18n( (int) ( $status['store_hits'] ?? 0 ) ),
 					number_format_i18n( (int) ( $status['store_misses'] ?? 0 ) )
-				) ) . '</p>';
+				) ) . '</p><p class="description">' . esc_html__( 'Cache entries count this request’s runtime objects. Exact memory is measured in Diagnostics.', 'harborcache-object-cache-with-redis' ) . '</p>';
 				self::chart( Core\Metrics::get( null, 100 ) );
 			}
 
