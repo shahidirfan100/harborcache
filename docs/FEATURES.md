@@ -34,7 +34,7 @@ The status model separates not installed, installed but not loaded, loaded but u
 
 New installs select PhpRedis when the extension is loaded. Existing installations that saved Predis keep it, and the Settings screen offers a one-click switch. No cache key format changed.
 
-String values now use the existing `S` marker without PHP serialization. Values written by 1.2.7 and earlier still decode through `V1`. A 1.2.7 worker that is still serving an in-flight request treats a newly written string as a miss until it reloads the drop-in; the window is one request per worker.
+In the 1.2.8 acceptance run, operation PHP CPU was 10.7% above Redis Object Cache 3.0.0 and 5.6% below 1.2.6. The 5% target remains open; `VALIDATION-1.2.8.md` holds the table and limits.
 
 ## 1.2.6 safety and initialization changes
 

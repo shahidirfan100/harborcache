@@ -27,21 +27,19 @@
 - New installs and configurations without a saved client use PhpRedis when `\Redis` exists, matching the free plugin.
 - Saved Predis installations keep Predis.
 - A notice on the Settings screen offers the switch. The next request uses the new client.
-
-## Value format
-
-- String values use the existing `S` marker without PHP serialization. This removes a serialize and unserialize pair from every string read and write.
-- Values written by 1.2.7 and earlier still decode through `V1`.
-- A 1.2.7 worker that is still serving an in-flight request treats a newly written string as a miss until it reloads the drop-in. The window is one request per worker.
-- No cache key changed.
+- A string fast path was implemented, measured and reverted: the benchmark lane showed no improvement outside run noise.
 
 ## Verification
 
-Run the `Linux acceptance` workflow on the release commit. The local checks used while preparing the release:
+The `Linux acceptance` workflow passed all nine jobs on run [40675868347](https://github.com/shahidirfan100/harborcache/actions/runs/40675868347): eight PHP/Redis/WordPress combinations, the relocated-ZIP review and the integrations/benchmark job. Plugin Check reported no errors or warnings.
+
+Local checks used while preparing the release:
 
 - PHP 8.3.36 `php -l` over every PHP file outside `vendor/`.
 - `tests/dropin-writer.php` (12), `tests/review-regressions.php` (9), `tests/safety-regressions.php` (21), `tests/metrics-failure.php`, `tests/conflict-notice.php`.
 - `tests/connection-check.php` against a refused endpoint and against a local RESP fixture.
 - A WordPress-free render harness for Status, Settings, Cache and Diagnostics that reported no notices, warnings or em dashes.
 
-The WordPress admin flow, a live Redis service, codecs, ACL, TLS, outage recovery and the benchmark lanes run in the workflow. Record the run ID and any limits in `VALIDATION-1.2.8.md` before publishing.
+Measured in the same acceptance run: operation CPU was 10.7% above Redis Object Cache 3.0.0 and 5.6% below 1.2.6. The 5% target was not met. See `VALIDATION-1.2.8.md` for the table and limits.
+
+A string fast path was implemented, measured in run 40677015431 and reverted. It did not improve the measured workload, so the value format is unchanged.

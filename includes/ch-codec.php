@@ -30,8 +30,7 @@ final class Codec {
 		if ( is_int( $value ) ) {
 			return 'N' . (int) $value;
 		}
-		// Strings use the existing S marker; PHP serialization adds nothing for a scalar.
-		if ( is_string( $value ) ) { return 'S' . $value; }
+		if ( is_string( $value ) && is_numeric( $value ) ) { return 'S' . $value; }
 		$data = 'php' === $this->serializer ? serialize( $value ) : igbinary_serialize( $value ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
 		if ( 'none' !== $this->compression ) {
 			$data = call_user_func( $this->compression . '_compress', $data );
@@ -49,7 +48,7 @@ final class Codec {
 		if ( 'N' === $raw[0] && preg_match( '/^-?\d+$/D', substr( $raw, 1 ) ) ) {
 			return (int) substr( $raw, 1 );
 		}
-		if ( 'S' === $raw[0] ) { return substr( $raw, 1 ); }
+		if ( 'S' === $raw[0] && is_numeric( substr( $raw, 1 ) ) ) { return substr( $raw, 1 ); }
 		if ( 'V1' !== substr( $raw, 0, 2 ) ) {
 			throw new \RuntimeException( 'Unknown cache value format.' );
 		}

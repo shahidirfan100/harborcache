@@ -74,7 +74,6 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * A failed save keeps the submitted connection values visible instead of replacing them with the saved ones.
 * New installs use PhpRedis when the extension is available; existing Predis installs can switch from the notice.
 * Request-cache byte estimation is skipped on screens that do not show it.
-* String values use the existing S marker instead of PHP serialization, removing a serialize and unserialize pair from every string read and write.
 * Clear actions name their scope, and clearing request memory no longer asks for a cache invalidation.
 * The teal palette, product name and existing key format are unchanged.
 
