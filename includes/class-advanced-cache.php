@@ -483,9 +483,9 @@ LUA;
 		return $count;
 	}
 
-	public function ch_diagnostics() {
-		$info = $this->info();
-		return array( 'connected' => $this->redis_status(), 'client' => $info->meta['Client'], 'redis' => $this->redis_version(), 'runtime_hits' => $this->runtime_hits, 'store_hits' => $this->store_hits, 'store_misses' => $this->store_misses, 'store_ratio' => $this->store_hits + $this->store_misses > 0 ? round( 100 * $this->store_hits / ( $this->store_hits + $this->store_misses ), 1 ) : null, 'hits' => $info->hits, 'misses' => $info->misses, 'ratio' => $info->ratio, 'calls' => $info->calls, 'milliseconds' => round( $info->time * 1000, 3 ), 'bytes' => $info->bytes, 'serializer' => $this->ch_config['serializer'], 'compression' => $this->ch_config['compression'], 'max_ttl' => $this->ch_config['maxttl'] );
+	public function ch_diagnostics( $with_bytes = true ) {
+		$info = $this->info( $with_bytes );
+		return array( 'connected' => $this->redis_status(), 'ready' => $this->ch_ready, 'reason' => $this->ch_ready ? '' : ( $this->ch_failure_reason ?: 'backend-unavailable' ), 'client' => $info->meta['Client'], 'redis' => $this->redis_version(), 'runtime_hits' => $this->runtime_hits, 'store_hits' => $this->store_hits, 'store_misses' => $this->store_misses, 'store_ratio' => $this->store_hits + $this->store_misses > 0 ? round( 100 * $this->store_hits / ( $this->store_hits + $this->store_misses ), 1 ) : null, 'hits' => $info->hits, 'misses' => $info->misses, 'ratio' => $info->ratio, 'calls' => $info->calls, 'milliseconds' => round( $info->time * 1000, 3 ), 'bytes' => $info->bytes, 'serializer' => $this->ch_config['serializer'], 'compression' => $this->ch_config['compression'], 'max_ttl' => $this->ch_config['maxttl'] );
 	}
 
 	public function storage_summary() {

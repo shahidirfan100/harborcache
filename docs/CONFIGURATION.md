@@ -2,7 +2,7 @@
 
 1. Disable the previous object-cache plugin using its own controls. Back up its configuration and wp-content/object-cache.php. HarborCache refuses to overwrite a foreign drop-in.
 2. Install the HarborCache ZIP, activate it and open Settings → HarborCache.
-3. Set the Redis endpoint and a unique installation prefix in Connection. Save, then enable object caching from Overview. No licensing step exists.
+3. Set the Redis endpoint and a unique installation prefix in Settings. Save, then enable object caching from Status. No licensing step exists.
 4. Verify Connected status and exercise your site's options, editing, checkout, login and background tasks on staging.
 
 Redis is an external server you operate or your host provides. HarborCache does not install Redis. Cache data from other plugins is not imported; use a fresh prefix. Switching codec or split-alloptions settings produces a separate value namespace. Old entries expire under the configured maximum TTL.

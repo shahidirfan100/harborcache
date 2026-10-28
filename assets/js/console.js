@@ -3,6 +3,7 @@
   const ui = window.harborcacheUI || {};
   document.querySelectorAll('#harborcache, #harborcache_status').forEach(root => {
     root.querySelectorAll('.ch-chart').forEach(chart => {
+      chart.classList.add('ch-js');
       const originals = new WeakMap();
       let previousWidth;
       const resize = () => {
@@ -32,9 +33,35 @@
     });
     root.querySelectorAll('[data-ch-confirm]').forEach(button => {
       button.addEventListener('click', event => {
-        if (!window.confirm(ui.confirm)) event.preventDefault();
+        const text = button.dataset.chConfirm || ui.confirm;
+        if (!window.confirm(text)) event.preventDefault();
       });
     });
+
+    const testForm = root.querySelector('#ch-test-form');
+    if (testForm && window.fetch && ui.ajax) testForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = testForm.querySelector('button[type="submit"]');
+      const status = root.querySelector('#ch-test-status');
+      const target = root.querySelector('#ch-probe-result');
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      if (status) status.textContent = ui.testing || '';
+      try {
+        const body = new URLSearchParams({ action: 'harborcache_probe', _wpnonce: ui.probeNonce });
+        const response = await fetch(ui.ajax, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+        const data = await response.json();
+        if (target && data.html) target.innerHTML = data.html;
+        if (status) status.textContent = '';
+        if (!data.html) throw new Error('empty');
+      } catch (error) {
+        if (status) status.textContent = ui.probeFailed || '';
+      } finally {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+      }
+    });
+
     const copy = root.querySelector('#ch-copy');
     if (copy) copy.addEventListener('click', async () => {
       const report = root.querySelector('#ch-diagnostics');
@@ -51,6 +78,7 @@
         selection.addRange(range);
         feedback.textContent = ui.selected;
       }
+      window.setTimeout(() => { feedback.textContent = ''; }, 4000);
     });
   });
 })();

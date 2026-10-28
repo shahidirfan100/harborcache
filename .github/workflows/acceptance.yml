@@ -132,6 +132,9 @@ jobs:
           rsync -a --exclude=.git --exclude=media --exclude=dist --exclude=tests --exclude=.github ./ "$WP_ROOT/wp-content/plugins/harborcache/"
           wp plugin activate harborcache --path="$WP_ROOT"
           php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
+          mkdir -p evidence
+          php tests/connection-check.php | tee evidence/connection-check.txt
+          wp eval-file tests/console-render.php --path="$WP_ROOT" | tee evidence/console-render.txt
       - name: Native and PHP clients, codecs, concurrent workers and WordPress flows
         shell: bash
         run: |

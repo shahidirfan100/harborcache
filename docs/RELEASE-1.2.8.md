@@ -1,0 +1,40 @@
+# HarborCache 1.2.8 release notes
+
+## Scope
+
+1.2.8 fixes the connection setup path and the dashboard structure. It does not change the cache key format, the namespace layout, the product name or the teal palette.
+
+## Connection setup
+
+- One check path, shared by Save, Test saved connection and Enable.
+- The check uses the selected client for a single node. Predis, PhpRedis, Relay and Credis are exercised with their own driver. Cluster, Sentinel and replica configurations are checked with Predis, and the result says so.
+- A five second minimum budget, independent of the one second runtime connect timeout.
+- A temporary key is written, read and deleted inside the installation namespace.
+- Specific results for refused, timed out, authentication, ACL, TLS, DNS, Unix socket and database failures.
+- A failed save keeps the submitted values and shows the reason next to the form.
+
+## Status and screens
+
+- States: not installed, installed and waiting for reload, not connected, connected, disabled by configuration.
+- Screens: Status, Settings, Cache, Analytics, Diagnostics.
+- The saved-connection test has a visible pending state and an `aria-live` result.
+- Clear actions name their scope. Clearing request memory no longer asks for an invalidation.
+- The dashboard widget is one state line, one metric line and one link.
+- The raw diagnostics report stays available behind a summary.
+
+## Client selection
+
+- New installs and configurations without a saved client use PhpRedis when `\Redis` exists, matching the free plugin.
+- Saved Predis installations keep Predis.
+- A notice on the Settings screen offers the switch. The next request uses the new client.
+
+## Verification
+
+Run the `Linux acceptance` workflow on the release commit. The local checks used while preparing the release:
+
+- PHP 8.3.36 `php -l` over every PHP file outside `vendor/`.
+- `tests/dropin-writer.php` (12), `tests/review-regressions.php` (9), `tests/safety-regressions.php` (21), `tests/metrics-failure.php`, `tests/conflict-notice.php`.
+- `tests/connection-check.php` against a refused endpoint and against a local RESP fixture.
+- A WordPress-free render harness for Status, Settings, Cache and Diagnostics that reported no notices, warnings or em dashes.
+
+The WordPress admin flow, a live Redis service, codecs, ACL, TLS, outage recovery and the benchmark lanes run in the workflow. Record the run ID and any limits in `VALIDATION-1.2.8.md` before publishing.

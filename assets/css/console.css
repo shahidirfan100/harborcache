@@ -11,7 +11,6 @@
 #harborcache.ch-console .ch-page-title { font-size: 26px; line-height: 1.3; font-weight: 600; padding: 0; margin: 20px 0 8px; color: var(--ch-ink); }
 #harborcache .ch-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 8px 0 20px; border-bottom: 2px solid var(--ch-accent); }
 #harborcache .ch-identity { display: flex; align-items: center; gap: 12px; }
-#harborcache .ch-identity .ch-brand-name { display: none; }
 #harborcache .ch-identity p { margin: 0; font-size: 16px; color: var(--ch-muted); }
 #harborcache .ch-status { border: 1px solid #806325; background: #fff5da; color: #624810; }
 #harborcache .ch-status::before { content: ""; width: 8px; height: 8px; background: currentColor; border-radius: 50%; margin-right: 8px; flex: none; }
@@ -32,6 +31,21 @@
 #harborcache .ch-metrics span { display: block; font-size: 15px; line-height: 1.5; color: var(--ch-muted); }
 #harborcache .ch-metrics strong { display: block; margin-top: 8px; font-size: 28px; line-height: 1.3; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 #harborcache .ch-panel, #harborcache .ch-settings-section { background: var(--ch-surface); border: 1px solid var(--ch-border); padding: 20px; margin: 20px 0; min-width: 0; }
+#harborcache .ch-state-title { font-size: 24px; line-height: 1.35; margin: 0 0 6px; }
+#harborcache .ch-state-text { font-size: 17px; line-height: 1.6; margin: 0 0 8px; max-width: 75ch; }
+#harborcache .ch-probe { border: 1px solid var(--ch-border); background: #f7fbfa; padding: 14px 16px; margin: 16px 0; }
+#harborcache .ch-probe.is-connected { border-color: #4b8375; background: #e9f5f0; color: #064e42; }
+#harborcache .ch-probe.is-failed { border-color: #806325; background: #fff5da; color: #624810; }
+#harborcache .ch-probe strong { display: block; font-size: 18px; line-height: 1.4; }
+#harborcache .ch-probe p { margin: 6px 0 0; font-size: 15px; line-height: 1.55; }
+#harborcache .ch-probe-meta { color: var(--ch-muted); font-size: 13px; }
+#harborcache .ch-advanced { padding: 0; }
+#harborcache .ch-advanced > summary { cursor: pointer; min-height: 44px; padding: 14px 20px; font-size: 18px; font-weight: 600; }
+#harborcache .ch-advanced[open] > summary { border-bottom: 1px solid var(--ch-border); }
+#harborcache .ch-advanced > .ch-form-grid { padding: 0 20px; margin-top: 20px; }
+#harborcache .ch-advanced > fieldset.ch-settings-section { margin: 20px; }
+#harborcache .ch-test-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+#harborcache .ch-test-status { color: var(--ch-muted); font-size: 15px; }
 #harborcache .ch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
 #harborcache .ch-action { display: inline-block; margin: 0; }
 #harborcache .ch-action label { margin-right: 8px; }
