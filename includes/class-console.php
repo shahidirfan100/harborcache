@@ -443,6 +443,7 @@ final class Console {
 		self::store_probe( $probe );
 		if ( empty( $probe['ok'] ) ) {
 			self::store_draft( $input );
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Escaped when the admin notice is rendered.
 			throw new \InvalidArgumentException( sprintf(
 				/* translators: %s: reason the new connection failed. */
 				__( 'The new connection failed, so the previous configuration was kept: %s', 'harborcache-object-cache-with-redis' ),
@@ -802,11 +803,14 @@ final class Console {
 	private static function ttl_label( $seconds ) {
 		$seconds = max( 1, (int) $seconds );
 		if ( 0 === $seconds % DAY_IN_SECONDS ) {
+			/* translators: %s: number of days. */
 			return sprintf( _n( '%s day', '%s days', $seconds / DAY_IN_SECONDS, 'harborcache-object-cache-with-redis' ), number_format_i18n( $seconds / DAY_IN_SECONDS ) );
 		}
 		if ( 0 === $seconds % HOUR_IN_SECONDS ) {
+			/* translators: %s: number of hours. */
 			return sprintf( _n( '%s hour', '%s hours', $seconds / HOUR_IN_SECONDS, 'harborcache-object-cache-with-redis' ), number_format_i18n( $seconds / HOUR_IN_SECONDS ) );
 		}
+		/* translators: %s: number of seconds. */
 		return sprintf( _n( '%s second', '%s seconds', $seconds, 'harborcache-object-cache-with-redis' ), number_format_i18n( $seconds ) );
 	}
 

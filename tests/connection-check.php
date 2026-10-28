@@ -15,7 +15,9 @@ if ( $root ) {
 	if ( ! function_exists( 'wp_date' ) ) { function wp_date( $format, $timestamp = null ) { return gmdate( $format, $timestamp ?: time() ); } }
 }
 
-require_once dirname( __DIR__ ) . '/includes/class-connection-check.php';
+if ( ! class_exists( 'HarborCache\\Connection_Check' ) ) {
+	require_once dirname( __DIR__ ) . '/includes/class-connection-check.php';
+}
 
 $failures = 0;
 function hc_probe_gate( $name, $pass, $detail = '' ) {

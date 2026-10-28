@@ -164,6 +164,7 @@ final class Connection_Check {
 		$class  = $relay ? '\\Relay\\Relay' : '\\Redis';
 		$name   = $relay ? 'relay' : 'redis';
 		if ( ! class_exists( $class ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped in the result card.
 			throw new \RuntimeException( sprintf( 'The %s PHP extension is not installed.', $name ) );
 		}
 
@@ -200,11 +201,13 @@ final class Connection_Check {
 			$auth = true;
 		}
 		if ( false === $auth ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped in the result card.
 			throw new \RuntimeException( self::native_error( $client, 'Redis rejected the password or ACL user.' ) );
 		}
 		if ( (int) $config['database'] > 0 ) {
 			$selected = $client->select( (int) $config['database'] );
 			if ( false === $selected ) {
+				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped in the result card.
 				throw new \RuntimeException( self::native_error( $client, 'Redis rejected the selected database.' ) );
 			}
 		}
