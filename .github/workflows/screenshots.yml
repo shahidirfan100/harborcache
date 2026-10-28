@@ -98,6 +98,8 @@ jobs:
 
       - name: Capture screenshots
         shell: bash
+        env:
+          HC_RESEED_CMD: 'HC_METRICS_ONLY=1 wp eval-file tests/screenshot-seed.php --path=/tmp/hc-screenshots'
         run: |
           set -euo pipefail
           node tools/capture-screenshots.mjs | tee "$HC_OUT/capture.log"

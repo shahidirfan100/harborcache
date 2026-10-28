@@ -10,12 +10,14 @@
 import { chromium } from 'playwright';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const base = process.env.HC_BASE_URL;
 const user = process.env.HC_ADMIN_USER;
 const pass = process.env.HC_ADMIN_PASS;
 const out = process.env.HC_OUT || 'media-capture';
 const warm = process.env.HC_WARM === '1';
+const reseedCommand = process.env.HC_RESEED_CMD || '';
 
 if (!base || !user || !pass) {
   throw new Error('HC_BASE_URL, HC_ADMIN_USER and HC_ADMIN_PASS are required.');
@@ -61,6 +63,11 @@ async function newContext(viewport, mobile = false) {
   await page.click('#wp-submit');
   await page.waitForURL(/wp-admin/, { timeout: 30000 });
   return { context, page };
+}
+
+function reseedMetrics() {
+  if (!reseedCommand) return;
+  execFileSync('bash', ['-lc', reseedCommand], { stdio: 'inherit' });
 }
 
 async function settle(page) {
@@ -118,6 +125,7 @@ for (const [file, view] of [
   ['screenshot-4.png', 'cache'],
   ['screenshot-5.png', 'diagnostics'],
 ]) {
+  if (view === 'analytics') reseedMetrics();
   await page.goto(pageUrl(view), { waitUntil: 'domcontentloaded' });
   await settle(page);
   await capture(page, { file, view, url: pageUrl(view), selector: '#harborcache', minWidth: 1000 });
@@ -134,6 +142,7 @@ await settle(page);
 await capture(page, { file: 'screenshot-6.png', view: 'raw report', url: pageUrl('diagnostics'), selector: 'section.ch-panel:has(#ch-diagnostics)', minWidth: 1000 });
 
 // Dashboard widget.
+reseedMetrics();
 await page.goto(`${admin}/index.php`, { waitUntil: 'domcontentloaded' });
 await settle(page);
 await page.locator('#harborcache_status').scrollIntoViewIfNeeded();
@@ -149,6 +158,7 @@ await mobilePage.goto(pageUrl('connection'), { waitUntil: 'domcontentloaded' });
 await settle(mobilePage);
 await capture(mobilePage, { file: 'screenshot-mobile.png', view: 'settings', url: pageUrl('connection'), selector: '#harborcache', minWidth: 300 });
 
+reseedMetrics();
 await mobilePage.goto(`${admin}/index.php`, { waitUntil: 'domcontentloaded' });
 await settle(mobilePage);
 await mobilePage.locator('#harborcache_status').scrollIntoViewIfNeeded();
