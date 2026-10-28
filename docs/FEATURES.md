@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.9)
+# HarborCache feature ledger (1.2.10)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.9 replaces per-group epoch reads with one shared Redis hash and one registry read per request, so a 30-group request uses a fixed metadata cost instead of one GET and one registration per group. The existing key format, legacy epoch keys, cleanup guards and scoped invalidation remain. Version 1.2.8 added the selected-client connection check, five dashboard screens and the restored widget.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.10 corrects two panel spacing defects found while capturing the listing screenshots and regenerates the translation template; the engine, key format, settings, palette and product name are unchanged. Version 1.2.9 replaces per-group epoch reads with one shared Redis hash and one registry read per request, so a 30-group request uses a fixed metadata cost instead of one GET and one registration per group. The existing key format, legacy epoch keys, cleanup guards and scoped invalidation remain. Version 1.2.8 added the selected-client connection check, five dashboard screens and the restored widget.
 
 | Area | Behavior and evidence |
 | --- | --- |

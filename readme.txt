@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.9
+Stable tag: 1.2.10
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,11 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.2.10 =
+* Separate the group clear button, the include-memory option and the group inspection button.
+* Align the Settings save and connection test buttons with the panel content.
+* Regenerate the translation template for the current interface strings.
 
 = 1.2.9 =
 * Read scope and group epochs from one Redis hash and the group registry once per request, instead of one GET per group.
@@ -204,6 +209,9 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.10 =
+Interface spacing fixes and a refreshed translation template. Cache behavior, key format and settings are unchanged.
 
 = 1.2.9 =
 Refresh the owned drop-in. The first request after upgrading migrates used legacy epoch keys into the shared hash; existing cached entries stay valid. Key format and settings are preserved.
