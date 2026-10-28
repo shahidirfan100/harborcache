@@ -15,6 +15,7 @@ const base = process.env.HC_BASE_URL;
 const user = process.env.HC_ADMIN_USER;
 const pass = process.env.HC_ADMIN_PASS;
 const out = process.env.HC_OUT || 'media-capture';
+const warm = process.env.HC_WARM === '1';
 
 if (!base || !user || !pass) {
   throw new Error('HC_BASE_URL, HC_ADMIN_USER and HC_ADMIN_PASS are required.');
@@ -63,7 +64,7 @@ async function newContext(viewport, mobile = false) {
 }
 
 async function settle(page) {
-  await page.waitForLoadState('networkidle').catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
   await page.addStyleTag({ content: reducedMotion });
   await page.waitForFunction(
     () => Array.from(document.images).every((image) => image.complete && image.naturalWidth > 0),
@@ -94,6 +95,22 @@ async function capture(page, { file, view, url, selector, minWidth }) {
 const desktop = await newContext({ width: 1440, height: 1000 });
 const { page } = desktop;
 
+if (warm) {
+  const views = ['overview', 'analytics', 'connection', 'cache', 'diagnostics'];
+  for (let pass = 0; pass < 2; pass++) {
+    for (const view of views) {
+      await page.goto(pageUrl(view), { waitUntil: 'load' });
+      await page.waitForTimeout(150);
+    }
+    await page.goto(`${admin}/index.php`, { waitUntil: 'load' });
+    await page.waitForTimeout(150);
+  }
+  await desktop.context.close();
+  await browser.close();
+  console.log('PASS warm pass complete');
+  process.exit(0);
+}
+
 for (const [file, view] of [
   ['screenshot-1.png', 'overview'],
   ['screenshot-2.png', 'analytics'],
@@ -112,6 +129,7 @@ await settle(page);
 const reportPanel = page.locator('section.ch-panel').filter({ has: page.locator('#ch-diagnostics') }).first();
 await reportPanel.locator('summary').click();
 await page.locator('#ch-diagnostics').waitFor({ state: 'visible' });
+await page.addStyleTag({ content: '#ch-diagnostics { max-height: none !important; }' });
 await settle(page);
 await capture(page, { file: 'screenshot-6.png', view: 'raw report', url: pageUrl('diagnostics'), selector: 'section.ch-panel:has(#ch-diagnostics)', minWidth: 1000 });
 

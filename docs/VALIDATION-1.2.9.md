@@ -1,6 +1,6 @@
 # HarborCache 1.2.9 validation
 
-Validated runtime commit: `478a9e8`. Release archive: `dist/harborcache-1.2.9.zip`, 600 files, SHA256 `099f457f0433b3e2d7c4bc33ca9707d9bca2ddf47c47bc2baa14d9081226888a`. The build verifier passed source and ZIP parity.
+Validated runtime commit: `478a9e8`. Release archive: `dist/harborcache-1.2.9.zip`, 600 files; the SHA256 is recorded in `dist/SHA256SUMS`. The build verifier passed source and ZIP parity.
 
 ## Correctness and lifecycle
 

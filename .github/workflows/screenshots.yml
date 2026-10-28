@@ -84,6 +84,18 @@ jobs:
           npm install --no-audit --no-fund playwright@1.49.1
           npx playwright install --with-deps chromium
 
+      - name: Warm the captured pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          HC_WARM=1 node tools/capture-screenshots.mjs
+
+      - name: Reseed analytics history immediately before capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          HC_METRICS_ONLY=1 wp eval-file tests/screenshot-seed.php --path="$WP_ROOT"
+
       - name: Capture screenshots
         shell: bash
         run: |

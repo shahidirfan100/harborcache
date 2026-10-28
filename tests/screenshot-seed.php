@@ -18,9 +18,12 @@ if ( ! $wp_object_cache instanceof HarborCache_Advanced_Cache || ! $wp_object_ca
 }
 
 $client = $wp_object_cache->redis_instance();
+$metrics_only = '1' === getenv( 'HC_METRICS_ONLY' );
 
 // Start from a clean namespace so the capture is deterministic.
-$wp_object_cache->flush();
+if ( ! $metrics_only ) {
+	$wp_object_cache->flush();
+}
 
 $groups = array(
 	'posts'          => array( 'last_changed', 'posts:published', 'posts:front' ),
@@ -38,34 +41,36 @@ $groups = array(
 );
 
 $written = 0;
-foreach ( $groups as $group => $keys ) {
-	foreach ( $keys as $index => $key ) {
-		$value = array(
-			'group'   => $group,
-			'key'     => $key,
-			'records' => 8 + ( $index * 3 ),
-			'built'   => time() - ( $index * 90 ),
-		);
-		if ( wp_cache_set( $key, $value, $group, HOUR_IN_SECONDS ) ) {
-			++$written;
+if ( ! $metrics_only ) {
+	foreach ( $groups as $group => $keys ) {
+		foreach ( $keys as $index => $key ) {
+			$value = array(
+				'group'   => $group,
+				'key'     => $key,
+				'records' => 8 + ( $index * 3 ),
+				'built'   => time() - ( $index * 90 ),
+			);
+			if ( wp_cache_set( $key, $value, $group, HOUR_IN_SECONDS ) ) {
+				++$written;
+			}
 		}
 	}
-}
 
-// Read the seeded values back so the request memory also holds entries.
-foreach ( $groups as $group => $keys ) {
-	foreach ( $keys as $key ) {
-		wp_cache_get( $key, $group );
+	// Read the seeded values back so the request memory also holds entries.
+	foreach ( $groups as $group => $keys ) {
+		foreach ( $keys as $key ) {
+			wp_cache_get( $key, $group );
+		}
 	}
-}
 
-// Representative traffic so the Status request counters are not near zero.
-for ( $i = 0; $i < 240; ++$i ) {
-	$post_id = 1 + ( $i % 12 );
-	wp_cache_get( 'post_' . $post_id, 'posts' );
-	wp_cache_get( 'post_meta_' . $post_id, 'post_meta' );
-	wp_cache_get( 'user_' . ( 1 + ( $i % 3 ) ), 'users' );
-	wp_cache_get( 'missing_' . $i, 'terms' );
+	// Representative traffic so the Status request counters are not near zero.
+	for ( $i = 0; $i < 240; ++$i ) {
+		$post_id = 1 + ( $i % 12 );
+		wp_cache_get( 'post_' . $post_id, 'posts' );
+		wp_cache_get( 'post_meta_' . $post_id, 'post_meta' );
+		wp_cache_get( 'user_' . ( 1 + ( $i % 3 ) ), 'users' );
+		wp_cache_get( 'missing_' . $i, 'terms' );
+	}
 }
 
 $key = $wp_object_cache->build_key( 'metrics', 'harborcache' );
@@ -78,7 +83,7 @@ if ( $client instanceof \Redis ) {
 	$client->del( array( $key ) );
 }
 
-$samples = 130;
+$samples = 36;
 $span    = 6600; // 110 minutes, inside the two hour retention window.
 for ( $i = 1; $i <= $samples; ++$i ) {
 	$timestamp = $now - 60 - (int) round( ( $samples - $i ) * ( $span / $samples ) );
@@ -120,6 +125,6 @@ $count = \HarborCache\Core\Metrics::count();
 WP_CLI::line( 'Seeded ' . $written . ' cache entries in ' . count( $groups ) . ' groups.' );
 WP_CLI::line( 'Seeded analytics samples: ' . $count . '.' );
 
-if ( $written < 20 || $count < $samples ) {
+if ( ( ! $metrics_only && $written < 20 ) || $count < $samples ) {
 	WP_CLI::error( 'Screenshot fixture is incomplete.' );
 }
