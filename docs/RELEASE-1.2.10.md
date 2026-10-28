@@ -16,4 +16,7 @@ No option, constant or cache key changes. Rolling back to 1.2.9 needs no cache f
 
 ## Verification
 
-The full matrix, Plugin Check result and screenshot capture run are recorded in `VALIDATION-1.2.10.md`.
+- GitHub Actions [40704819365](https://github.com/shahidirfan100/harborcache/actions/runs/40704819365): all ten jobs passed, Plugin Check reported no errors on the exact ZIP.
+- Screenshots [40704836977](https://github.com/shahidirfan100/harborcache/actions/runs/40704836977): nine captures from the 1.2.10 ZIP with zero JavaScript and console errors.
+
+The full record is in `VALIDATION-1.2.10.md`.
