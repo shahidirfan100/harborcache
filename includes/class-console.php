@@ -443,12 +443,7 @@ final class Console {
 		self::store_probe( $probe );
 		if ( empty( $probe['ok'] ) ) {
 			self::store_draft( $input );
-			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Escaped when the admin notice is rendered.
-			throw new \InvalidArgumentException( sprintf(
-				/* translators: %s: reason the new connection failed. */
-				__( 'The new connection failed, so the previous configuration was kept: %s', 'harborcache-object-cache-with-redis' ),
-				$probe['message']
-			) );
+			throw new \InvalidArgumentException( esc_html__( 'The new connection failed, so the previous configuration was kept. The result above shows the reason.', 'harborcache-object-cache-with-redis' ) );
 		}
 		self::write_config( $saved );
 		return array( 'probe' => $probe );
