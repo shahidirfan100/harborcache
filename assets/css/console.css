@@ -44,7 +44,8 @@
 #harborcache .ch-advanced[open] > summary { border-bottom: 1px solid var(--ch-border); }
 #harborcache .ch-advanced > .ch-form-grid { padding: 0 20px; margin-top: 20px; }
 #harborcache .ch-advanced > fieldset.ch-settings-section { margin: 20px; }
-#harborcache .ch-test-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+#harborcache .ch-test-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; padding: 0 24px; }
+#harborcache .ch-settings > .ch-actions { padding: 0 24px; }
 #harborcache .ch-test-status { color: var(--ch-muted); font-size: 15px; }
 #harborcache .ch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
 #harborcache .ch-action { display: inline-block; margin: 0; vertical-align: middle; }
@@ -97,6 +98,7 @@
   #harborcache .ch-identity img { width: 32px; height: 32px; }
   #harborcache .ch-tabs a { padding: 0 10px; }
   #harborcache .ch-panel, #harborcache .ch-settings-section, #harborcache .ch-settings fieldset.ch-settings-section { padding: 16px; }
+  #harborcache .ch-settings > .ch-actions, #harborcache .ch-test-form { padding: 0 16px; }
   #harborcache .ch-details > div { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
