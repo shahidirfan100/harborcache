@@ -75,6 +75,7 @@ if ( $root ) {
 	$status = HarborCache\Console::status();
 	hc_probe_gate( 'Status exposes the state model', isset( $status['state'], $status['loaded'], $status['installed'], $status['reason'] ) );
 	hc_probe_gate( 'Status label is user facing', in_array( $status['state'], array( 'connected', 'not-loaded', 'unreachable', 'not-installed', 'disabled' ), true ), $status['state'] );
+	hc_probe_gate( 'Installed drop-in reports connected', 'connected' === $status['state'], $status['state'] );
 }
 
 echo "RESULT " . ( $failures ? 'FAILED' : 'PASSED' ) . " with " . $failures . " failure(s)\n";

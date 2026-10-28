@@ -36,6 +36,7 @@ hc_console_gate( 'No bare "Not active" state', false === strpos( $all, 'Not acti
 hc_console_gate( 'No duplicate Overview heading', false === strpos( $overview, '>Overview<' ) );
 hc_console_gate( 'Five tabs, no Tools drawer', false === strpos( $all, '>Tools<' ) && false !== strpos( $all, '>Status<' ) && false !== strpos( $all, '>Settings<' ) && false !== strpos( $all, '>Cache<' ) && false !== strpos( $all, '>Diagnostics<' ) );
 hc_console_gate( 'The state has a live region', false !== strpos( $overview, 'class="ch-status' ) && false !== strpos( $overview, 'role="status"' ) );
+hc_console_gate( 'The connected header state is rendered', false !== strpos( $overview, 'class="ch-status is-connected"' ) && false !== strpos( $overview, '>Connected<' ) );
 hc_console_gate( 'Old composite metric labels are gone', false === strpos( $overview, 'Combined hit ratio' ) && false === strpos( $overview, 'Runtime cache (bytes)' ) );
 hc_console_gate( 'Clear buttons carry the action-specific confirmation', false === strpos( $all, 'data-ch-confirm="1"' ) );
 hc_console_gate( 'Settings exposes a saved-connection test', false !== strpos( $settings, 'id="ch-test-form"' ) && false !== strpos( $settings, 'Test saved connection' ) );
