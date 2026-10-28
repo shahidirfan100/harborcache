@@ -11,8 +11,9 @@ final class Config {
 	private static $loaded;
 
 	public static function defaults() {
+		// Match the free plugin's behaviour: use the C extension when the server has it.
 		return array(
-			'client' => 'predis', 'host' => '127.0.0.1', 'port' => 6379,
+			'client' => class_exists( '\Redis' ) ? 'phpredis' : 'predis', 'host' => '127.0.0.1', 'port' => 6379,
 			'database' => 0, 'username' => '', 'password' => '', 'prefix' => '', 'scheme' => 'tcp', 'path' => '',
 			'timeout' => 1.0, 'read_timeout' => 1.0, 'persistent' => false,
 			'cluster' => array(), 'sentinels' => array(), 'service' => '', 'servers' => array(),
@@ -150,9 +151,12 @@ final class Config {
 		$config = self::load();
 		$map = array( 'scheme' => 'SCHEME', 'path' => 'PATH', 'client' => 'CLIENT', 'host' => 'HOST', 'port' => 'PORT', 'database' => 'DATABASE', 'password' => 'PASSWORD', 'username' => 'USERNAME', 'timeout' => 'TIMEOUT', 'read_timeout' => 'READ_TIMEOUT', 'persistent' => 'PERSISTENT', 'maxttl' => 'MAXTTL', 'global_groups' => 'GLOBAL_GROUPS', 'non_persistent_groups' => 'IGNORED_GROUPS', 'tls_options' => 'SSL_CONTEXT', 'retry_interval' => 'RETRY_INTERVAL' );
 		foreach ( $map as $key => $suffix ) {
-			if ( ! defined( 'WP_REDIS_' . $suffix ) ) { define( 'WP_REDIS_' . $suffix, $config[ $key ] ); }
+			if ( ! defined( 'WP_REDIS_' . $suffix ) ) {
+				define( 'WP_REDIS_' . $suffix, $config[ $key ] );
+				if ( 'client' === $key ) { define( 'HARBORCACHE_CLIENT_FROM_CONFIG', true ); }
+			}
 		}
-		if ( ! defined( 'WP_REDIS_PREFIX' ) ) { define( 'WP_REDIS_PREFIX', 'ch:' . substr( hash( 'sha256', $config['prefix'] ), 0, 24 ) . ':' ); }
+		if ( ! defined( 'WP_REDIS_PREFIX' ) ) { define( 'WP_REDIS_PREFIX', 'ch:' . substr( hash( 'sha256', $config['prefix'] ), 0, 24 ) . ':' ); define( 'HARBORCACHE_PREFIX_FROM_CONFIG', true ); }
 		if ( $config['cluster'] && ! defined( 'WP_REDIS_CLUSTER' ) ) { define( 'WP_REDIS_CLUSTER', $config['cluster'] ); }
 		if ( $config['servers'] && ! defined( 'WP_REDIS_SERVERS' ) ) { define( 'WP_REDIS_SERVERS', $config['servers'] ); }
 		if ( $config['sentinels'] ) {

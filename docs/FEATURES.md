@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.7)
+# HarborCache feature ledger (1.2.8)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.7 reduces repeated key-context and bootstrap work, batches supported metadata operations and contains metrics failures while preserving the 1.2.6 safety fixes and dashboard assets. No account, subscription or vendor updater is required.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.8 adds a selected-client connection check with a five second budget, a five-state status model, five dashboard screens, a saved-connection test and PhpRedis detection for new installs. The 1.2.7 cache engine, key format, teal palette and product name are unchanged.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -22,9 +22,19 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and c
 | Extension points | Custom connector callable and cache subclass/factory exercised against Redis. These follow HarborCache's documented API contracts. |
 | Native clients | PhpRedis and Relay connection paths; Relay Cluster constructor, cache/invalidation patterns, adaptive policy, listeners and native routing have API-contract fixtures. Real PhpRedis 6.3.0 standalone, cluster, replicas and Sentinel were validated on Windows with Redis 5. Real Relay 0.50.2 standalone values, counters, forced reads, option patches and concurrent processes passed on Linux. Native Relay topology/failover remains a separate gate. |
 | Values | PHP serialization live-tested. igbinary/LZF/LZ4/Zstandard adapters reject missing codec functions. Real Linux extension roundtrips passed for PHP/igbinary serialization with none/LZF/LZ4/Zstandard compression. |
-| Administration | Six responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
+| Administration | Five responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
 | Shared servers | Shared mode hides memory/key totals which would include other applications; dedicated mode sums primary memory and selected-database key counts. Server command statistics are explicitly labeled. |
 | Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging, interrupted-write recovery and removal of incomplete canonical files, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
+
+## 1.2.8 connection and dashboard changes
+
+The connection check builds its client from the saved configuration, so PhpRedis, Predis, Relay and Credis are checked with their own driver for a single node. Cluster, Sentinel and replica configurations use Predis for the check while the runtime keeps the selected client. The probe uses a five second minimum budget, writes and removes one key inside the installation namespace, and reports a specific reason for refused, timed out, authentication, ACL, TLS, DNS, socket and database failures.
+
+The status model separates not installed, installed but not loaded, loaded but unreachable, connected and disabled by constant. The dashboard exposes Status, Settings, Cache, Analytics and Diagnostics. The Settings screen tests the saved connection without saving, keeps submitted values after a failed save, and collapses advanced limits. Clearing request memory no longer asks for a cache invalidation, and every clear action names its scope.
+
+New installs select PhpRedis when the extension is loaded. Existing installations that saved Predis keep it, and the Settings screen offers a one-click switch. No cache key format changed.
+
+In the 1.2.8 acceptance run, operation PHP CPU was 10.7% above Redis Object Cache 3.0.0 and 5.6% below 1.2.6. The 5% target remains open; `VALIDATION-1.2.8.md` holds the table and limits.
 
 ## 1.2.6 safety and initialization changes
 

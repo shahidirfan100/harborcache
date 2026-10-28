@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.7
+Stable tag: 1.2.8
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -20,7 +20,7 @@ Features include persistent caching through Predis, PhpRedis, Relay or Credis; m
 
 Advanced additions include bounded background reclamation, exact integer counters, safe-read retries/backoff, replica/Sentinel/cluster read routing, logging/tracing adapters, custom cache/connector factories, analytics retention/count/flush-persistence controls and shared-server capacity reporting. See docs/ADVANCED.md and the feature ledger for native-extension acceptance gates and API differences.
 
-The dashboard includes Overview, Analytics, Connection, Cache Groups, Tools and Diagnostics. Configuration is saved to a guarded PHP file in wp-content. Configuration constants take precedence. Passwords and cached values are excluded from diagnostic exports.
+The dashboard includes Status, Analytics, Settings, Cache and Diagnostics. Configuration is saved to a guarded PHP file in wp-content. Configuration constants take precedence. Passwords and cached values are excluded from diagnostic exports.
 
 HarborCache connects to the Redis endpoint you configure. It does not contact the original plugin vendor. Optional tracing must be explicitly configured and uses your host application's New Relic or OpenTelemetry integration and destination. Plugin-provided spans contain command names, timings and bounded datastore metadata; they omit cached keys, values, credentials and endpoint details. Configure retention and privacy in your provider or collector. No tracing SDK, remote account or external destination is enabled by default.
 
@@ -30,8 +30,8 @@ Redis is a registered trademark of Redis Ltd. No affiliation or endorsement is i
 
 1. Install HarborCache from Plugins > Add New, or upload the installable ZIP, then activate it.
 2. Open Settings > HarborCache, or Network Admin > Settings > HarborCache.
-3. Configure your Redis host, port, database and credentials on the Connection tab.
-4. Save configuration, then choose Enable Object Cache on the Overview tab.
+3. Configure your Redis host, port, database and credentials on the Settings tab, then test the saved connection.
+4. Save configuration, then choose Enable Object Cache on the Status tab.
 5. Verify Connected status and Site Health. Test on staging before production.
 
 Disable any other object-cache plugin first. HarborCache refuses to overwrite another plugin's object-cache.php. Removing the drop-in does not flush unrelated Redis data.
@@ -57,15 +57,25 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 
 == Screenshots ==
 
-1. Overview: cache status, request metrics and lifecycle controls.
+1. Status: connection state, request metrics and lifecycle controls.
 2. Analytics: local sampled request history.
-3. Connection and cache configuration.
-4. Cache groups and scoped invalidation.
-5. Tools and server observability.
-6. Redacted diagnostics.
-7. WordPress dashboard charts and statistics widget.
+3. Settings: connection, limits and the saved-connection test.
+4. Cache: groups and scoped clearing.
+5. Diagnostics: server observability and on-demand checks.
+6. Raw report for support.
+7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.2.8 =
+* Save and test now run one connection check with the selected client, a five second budget and a specific failure reason.
+* Status, Settings, Cache, Analytics and Diagnostics replace the Overview, Connection, Cache groups and Tools tabs.
+* Installed, loaded, connected and disabled are separate states, so a new connection no longer reports a bare "Not active".
+* A failed save keeps the submitted connection values visible instead of replacing them with the saved ones.
+* New installs use PhpRedis when the extension is available; existing Predis installs can switch from the notice.
+* Request-cache byte estimation is skipped on screens that do not show it.
+* Clear actions name their scope, and clearing request memory no longer asks for a cache invalidation.
+* The teal palette, product name and existing key format are unchanged.
 
 = 1.2.7 =
 * Reuse key contexts within a site and invalidate them when global groups or the current site change.
@@ -186,6 +196,9 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.8 =
+Refresh the owned drop-in after upgrading. Save the connection once to run the new selected-client check. Existing settings, key formats and the teal dashboard palette are preserved.
 
 = 1.2.7 =
 Refresh the owned drop-in after upgrading. Existing settings, key formats, dashboard styling and prefix safety are preserved. This update reduces repeated PHP work and batches supported Redis commands.

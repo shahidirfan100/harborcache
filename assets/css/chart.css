@@ -1,6 +1,8 @@
 :where(#harborcache, #harborcache_status) .ch-chart { color: #182c32; margin: 16px 0 20px; min-width: 0; }
 :where(#harborcache, #harborcache_status) .ch-chart-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 :where(#harborcache, #harborcache_status) .ch-chart-controls { display: flex; gap: 2px; flex-wrap: wrap; }
+:where(#harborcache, #harborcache_status) .ch-chart-controls { display: none; }
+:where(#harborcache, #harborcache_status) .ch-js .ch-chart-controls { display: flex; }
 :where(#harborcache, #harborcache_status) .ch-chart-controls button { font: inherit; font-size: 16px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #0b615e; min-height: 44px; padding: 8px 10px; cursor: pointer; }
 :where(#harborcache, #harborcache_status) .ch-chart-controls button[aria-pressed=true] { border-bottom-color: #0b615e; color: #182c32; font-weight: 600; }
 :where(#harborcache, #harborcache_status) .ch-chart-toolbar a { color: #0b615e; font-size: 16px; }
