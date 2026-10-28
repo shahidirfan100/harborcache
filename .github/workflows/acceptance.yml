@@ -135,6 +135,7 @@ jobs:
           mkdir -p evidence
           php tests/connection-check.php | tee evidence/connection-check.txt
           wp eval-file tests/console-render.php --path="$WP_ROOT" | tee evidence/console-render.txt
+          wp eval-file tests/metadata-count.php --path="$WP_ROOT" | tee evidence/metadata-count.txt
       - name: Native and PHP clients, codecs, concurrent workers and WordPress flows
         shell: bash
         run: |

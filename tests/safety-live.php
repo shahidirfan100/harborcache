@@ -39,7 +39,8 @@ function safety_gate( $name, $pass ) {
 try {
     safety_gate( 'Selected real client loads', $cache instanceof HarborCache_Advanced_Cache );
     if ( 'metadata-denied' === $mode ) {
-        safety_gate( 'Rejected metadata pipeline cannot enable persistent writes', ! $cache->redis_status() && $cache->set( 'fallback', 42, 'safety' ) && 42 === $cache->get( 'fallback', 'safety' ) );
+        $written = $cache->set( 'fallback', 42, 'safety' );
+        safety_gate( 'Rejected metadata pipeline cannot enable persistent writes', ! $cache->redis_status() && $written && 42 === $cache->get( 'fallback', 'safety' ) );
     } elseif ( 'metrics-denied' === $mode ) {
         safety_gate( 'Data cache connects with metrics writes denied', $cache->redis_status() );
         \HarborCache\Core\Metrics::record();

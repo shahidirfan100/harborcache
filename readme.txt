@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.8
+Stable tag: 1.2.9
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,12 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.2.9 =
+* Read scope and group epochs from one Redis hash and the group registry once per request, instead of one GET per group.
+* Skip per-group registration on reads and refresh metadata lifetimes on writes.
+* Keep the existing cache key format, and migrate legacy epoch keys on first use.
+* Add a 30-group metadata command-count test and a 1.2.9 validation record.
 
 = 1.2.8 =
 * Save and test now run one connection check with the selected client, a five second budget and a specific failure reason.
@@ -198,6 +204,9 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.2.9 =
+Refresh the owned drop-in. The first request after upgrading migrates used legacy epoch keys into the shared hash; existing cached entries stay valid. Key format and settings are preserved.
 
 = 1.2.8 =
 Refresh the owned drop-in after upgrading. Save the connection once to run the new selected-client check. Existing settings, key formats and the teal dashboard palette are preserved.
