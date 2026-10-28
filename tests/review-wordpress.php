@@ -10,6 +10,9 @@ $assert( 'Installed drop-in matches the currently located template', HarborCache
 $assert( 'Canonical drop-in location respects the configured content directory', WP_CONTENT_DIR . '/object-cache.php' === HarborCache\Paths::content( 'object-cache.php' ) );
 $default = HarborCache\Config::validate( HarborCache\Config::defaults() );
 $assert( 'Default prefix identity is unchanged by path centralization', substr( hash( 'sha256', WP_CONTENT_DIR ), 0, 16 ) === $default['prefix'] );
+if ( ! class_exists( 'Predis\Client' ) ) {
+	require_once HARBORCACHE_PLUGIN_PATH . '/vendor/predis/predis/autoload.php';
+}
 $client = new ReflectionClass( 'Predis\Client' );
 $assert( 'Predis loads from the actual plugin location', realpath( HARBORCACHE_PLUGIN_PATH . '/vendor/predis/predis/src/Client.php' ) === realpath( $client->getFileName() ) );
 $diagnostics = $cache->diagnostics;
