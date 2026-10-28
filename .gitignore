@@ -7,3 +7,5 @@ wp-config.php
 harborcache-config.php
 node_modules/
 media-capture/
+/dist/wp-org-release/
+/dist/wp-org-assets/
