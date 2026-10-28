@@ -11,8 +11,10 @@ final class Config {
 	private static $loaded;
 
 	public static function defaults() {
+		static $defaults;
+		if ( null !== $defaults ) { return $defaults; }
 		// Match the free plugin's behaviour: use the C extension when the server has it.
-		return array(
+		$defaults = array(
 			'client' => class_exists( '\Redis' ) ? 'phpredis' : 'predis', 'host' => '127.0.0.1', 'port' => 6379,
 			'database' => 0, 'username' => '', 'password' => '', 'prefix' => '', 'scheme' => 'tcp', 'path' => '',
 			'timeout' => 1.0, 'read_timeout' => 1.0, 'persistent' => false,
@@ -35,6 +37,7 @@ final class Config {
 			'replication_strategy' => 'distribute',
 			'relay' => array( 'cache' => true, 'listeners' => false, 'invalidations' => true, 'ignored' => array( '*:analytics:*' ), 'allowed' => null, 'adaptive' => null ),
 		);
+		return $defaults;
 	}
 
 	/** Avoid the PHP 7.4/PhpRedis TLS 1.3 stream hang; preserve explicit policy. */

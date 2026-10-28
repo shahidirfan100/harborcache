@@ -22,6 +22,14 @@
 - The dashboard widget is one state line, one metric line and one link.
 - The raw diagnostics report stays available behind a summary.
 
+## Dashboard and widget
+
+- The widget keeps the request table, sampled summary, chart and both dashboard links, with separate request-memory and Redis counters.
+- The Status page builds one status snapshot per request instead of two.
+- A single-node first-use group registration is one Lua command instead of SADD plus three EXPIRE commands.
+- Configuration defaults are cached per request, and the connection probe class loads only when an admin action needs it.
+- The widget does not serialize the runtime cache to show its numbers.
+
 ## Client selection
 
 - New installs and configurations without a saved client use PhpRedis when `\Redis` exists, matching the free plugin.

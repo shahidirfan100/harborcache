@@ -16,7 +16,8 @@ if ( $root ) {
 }
 
 if ( ! class_exists( 'HarborCache\\Connection_Check' ) ) {
-	require_once dirname( __DIR__ ) . '/includes/class-connection-check.php';
+	$hc_plugin = defined( 'HARBORCACHE_PLUGIN_PATH' ) ? HARBORCACHE_PLUGIN_PATH : dirname( __DIR__ );
+	require_once $hc_plugin . '/includes/class-connection-check.php';
 }
 
 $failures = 0;

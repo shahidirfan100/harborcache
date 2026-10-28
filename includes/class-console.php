@@ -7,14 +7,16 @@ defined( 'ABSPATH' ) || exit;
 // Enabling and saving settings must also work before the drop-in is installed.
 require_once __DIR__ . '/ch-codec.php';
 require_once __DIR__ . '/class-analytics.php';
-require_once __DIR__ . '/class-connection-check.php';
 require_once __DIR__ . '/class-dropin-writer.php';
 
 final class Console {
 	private static $dropin_owned;
 	private static $dropin_matches;
 	private static $dropin_recovery_failed = false;
+	private static $probe_cache;
+	private static $probe_loaded = false;
 	public static function reset_dropin_state() { self::$dropin_owned = null; self::$dropin_matches = null; }
+	private static function connection_check() { require_once __DIR__ . '/class-connection-check.php'; }
 	public static function capability() { $default = is_multisite() ? 'manage_network_options' : 'manage_options'; return apply_filters( 'harborcache_manager_capability', $default ); }
 	public static function allowed() { return current_user_can( self::capability() ); }
 	public static function cache() { return isset( $GLOBALS['wp_object_cache'] ) && $GLOBALS['wp_object_cache'] instanceof \HarborCache_Advanced_Cache ? $GLOBALS['wp_object_cache'] : null; }
@@ -195,6 +197,7 @@ final class Console {
 		if ( $fs->exists( $file ) && ! self::owns_dropin() ) { throw new \RuntimeException( esc_html__( 'Another object-cache.php is installed. Disable its owning plugin before enabling HarborCache.', 'harborcache-object-cache-with-redis' ) ); }
 		if ( $enable ) {
 			$config = Config::load();
+			self::connection_check();
 			new Codec( $config );
 			if ( ( 'phpredis' === $config['client'] && ! class_exists( '\Redis' ) ) || ( 'relay' === $config['client'] && ! class_exists( '\Relay\Relay' ) ) ) { throw new \RuntimeException( esc_html__( 'Install the selected PHP Redis client extension before enabling this connection.', 'harborcache-object-cache-with-redis' ) ); }
 			if ( defined( 'WP_REDIS_DISABLED' ) && WP_REDIS_DISABLED ) { throw new \RuntimeException( esc_html__( 'Remove the disabled configuration flag before enabling the cache.', 'harborcache-object-cache-with-redis' ) ); }
@@ -304,14 +307,18 @@ final class Console {
 	}
 
 	private static function stored_probe() {
+		if ( self::$probe_loaded ) { return self::$probe_cache; }
+		self::$probe_loaded = true;
 		$probe = get_user_meta( get_current_user_id(), '_harborcache_connection_probe', true );
 		if ( ! is_array( $probe ) || empty( $probe['checked_at'] ) || time() - (int) $probe['checked_at'] > HOUR_IN_SECONDS ) {
-			return null;
+			return self::$probe_cache = null;
 		}
-		return $probe;
+		return self::$probe_cache = $probe;
 	}
 
 	private static function store_probe( array $probe ) {
+		self::$probe_cache  = $probe;
+		self::$probe_loaded = true;
 		update_user_meta( get_current_user_id(), '_harborcache_connection_probe', $probe );
 	}
 
@@ -374,6 +381,7 @@ final class Console {
 			wp_send_json( array( 'ok' => false, 'html' => '<div class="ch-probe is-failed" role="status">' . esc_html__( 'A check just ran. Wait a moment, then try again.', 'harborcache-object-cache-with-redis' ) . '</div>' ) );
 		}
 		set_transient( $lock, 1, 2 );
+		self::connection_check();
 
 		try {
 			$probe = Connection_Check::run( Config::load(), 'manual' );
@@ -439,6 +447,7 @@ final class Console {
 		if ( ! $exportable( $saved ) ) { throw new \InvalidArgumentException( esc_html__( 'Put callback and object configuration in HARBORCACHE_CONFIG; the settings file accepts scalar values and arrays.', 'harborcache-object-cache-with-redis' ) ); }
 		Config::validate( $saved );
 		new Codec( array_replace( $old, $saved ) );
+		self::connection_check();
 		$probe = Connection_Check::run( $saved, 'save' );
 		self::store_probe( $probe );
 		if ( empty( $probe['ok'] ) ) {
@@ -469,6 +478,7 @@ final class Console {
 		check_admin_referer( 'harborcache_action' );
 		$input = wp_unslash( $_POST );
 		$operation = sanitize_key( $input['operation'] ?? '' );
+		if ( in_array( $operation, array( 'test-connection', 'use-phpredis' ), true ) ) { self::connection_check(); }
 		try {
 			if ( 'export-analytics' === $operation ) { nocache_headers(); header( 'Content-Type: text/csv; charset=utf-8' ); header( 'Content-Disposition: attachment; filename=harborcache-analytics.csv' ); echo Analytics::csv( Core\Metrics::get( Analytics::window( $input['window'] ?? 7200 ), 1000 ) ); exit; } // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Numeric CSV generated internally.
 			if ( in_array( $operation, array( 'inspect-group', 'inspect-nodes', 'inspect-relay' ), true ) ) {
@@ -575,15 +585,38 @@ final class Console {
 		}
 		echo '</div><p class="description">' . esc_html( self::state_explanation( $status ) ) . '</p>';
 		if ( $status['connected'] ) {
-			echo '<p>' . esc_html( sprintf(
-				/* translators: 1: hit ratio, 2: Redis command count, 3: Redis time in milliseconds. */
-				__( '%1$s%% of cache reads came from memory; %2$s Redis commands in %3$s ms.', 'harborcache-object-cache-with-redis' ),
-				number_format_i18n( (float) $status['ratio'], 1 ),
-				number_format_i18n( (int) $status['calls'] ),
-				number_format_i18n( (float) $status['milliseconds'], 1 )
-			) ) . '</p>';
+			$samples = Core\Metrics::get( null, 100 );
+			self::chart( $samples );
+			echo '<details class="ch-request-details"><summary>' . esc_html__( 'Current dashboard request', 'harborcache-object-cache-with-redis' ) . '</summary><div class="ch-table-scroll"><table class="widefat striped"><tbody>';
+			$rows = array(
+				'ratio'        => array( __( 'Hit ratio', 'harborcache-object-cache-with-redis' ), '%', 1 ),
+				'runtime_hits' => array( __( 'From request memory', 'harborcache-object-cache-with-redis' ), '', 0 ),
+				'store_hits'   => array( __( 'From Redis', 'harborcache-object-cache-with-redis' ), '', 0 ),
+				'store_misses' => array( __( 'Redis misses', 'harborcache-object-cache-with-redis' ), '', 0 ),
+				'calls'        => array( __( 'Redis commands', 'harborcache-object-cache-with-redis' ), '', 0 ),
+				'milliseconds' => array( __( 'Redis time', 'harborcache-object-cache-with-redis' ), ' ms', 1 ),
+			);
+			foreach ( $rows as $key => $row ) {
+				echo '<tr><th scope="row">' . esc_html( $row[0] ) . '</th><td>' . esc_html( number_format_i18n( (float) ( $status[ $key ] ?? 0 ), $row[2] ) . $row[1] ) . '</td></tr>';
+			}
+			echo '</tbody></table></div></details>';
+			if ( $samples ) {
+				$hits = 0; $misses = 0; $seconds = 0; $commands = 0;
+				foreach ( $samples as $sample ) { $hits += $sample->hits; $misses += $sample->misses; $seconds += $sample->time; $commands += $sample->calls; }
+				echo '<p>' . esc_html( sprintf(
+					/* translators: 1: sample count, 2: hit ratio, 3: Redis command count, 4: average Redis time in milliseconds. */
+					__( 'Latest %1$s sampled requests: %2$s%% hit ratio, %3$s Redis commands, %4$s ms average Redis time.', 'harborcache-object-cache-with-redis' ),
+					number_format_i18n( count( $samples ) ),
+					number_format_i18n( $hits + $misses > 0 ? 100 * $hits / ( $hits + $misses ) : 100, 1 ),
+					number_format_i18n( $commands ),
+					number_format_i18n( 1000 * $seconds / count( $samples ), 1 )
+				) ) . '</p>';
+			} else {
+				echo '<p>' . esc_html__( 'No recent samples. Analytics must be enabled; samples appear after one minute.', 'harborcache-object-cache-with-redis' ) . '</p>';
+			}
+			echo '<p class="description">' . esc_html__( 'Request measurements include request-memory hits and are not server-wide totals.', 'harborcache-object-cache-with-redis' ) . '</p>';
 		}
-		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( 'Open cache dashboard', 'harborcache-object-cache-with-redis' ) . '</a></p>';
+		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( 'Open cache dashboard', 'harborcache-object-cache-with-redis' ) . '</a> · <a href="' . esc_url( self::url( 'analytics' ) ) . '">' . esc_html__( 'View analytics', 'harborcache-object-cache-with-redis' ) . '</a></p>';
 	}
 
 	public static function chart( array $samples ) {
@@ -641,6 +674,7 @@ final class Console {
 
 	public static function render() {
 		if ( ! self::allowed() ) { return; }
+		self::connection_check();
 
 		$tabs = array(
 			'overview'    => __( 'Status', 'harborcache-object-cache-with-redis' ),
@@ -653,7 +687,7 @@ final class Console {
 		if ( 'groups' === $view || 'tools' === $view ) { $view = 'cache'; }
 		if ( ! isset( $tabs[ $view ] ) ) { $view = 'overview'; }
 
-		$status = self::status();
+		$status = 'overview' === $view ? self::status( true ) : self::status();
 		$config = Config::load();
 		$probe  = self::stored_probe();
 		$state  = $status['state'];
@@ -696,26 +730,25 @@ final class Console {
 			echo '</div></section>';
 
 			if ( 'connected' === $state ) {
-				$detailed = self::status( true );
 				echo '<div class="ch-metrics">';
 				foreach ( array( 'ratio' => __( 'Cache hit ratio', 'harborcache-object-cache-with-redis' ), 'calls' => __( 'Redis commands', 'harborcache-object-cache-with-redis' ), 'milliseconds' => __( 'Redis time', 'harborcache-object-cache-with-redis' ), 'bytes' => __( 'Memory used', 'harborcache-object-cache-with-redis' ) ) as $key => $metric_label ) {
 					if ( 'bytes' === $key ) {
-						$value = null === $detailed[ $key ] ? __( 'Not measured', 'harborcache-object-cache-with-redis' ) : number_format_i18n( $detailed[ $key ] / 1024, 0 ) . ' KiB';
+						$value = null === $status[ $key ] ? __( 'Not measured', 'harborcache-object-cache-with-redis' ) : number_format_i18n( $status[ $key ] / 1024, 0 ) . ' KiB';
 					} elseif ( 'milliseconds' === $key ) {
-						$value = number_format_i18n( (float) $detailed[ $key ], 1 ) . ' ms';
+						$value = number_format_i18n( (float) $status[ $key ], 1 ) . ' ms';
 					} elseif ( 'ratio' === $key ) {
-						$value = number_format_i18n( (float) $detailed[ $key ], 1 ) . '%';
+						$value = number_format_i18n( (float) $status[ $key ], 1 ) . '%';
 					} else {
-						$value = number_format_i18n( (int) $detailed[ $key ] );
+						$value = number_format_i18n( (int) $status[ $key ] );
 					}
 					echo '<div><span>' . esc_html( $metric_label ) . '</span><strong>' . esc_html( $value ) . '</strong></div>';
 				}
 				echo '</div><p class="description">' . esc_html( sprintf(
 					/* translators: 1: request-memory hits, 2: Redis hits, 3: Redis misses. */
 					__( 'This request: %1$s from memory, %2$s from Redis, %3$s missed.', 'harborcache-object-cache-with-redis' ),
-					number_format_i18n( (int) ( $detailed['runtime_hits'] ?? 0 ) ),
-					number_format_i18n( (int) ( $detailed['store_hits'] ?? 0 ) ),
-					number_format_i18n( (int) ( $detailed['store_misses'] ?? 0 ) )
+					number_format_i18n( (int) ( $status['runtime_hits'] ?? 0 ) ),
+					number_format_i18n( (int) ( $status['store_hits'] ?? 0 ) ),
+					number_format_i18n( (int) ( $status['store_misses'] ?? 0 ) )
 				) ) . '</p>';
 				self::chart( Core\Metrics::get( null, 100 ) );
 			}

@@ -28,6 +28,10 @@ ob_start();
 HarborCache\Console::render();
 $diagnostics = ob_get_clean();
 
+ob_start();
+HarborCache\Console::render_widget();
+$widget = ob_get_clean();
+
 $all = $overview . $settings . $diagnostics;
 
 hc_console_gate( 'No em dash is rendered', false === strpos( $all, "\xE2\x80\x94" ) );
@@ -45,6 +49,11 @@ hc_console_gate( 'The probe result is announced', false !== strpos( $settings, '
 hc_console_gate( 'Diagnostics keeps the raw report behind a summary', false !== strpos( $diagnostics, 'Show raw report' ) );
 hc_console_gate( 'Diagnostics keeps the copy control', false !== strpos( $diagnostics, 'id="ch-copy"' ) );
 hc_console_gate( 'Empty dead notice container is gone', false === strpos( $all, 'class="ch-notices"' ) );
+hc_console_gate( 'Widget keeps the request table', false !== strpos( $widget, 'Current dashboard request' ) );
+hc_console_gate( 'Widget keeps the sampled summary', false !== strpos( $widget, 'sampled requests' ) || false !== strpos( $widget, 'No recent samples' ) );
+hc_console_gate( 'Widget keeps both dashboard links', false !== strpos( $widget, 'Open cache dashboard' ) && false !== strpos( $widget, 'View analytics' ) );
+hc_console_gate( 'Widget separates request-memory and Redis counters', false !== strpos( $widget, 'From request memory' ) && false !== strpos( $widget, 'From Redis' ) );
+hc_console_gate( 'Widget has no em dash', false === strpos( $widget, "\xE2\x80\x94" ) );
 
 echo 'RESULT ' . ( $hc_failures ? 'FAILED' : 'PASSED' ) . ' with ' . $hc_failures . " failure(s)\n";
 if ( $hc_failures ) {

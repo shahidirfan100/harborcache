@@ -256,21 +256,11 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$registry = $this->ch_base . ':' . $this->ch_root . ':groups';
 		$expiry = $this->ch_config['maxttl'] * 2;
 		$client = $this->redis_instance();
-		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] && ( $client instanceof \Redis || $client instanceof \Predis\Client ) ) {
-			$start = microtime( true );
-			try {
-			$pipeline = $this->redis_pipeline();
-			$pipeline->sadd( $registry, $this->ch_scope( $group ) . '|' . rawurlencode( $group ) );
-			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $registry ) as $metadata ) { $pipeline->expire( $metadata, $expiry ); }
-			$replies = $client instanceof \Predis\Client ? $pipeline->execute() : $pipeline->exec();
-			if ( ! is_array( $replies ) || 4 !== count( $replies ) ) { throw new RuntimeException( 'Cache metadata registration failed.' ); }
-			foreach ( $replies as $index => $reply ) {
-				if ( ( 0 === $index && ! is_int( $reply ) && true !== $reply ) || ( $index > 0 && 1 !== $reply && true !== $reply ) ) { throw new RuntimeException( 'Cache metadata registration failed.' ); }
-			}
-			} finally {
-				$this->cache_calls += 4;
-				$this->cache_time += microtime( true ) - $start;
-			}
+		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] && ( $client instanceof \Redis || $client instanceof \Predis\Client || $client instanceof \Relay\Relay ) ) {
+			// One command replaces the previous SADD plus three EXPIRE round trips.
+			$script = "redis.call('SADD',KEYS[1],ARGV[1]); for i=2,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[2]) end; return 1";
+			$reply  = $this->ch_command( array( 'EVAL', $script, 3, $registry, $scope . ':epoch', $group_key . ':epoch', $this->ch_scope( $group ) . '|' . rawurlencode( $group ), $expiry ) );
+			if ( 1 !== (int) $reply ) { throw new RuntimeException( 'Cache metadata registration failed.' ); }
 		} else {
 			$this->ch_command( array( 'SADD', $registry, $this->ch_scope( $group ) . '|' . rawurlencode( $group ) ) );
 			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $registry ) as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $expiry ) ); }
