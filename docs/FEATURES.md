@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.8)
+# HarborCache feature ledger (1.2.9)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.8 adds a selected-client connection check with a five second budget, a five-state status model, five dashboard screens, a saved-connection test and PhpRedis detection for new installs. The 1.2.7 cache engine, key format, teal palette and product name are unchanged.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.9 replaces per-group epoch reads with one shared Redis hash and one registry read per request, so a 30-group request uses a fixed metadata cost instead of one GET and one registration per group. The existing key format, legacy epoch keys, cleanup guards and scoped invalidation remain. Version 1.2.8 added the selected-client connection check, five dashboard screens and the restored widget.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -25,6 +25,10 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and c
 | Administration | Five responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
 | Shared servers | Shared mode hides memory/key totals which would include other applications; dedicated mode sums primary memory and selected-database key counts. Server command statistics are explicitly labeled. |
 | Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging, interrupted-write recovery and removal of incomplete canonical files, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
+
+## 1.2.9 namespace metadata
+
+The request reads the prefix owner and root once, then one `HGETALL` for scope and group epochs and one `SMEMBERS` for the group registry. Reads of known groups perform no metadata write. Writes refresh the metadata lifetime once per group per request. A first request after upgrading migrates the legacy `scope:epoch` and `group:epoch` keys into the hash and preserves their tokens, so existing entries remain valid and the key bytes do not change. Legacy keys stay in place for cleanup guards. The hash key includes the root, so a full flush starts a new hash.
 
 ## 1.2.8 connection and dashboard changes
 

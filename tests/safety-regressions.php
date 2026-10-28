@@ -22,6 +22,8 @@ require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-predis.php';
 
 class HC_Safety_Driver {
     public $values = array();
+    public $hashes = array();
+    public $sets = array();
     public $info_calls = 0;
     public $deny_info = false;
     public $false_info = false;
@@ -46,13 +48,36 @@ class HC_Safety_Driver {
             if ( $this->deny_root_read && 'hc-safety:meta:root' === $key ) { $this->last_error = 'ERR denied'; return false; }
             return $this->values[ $key ] ?? null;
         }
+        if ( 'MGET' === $command ) {
+            if ( $this->deny_root_read && in_array( 'hc-safety:meta:root', $args, true ) ) { $this->last_error = 'ERR denied'; return false; }
+            return array_map( function ( $item ) { return $this->values[ $item ] ?? null; }, $args );
+        }
         if ( 'SET' === $command ) {
             if ( $this->fail_root_write && 'hc-safety:meta:root' === $key ) { return 0; }
             if ( in_array( 'NX', $args, true ) && isset( $this->values[ $key ] ) ) { return null; }
             $this->values[ $key ] = $args[1];
             return 'OK';
         }
-        if ( 'EXPIRE' === $command || 'SADD' === $command ) { return 1; }
+        if ( 'HGETALL' === $command ) { return $this->hashes[ $key ] ?? array(); }
+        if ( 'HGET' === $command ) { return $this->hashes[ $key ][ $args[1] ?? '' ] ?? null; }
+        if ( 'HSET' === $command ) {
+            $is_new = ! isset( $this->hashes[ $key ][ $args[1] ] );
+            $this->hashes[ $key ][ $args[1] ] = $args[2];
+            return $is_new ? 1 : 0;
+        }
+        if ( 'SMEMBERS' === $command ) { return array_keys( $this->sets[ $key ] ?? array() ); }
+        if ( 'SADD' === $command ) { $this->sets[ $key ][ $args[1] ] = true; return 1; }
+        if ( 'EXPIRE' === $command ) { return 1; }
+        if ( 'EVAL' === $command ) {
+            $script = $args[0]; $numkeys = (int) $args[1];
+            $keys = array_slice( $args, 2, $numkeys ); $argv = array_slice( $args, 2 + $numkeys );
+            if ( false !== strpos( $script, 'SADD' ) ) { $this->sets[ $keys[0] ][ $argv[0] ] = true; return 1; }
+            if ( false !== strpos( $script, 'HSET' ) ) {
+                if ( ! isset( $this->hashes[ $keys[0] ][ $argv[0] ] ) ) { $this->hashes[ $keys[0] ][ $argv[0] ] = $argv[1]; }
+                return $this->hashes[ $keys[0] ][ $argv[0] ];
+            }
+            return 1;
+        }
         throw new RuntimeException( 'Unexpected fixture command: ' . $command );
     }
     public function set( ...$args ) { return $this->rawCommand( 'SET', ...$args ); }

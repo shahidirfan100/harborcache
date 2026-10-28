@@ -25,6 +25,11 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	public $store_misses = 0;
 	private $ch_codec;
 	private $ch_tokens = array();
+	private $ch_epochs = null;
+	private $ch_epochs_key;
+	private $ch_registry = null;
+	private $ch_writing = false;
+	private $ch_touched = array();
 	private $ch_root;
 	private $ch_base;
 	private $ch_ready = false;
@@ -66,7 +71,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 						return 'GET' === $args[0] ? $this->ch_metadata_get( $args[1] ) : $this->ch_command( $args );
 					}, $this->ch_base );
 				}
-				$this->ch_root = $this->ch_token( $this->ch_base . ':root' ); $this->ch_ready = '' !== $this->ch_root && $this->redis_status();
+				$this->ch_root = $this->ch_token( $this->ch_base . ':root' );
+				$this->ch_ready = '' !== $this->ch_root && $this->redis_status();
 			}
 			catch ( Throwable $error ) { $this->handle_exception( $error ); }
 		}
@@ -207,6 +213,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 				$script = array_shift( $args ); $count = (int) array_shift( $args );
 				return $client->$method( $script, array_slice( $args, 0, $count ), array_slice( $args, $count ) );
 			}
+			if ( $client instanceof \Credis_Client && 'mget' === $method ) { return $client->mget( $args ); }
 			$result = $client->$method( ...$args );
 			if ( $client instanceof \Credis_Client && 'hgetall' === $method && is_array( $result ) ) { $flat = array(); foreach ( $result as $field => $value ) { $flat[] = $field; $flat[] = $value; } return $flat; }
 			return $result;
@@ -228,16 +235,76 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private function ch_token( $key ) {
 		if ( isset( $this->ch_tokens[ $key ] ) ) { return $this->ch_tokens[ $key ]; }
 		try {
-		$value = $this->ch_metadata_get( $key );
-		if ( null === $value ) {
-			$value = bin2hex( random_bytes( 12 ) );
-			$reply = $this->ch_command( array( 'SET', $key, $value, 'NX' ) );
-			if ( null === $reply ) { $value = $this->ch_metadata_get( $key ); }
-			elseif ( ! \HarborCache\Namespace_Guard::is_ok( $reply ) ) { throw new RuntimeException( 'Cache namespace initialization failed.' ); }
+		$field = $this->ch_epoch_field( $key );
+		if ( null !== $field ) { $value = $this->ch_epoch_token( $field, $key ); }
+		else {
+			$value = $this->ch_metadata_get( $key );
+			if ( null === $value ) {
+				$value = bin2hex( random_bytes( 12 ) );
+				$reply = $this->ch_command( array( 'SET', $key, $value, 'NX' ) );
+				if ( null === $reply ) { $value = $this->ch_metadata_get( $key ); }
+				elseif ( ! \HarborCache\Namespace_Guard::is_ok( $reply ) ) { throw new RuntimeException( 'Cache namespace initialization failed.' ); }
+			}
 		}
 		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { throw new RuntimeException( 'Cache namespace metadata is invalid.' ); }
 		return $this->ch_tokens[ $key ] = $value;
 		} catch ( Throwable $error ) { $this->handle_exception( $error ); return ''; }
+	}
+
+	/** The epoch key suffix a field in the shared hash represents, or null for the root and other keys. */
+	private function ch_epoch_field( $key ) {
+		$base = $this->ch_base . ':' . $this->ch_root . ':';
+		if ( 0 !== strpos( $key, $base ) ) { return null; }
+		$rest = substr( $key, strlen( $base ) );
+		if ( preg_match( '/^(global|site-[0-9]+):epoch$/D', $rest, $match ) ) { return $match[1]; }
+		if ( preg_match( '/^(global|site-[0-9]+):[a-f0-9]{24}:g:([^:]+):epoch$/D', $rest, $match ) ) { return $match[1] . '|' . $match[2]; }
+		return null;
+	}
+
+	private function ch_epochs_load() {
+		if ( null !== $this->ch_epochs ) { return; }
+		$this->ch_epochs_key = $this->ch_base . ':' . $this->ch_root . ':epochs';
+		$this->ch_epochs = $this->ch_pairs( $this->ch_command( array( 'HGETALL', $this->ch_epochs_key ) ) );
+	}
+
+	/** HGETALL is flat for raw clients and associative for Predis. Normalize both. */
+	private function ch_pairs( $raw ) {
+		if ( ! is_array( $raw ) ) { return array(); }
+		$pairs = array();
+		if ( array_keys( $raw ) === range( 0, count( $raw ) - 1 ) ) {
+			for ( $i = 0; $i + 1 < count( $raw ); $i += 2 ) { $pairs[ (string) $raw[ $i ] ] = (string) $raw[ $i + 1 ]; }
+		} else {
+			foreach ( $raw as $field => $value ) { $pairs[ (string) $field ] = (string) $value; }
+		}
+		return $pairs;
+	}
+
+	private function ch_epoch_token( $field, $legacy_key ) {
+		$this->ch_epochs_load();
+		if ( isset( $this->ch_epochs[ $field ] ) && preg_match( '/^[a-f0-9]{24}$/D', $this->ch_epochs[ $field ] ) ) { return $this->ch_epochs[ $field ]; }
+		$legacy = $this->ch_metadata_get( $legacy_key );
+		if ( is_string( $legacy ) && preg_match( '/^[a-f0-9]{24}$/D', $legacy ) ) {
+			$script = "redis.call('HSET',KEYS[1],ARGV[1],ARGV[2]); redis.call('EXPIRE',KEYS[1],ARGV[3]); return ARGV[2]";
+			$value  = $this->ch_command( array( 'EVAL', $script, 1, $this->ch_epochs_key, $field, $legacy, $this->ch_config['maxttl'] * 2 ) );
+			if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { $value = $legacy; }
+			$this->ch_epochs[ $field ] = $value;
+			return $value;
+		}
+		$candidate = bin2hex( random_bytes( 12 ) );
+		$script    = "local v=redis.call('HGET',KEYS[1],ARGV[1]); if not v then redis.call('HSET',KEYS[1],ARGV[1],ARGV[2]); redis.call('EXPIRE',KEYS[1],ARGV[3]); v=ARGV[2] end; return v";
+		$value     = $this->ch_command( array( 'EVAL', $script, 1, $this->ch_epochs_key, $field, $candidate, $this->ch_config['maxttl'] * 2 ) );
+		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { $value = $this->ch_command( array( 'HGET', $this->ch_epochs_key, $field ) ); }
+		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { throw new RuntimeException( 'Cache namespace metadata is invalid.' ); }
+		$this->ch_epochs[ $field ] = $value;
+		return $value;
+	}
+
+	private function ch_registry_load() {
+		if ( null !== $this->ch_registry ) { return; }
+		$this->ch_registry = array();
+		foreach ( (array) $this->ch_command( array( 'SMEMBERS', $this->ch_base . ':' . $this->ch_root . ':groups' ) ) as $member ) {
+			if ( is_string( $member ) ) { $this->ch_registry[ $member ] = true; }
+		}
 	}
 
 	private function ch_scope( $group ) { return $this->is_global_group( $group ) ? 'global' : 'site-' . ( is_numeric( $this->blog_prefix ) ? (int) $this->blog_prefix : 1 ); }
@@ -254,17 +321,35 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 
 	private function ch_register_group( $scope, $group_key, $group ) {
 		$registry = $this->ch_base . ':' . $this->ch_root . ':groups';
+		$member   = $this->ch_scope( $group ) . '|' . rawurlencode( $group );
+		$this->ch_registry_load();
+		$this->ch_epochs_load();
+		$known = isset( $this->ch_registry[ $member ] ) && isset( $this->ch_epochs[ $member ] );
+		if ( $known && ! $this->ch_writing ) { return; }
 		$expiry = $this->ch_config['maxttl'] * 2;
-		$client = $this->redis_instance();
-		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] && ( $client instanceof \Redis || $client instanceof \Predis\Client || $client instanceof \Relay\Relay ) ) {
-			// One command replaces the previous SADD plus three EXPIRE round trips.
-			$script = "redis.call('SADD',KEYS[1],ARGV[1]); for i=2,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[2]) end; return 1";
-			$reply  = $this->ch_command( array( 'EVAL', $script, 3, $registry, $scope . ':epoch', $group_key . ':epoch', $this->ch_scope( $group ) . '|' . rawurlencode( $group ), $expiry ) );
-			if ( 1 !== (int) $reply ) { throw new RuntimeException( 'Cache metadata registration failed.' ); }
-		} else {
-			$this->ch_command( array( 'SADD', $registry, $this->ch_scope( $group ) . '|' . rawurlencode( $group ) ) );
-			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $registry ) as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $expiry ) ); }
+		if ( $known ) {
+			if ( isset( $this->ch_touched[ $member ] ) ) { return; }
+			$this->ch_touched[ $member ] = true;
+			$keys = array( $scope . ':epoch', $group_key . ':epoch', $registry, $this->ch_epochs_key );
+			if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
+				$script = "for i=1,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[1]) end; return 1";
+				$this->ch_command( array_merge( array( 'EVAL', $script, count( $keys ) ), $keys, array( $expiry ) ) );
+			} else {
+				foreach ( $keys as $key ) { $this->ch_command( array( 'EXPIRE', $key, $expiry ) ); }
+			}
+			return;
 		}
+		// A read of a group with no registry entry creates only its epoch field. The first write registers it.
+		if ( ! $this->ch_writing ) { return; }
+		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
+			$script = "redis.call('SADD',KEYS[1],ARGV[1]); for i=2,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[2]) end; return 1";
+			$this->ch_command( array_merge( array( 'EVAL', $script, 4, $registry, $scope . ':epoch', $group_key . ':epoch', $this->ch_epochs_key, $member, $expiry ) ) );
+		} else {
+			$this->ch_command( array( 'SADD', $registry, $member ) );
+			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $registry, $this->ch_epochs_key ) as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $expiry ) ); }
+		}
+		$this->ch_registry[ $member ] = true;
+		$this->ch_touched[ $member ] = true;
 	}
 
 	public function add_global_groups( $groups ) {
@@ -345,7 +430,28 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		return $ignored;
 	}
 
-	private function ch_rotate( $key ) { $value = bin2hex( random_bytes( 12 ) ); if ( ! \HarborCache\Namespace_Guard::is_ok( $this->ch_command( array( 'SET', $key, $value ) ) ) ) { throw new RuntimeException( 'Cache namespace rotation failed.' ); } $this->ch_tokens[ $key ] = $value; $this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0; return $value; }
+	private function ch_rotate( $key ) {
+		$value = bin2hex( random_bytes( 12 ) );
+		if ( ! \HarborCache\Namespace_Guard::is_ok( $this->ch_command( array( 'SET', $key, $value ) ) ) ) { throw new RuntimeException( 'Cache namespace rotation failed.' ); }
+		if ( $key === $this->ch_base . ':root' ) {
+			$this->ch_tokens = array();
+			$this->ch_epochs = null;
+			$this->ch_registry = null;
+			$this->ch_epochs_key = null;
+			$this->ch_touched = array();
+		} else {
+			$field = $this->ch_epoch_field( $key );
+			if ( null !== $field ) {
+				$this->ch_epochs_load();
+				$reply = $this->ch_command( array( 'HSET', $this->ch_epochs_key, $field, $value ) );
+				if ( null === $reply || false === $reply ) { throw new RuntimeException( 'Cache namespace rotation failed.' ); }
+				$this->ch_epochs[ $field ] = $value;
+			}
+		}
+		$this->ch_tokens[ $key ] = $value;
+		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
+		return $value;
+	}
 
 	public function flush() {
 		$this->flush_runtime();
@@ -393,6 +499,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			$this->add_to_internal_cache( $this->build_key( $key, $group ), $value );
 			return $value;
 		}
+		$previous = $this->ch_writing; $this->ch_writing = true;
 		try {
 			// Decimal arithmetic avoids Lua's loss of integer precision above 2^53.
 			$script = <<<'LUA'
@@ -423,6 +530,7 @@ LUA;
 			unset( $this->cache[ $this->build_key( $key, $group ) ] );
 			return is_array( $value ) && 1 === (int) ( $value[0] ?? 0 ) && isset( $value[1] ) ? (int) $value[1] : false;
 		} catch ( Throwable $error ) { $this->handle_exception( $error ); return false; }
+		finally { $this->ch_writing = $previous; }
 	}
 
 	public function decrement( $key, $offset = 1, $group = 'default' ) { return PHP_INT_MIN === (int) $offset ? false : $this->increment( $key, -(int) $offset, $group ); }
@@ -459,8 +567,9 @@ LUA;
 	}
 
 	public function ch_groups() {
-		$rows = $this->ch_command( array( 'SMEMBERS', $this->ch_base . ':' . $this->ch_root . ':groups' ) );
-		return array_map( static function ( $row ) { list( $scope, $group ) = explode( '|', $row, 2 ); return array( 'scope' => $scope, 'group' => rawurldecode( $group ) ); }, (array) $rows );
+		$this->ch_registry_load();
+		$rows = array_keys( $this->ch_registry );
+		return array_map( static function ( $row ) { list( $scope, $group ) = explode( '|', $row, 2 ); return array( 'scope' => $scope, 'group' => rawurldecode( $group ) ); }, $rows );
 	}
 
 	public function flush_pattern( $pattern ) {
@@ -518,19 +627,28 @@ LUA;
 
 	public function set( $key, $value, $group = 'default', $expiration = 0 ) {
 		if ( ! is_int( $key ) && ( ! is_string( $key ) || '' === trim( $key ) ) ) { return false; }
-		if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && 'alloptions' === $key && is_array( $value ) && $this->redis_status() ) { return $this->ch_hash_write( 'set', $value, $group, $expiration ); }
-		return parent::set( $key, $value, $group, $expiration );
+		$previous = $this->ch_writing; $this->ch_writing = true;
+		try {
+			if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && 'alloptions' === $key && is_array( $value ) && $this->redis_status() ) { return $this->ch_hash_write( 'set', $value, $group, $expiration ); }
+			return parent::set( $key, $value, $group, $expiration );
+		} finally { $this->ch_writing = $previous; }
 	}
 	public function add( $key, $value, $group = 'default', $expiration = 0 ) {
 		if ( ! is_int( $key ) && ( ! is_string( $key ) || '' === trim( $key ) ) ) { return false; }
 		if ( function_exists( 'wp_suspend_cache_addition' ) && wp_suspend_cache_addition() ) { return false; }
-		if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && 'alloptions' === $key && is_array( $value ) && $this->redis_status() ) { return $this->ch_hash_write( 'add', $value, $group, $expiration ); }
-		return parent::add( $key, $value, $group, $expiration );
+		$previous = $this->ch_writing; $this->ch_writing = true;
+		try {
+			if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && 'alloptions' === $key && is_array( $value ) && $this->redis_status() ) { return $this->ch_hash_write( 'add', $value, $group, $expiration ); }
+			return parent::add( $key, $value, $group, $expiration );
+		} finally { $this->ch_writing = $previous; }
 	}
 	public function replace( $key, $value, $group = 'default', $expiration = 0 ) {
 		if ( ! is_int( $key ) && ( ! is_string( $key ) || '' === trim( $key ) ) ) { return false; }
-		if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && 'alloptions' === $key && is_array( $value ) && $this->redis_status() ) { return $this->ch_hash_write( 'replace', $value, $group, $expiration ); }
-		return parent::replace( $key, $value, $group, $expiration );
+		$previous = $this->ch_writing; $this->ch_writing = true;
+		try {
+			if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && 'alloptions' === $key && is_array( $value ) && $this->redis_status() ) { return $this->ch_hash_write( 'replace', $value, $group, $expiration ); }
+			return parent::replace( $key, $value, $group, $expiration );
+		} finally { $this->ch_writing = $previous; }
 	}
 	public function get( $key, $group = 'default', $force = false, &$found = null ) {
 		if ( $force && ! $this->ch_relay_bypass && 'relay' === $this->ch_config['client'] ) {
@@ -585,12 +703,16 @@ LUA;
 	}
 	public function set_multiple( array $data, $group = 'default', $expire = 0 ) {
 		if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && array_key_exists( 'alloptions', $data ) ) { $r = array(); foreach ( $data as $k => $v ) { $r[ $k ] = $this->set( $k, $v, $group, $expire ); } return $r; }
+		$previous = $this->ch_writing; $this->ch_writing = true;
 		try { return parent::set_multiple( $data, $group, $expire ); }
 		catch ( Throwable $error ) { $this->handle_exception( $error ); return array_fill_keys( array_keys( $data ), false ); }
+		finally { $this->ch_writing = $previous; }
 	}
 	public function add_multiple( array $data, $group = 'default', $expire = 0 ) {
 		if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && array_key_exists( 'alloptions', $data ) ) { $r = array(); foreach ( $data as $k => $v ) { $r[ $k ] = $this->add( $k, $v, $group, $expire ); } return $r; }
+		$previous = $this->ch_writing; $this->ch_writing = true;
 		try { return parent::add_multiple( $data, $group, $expire ); }
 		catch ( Throwable $error ) { $this->handle_exception( $error ); return array_fill_keys( array_keys( $data ), false ); }
+		finally { $this->ch_writing = $previous; }
 	}
 }

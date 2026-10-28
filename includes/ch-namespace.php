@@ -44,9 +44,9 @@ final class Namespace_Guard {
         return self::checked_reply( $client, $reply );
     }
 
-    public static function claim( callable $command, $base ) {
+    public static function claim( callable $command, $base, $owner = null ) {
         $identity = self::identity();
-        $owner = $command( array( 'GET', $base . ':owner' ) );
+        if ( null === $owner ) { $owner = $command( array( 'GET', $base . ':owner' ) ); }
         if ( null === $owner || false === $owner ) {
             $reply = $command( array( 'SET', $base . ':owner', $identity, 'NX' ) );
             if ( self::is_ok( $reply ) ) { return; }
