@@ -28,6 +28,13 @@
 - Saved Predis installations keep Predis.
 - A notice on the Settings screen offers the switch. The next request uses the new client.
 
+## Value format
+
+- String values use the existing `S` marker without PHP serialization. This removes a serialize and unserialize pair from every string read and write.
+- Values written by 1.2.7 and earlier still decode through `V1`.
+- A 1.2.7 worker that is still serving an in-flight request treats a newly written string as a miss until it reloads the drop-in. The window is one request per worker.
+- No cache key changed.
+
 ## Verification
 
 Run the `Linux acceptance` workflow on the release commit. The local checks used while preparing the release:

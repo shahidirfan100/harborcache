@@ -34,6 +34,8 @@ The status model separates not installed, installed but not loaded, loaded but u
 
 New installs select PhpRedis when the extension is loaded. Existing installations that saved Predis keep it, and the Settings screen offers a one-click switch. No cache key format changed.
 
+String values now use the existing `S` marker without PHP serialization. Values written by 1.2.7 and earlier still decode through `V1`. A 1.2.7 worker that is still serving an in-flight request treats a newly written string as a miss until it reloads the drop-in; the window is one request per worker.
+
 ## 1.2.6 safety and initialization changes
 
 Strict ownership checks now preserve a conflicting owner's metadata and root, including the lifecycle probe. The conflicting installation falls back under its configured failure policy; changing an installation's identity may require a distinct prefix or restoring its original identity. There is no automatic ownership takeover. Multisite identity uses the network's base table prefix when available.
