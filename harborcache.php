@@ -71,6 +71,7 @@ $harborcache_needs_management = is_admin()
     || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() )
     || ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() )
     || ( defined( 'WP_CLI' ) && WP_CLI )
+    || 'cli' === PHP_SAPI
     || ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() );
 
 if ( $harborcache_needs_management ) {
