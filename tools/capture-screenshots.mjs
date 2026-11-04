@@ -186,24 +186,24 @@ await capture(mobilePage, { file: 'screenshot-widget-mobile.png', view: 'dashboa
 
 // Exercise the two connection actions after the captures. These are the
 // controls an operator uses when the dashboard reports a problem.
-await page.goto(pageUrl('connection'), { waitUntil: 'domcontentloaded' });
-await settle(page);
-await page.locator('#ch-test-form button[type="submit"]').click();
-await page.locator('#ch-probe-result .ch-probe').waitFor({ state: 'visible' });
-const probeText = (await page.locator('#ch-probe-result .ch-probe').innerText()).trim();
+await mobilePage.goto(pageUrl('connection'), { waitUntil: 'domcontentloaded' });
+await settle(mobilePage);
+await mobilePage.locator('#ch-test-form button[type="submit"]').click();
+await mobilePage.locator('#ch-probe-result .ch-probe').waitFor({ state: 'visible' });
+const probeText = (await mobilePage.locator('#ch-probe-result .ch-probe').innerText()).trim();
 if (!/connected|not ready|not connected/i.test(probeText)) failures.push('Test saved connection did not render a result');
 
-await page.getByRole('button', { name: 'Run cache self-test' }).click();
-await page.waitForURL(/view=overview/, { timeout: 15000 });
-const noticeText = (await page.locator('#harborcache .notice').first().innerText()).trim();
+await mobilePage.getByRole('button', { name: 'Run cache self-test' }).click();
+await mobilePage.waitForURL(/view=overview/, { timeout: 15000 });
+const noticeText = (await mobilePage.locator('#harborcache .notice').first().innerText()).trim();
 if (!/self-test/i.test(noticeText)) failures.push('Cache self-test did not report a result');
 
-await page.goto(pageUrl('overview'), { waitUntil: 'domcontentloaded' });
-await settle(page);
+await mobilePage.goto(pageUrl('overview'), { waitUntil: 'domcontentloaded' });
+await settle(mobilePage);
 const focusTrail = [];
 for (let index = 0; index < 8; index++) {
-  await page.keyboard.press('Tab');
-  focusTrail.push(await page.evaluate(() => ({
+  await mobilePage.keyboard.press('Tab');
+  focusTrail.push(await mobilePage.evaluate(() => ({
     tag: document.activeElement?.tagName || '',
     label: (document.activeElement?.innerText || document.activeElement?.getAttribute('aria-label') || '').trim().slice(0, 40),
   })));
