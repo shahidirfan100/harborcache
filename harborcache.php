@@ -46,6 +46,21 @@ $harborcache_autoloader = new HarborCache\Core\Autoloader();
 $harborcache_autoloader->register();
 $harborcache_autoloader->add_namespace( 'HarborCache\Core', HARBORCACHE_PLUGIN_PATH . '/includes' );
 
+// Load the administration classes on first reference. This keeps anonymous
+// front-end requests light while preserving compatibility with scripts and
+// integrations that call Console/Status outside an admin request.
+spl_autoload_register( static function ( $class ) {
+    $map = array(
+        'HarborCache\\Console'          => '/includes/class-console.php',
+        'HarborCache\\Status'           => '/includes/class-status.php',
+        'HarborCache\\Self_Test'        => '/includes/class-self-test.php',
+        'HarborCache\\Connection_Check' => '/includes/class-connection-check.php',
+    );
+    if ( isset( $map[ $class ] ) ) {
+        require_once HARBORCACHE_PLUGIN_PATH . $map[ $class ];
+    }
+} );
+
 // Metrics are the only management feature needed on anonymous front-end
 // requests. Administration, WP-CLI, cron and logged-in admin-bar requests
 // additionally load the console and the integration layer.

@@ -51,7 +51,8 @@ jobs:
           wp config set WP_DEBUG false --raw --path="$WP_ROOT"
           wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
           wp core install --path="$WP_ROOT" --url="$HC_BASE_URL" --title='HarborCache demo' --admin_user="$HC_ADMIN_USER" --admin_password="$HC_ADMIN_PASS" --admin_email=ci@example.org --skip-email
-          unzip -q dist/harborcache-*.zip -d "$WP_ROOT/wp-content/plugins"
+          HC_ZIP="$(ls -1 dist/harborcache-*.zip | sort -V | tail -n1)"
+          unzip -q "$HC_ZIP" -d "$WP_ROOT/wp-content/plugins"
           cp tests/screenshot-config.php "$WP_ROOT/wp-content/harborcache-config.php"
           wp plugin activate harborcache-object-cache-with-redis --path="$WP_ROOT"
           wp harborcache enable --path="$WP_ROOT"

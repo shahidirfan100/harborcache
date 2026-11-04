@@ -52,7 +52,8 @@ jobs:
           wp config set WP_DEBUG_DISPLAY false --raw --path="$WP_ROOT"
           wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
           wp core install --path="$WP_ROOT" --url=http://localhost --title='HarborCache review' --admin_user=ci --admin_password=ci-disposable-only --admin_email=ci@example.org --skip-email
-          unzip -q dist/harborcache-*.zip -d "$HC_EXTENSIONS"
+          HC_ZIP="$(ls -1 dist/harborcache-*.zip | sort -V | tail -n1)"
+          unzip -q "$HC_ZIP" -d "$HC_EXTENSIONS"
           wp plugin activate harborcache-object-cache-with-redis --path="$WP_ROOT"
           wp plugin install plugin-check --activate --path="$WP_ROOT"
           wp plugin check harborcache-object-cache-with-redis --slug=harborcache-object-cache-with-redis --format=json --require="$HC_EXTENSIONS/plugin-check/cli.php" --path="$WP_ROOT" | tee evidence/plugin-check.json
