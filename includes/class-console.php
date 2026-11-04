@@ -902,7 +902,7 @@ final class Console {
 			echo '<p class="description">' . esc_html__( 'The client is fixed by WP_REDIS_CLIENT in wp-config.php.', 'harborcache-object-cache-with-redis' ) . '</p>';
 		}
 
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="ch-settings">';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="ch-settings" id="ch-settings-form">';
 		wp_nonce_field( 'harborcache_action' );
 		echo '<input type="hidden" name="action" value="harborcache_action"><input type="hidden" name="operation" value="save">';
 
@@ -967,9 +967,9 @@ final class Console {
 			echo '</div></fieldset>';
 		}
 		echo '<fieldset class="ch-settings-section"><legend>' . esc_html__( 'Analytics sampling', 'harborcache-object-cache-with-redis' ) . '</legend><div class="ch-form-grid ch-measurement-fields"><label for="ch-sample-rate">' . esc_html__( 'Sample rate (%)', 'harborcache-object-cache-with-redis' ) . ' <input id="ch-sample-rate" name="sample_rate" type="number" min="0" max="100" value="' . esc_attr( (string) $config['analytics']['sample_rate'] ) . '"></label><label for="ch-retention">' . esc_html__( 'Retention (seconds)', 'harborcache-object-cache-with-redis' ) . ' <input id="ch-retention" name="retention" type="number" min="60" max="86400" value="' . esc_attr( (string) $config['analytics']['retention'] ) . '"></label></div></fieldset>';
-		echo '</details><div class="ch-actions"><button class="button button-primary" type="submit">' . esc_html__( 'Save and test', 'harborcache-object-cache-with-redis' ) . '</button></div></form>';
+		echo '</details></form>';
 
-		echo '<div class="ch-actions ch-test-actions"><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="ch-test-form" id="ch-test-form">';
+		echo '<div class="ch-actions ch-settings-actions"><button class="button button-primary" type="submit" form="ch-settings-form">' . esc_html__( 'Save and test', 'harborcache-object-cache-with-redis' ) . '</button><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="ch-test-form" id="ch-test-form">';
 		wp_nonce_field( 'harborcache_action' );
 		echo '<input type="hidden" name="action" value="harborcache_action"><input type="hidden" name="operation" value="test-connection"><button class="button" type="submit">' . esc_html__( 'Test saved connection', 'harborcache-object-cache-with-redis' ) . '</button><span class="ch-test-status" id="ch-test-status" role="status" aria-live="polite"></span></form>';
 		self::button( 'self-test', __( 'Run cache self-test', 'harborcache-object-cache-with-redis' ) );
