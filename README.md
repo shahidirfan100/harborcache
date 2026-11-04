@@ -1,6 +1,6 @@
 # HarborCache – Object Cache with Redis
 
-Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release build: **1.3.0**.
+Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release build: **1.3.1**.
 
 HarborCache brings connection settings, local analytics, scoped invalidation and recovery controls into one administration workflow. It was developed around the day-to-day needs of the author's websites and continues as a separate project with its own interface and development direction.
 
@@ -8,7 +8,7 @@ HarborCache brings connection settings, local analytics, scoped invalidation and
 
 ## Install
 
-Install the [1.3.0 ZIP](dist/harborcache-1.3.0.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
+Install the [1.3.1 ZIP](dist/harborcache-1.3.1.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
 
 Requires WordPress 6.6+, PHP 7.4+ and a separately operated Redis service. Disable the existing object cache manager through its own controls first. Configure a distinct prefix in Settings → HarborCache, save the connection and enable the object cache. HarborCache refuses to overwrite another plugin's drop-in. Verify connection status and Site Health before using it on production.
 
@@ -36,7 +36,7 @@ No license key or account is required. No plugin REST endpoints are included. Op
 
 ## Validation and deployment gates
 
-The 1.3.0 release separates transport health from namespace readiness, makes the connection check match the live cache path, migrates legacy namespace owners after salt rotation, and reports “Namespace conflict” instead of “Not connected”. It also loads administration code only when needed, records sampled analytics without serializing cached values, and removes the inherited no-op hook layer. Earlier performance results do not predict every server. See the validation reports for the measured matrix.
+The 1.3.1 release keeps the 1.3.0 readiness model and rebuilds the Status panel as a compact health grid, replaces the repeated manual-test checklist with connection details, adds a widget summary and readable chart ticks, and versions CSS/JS by file modification time so stale caches cannot survive an update. The 1.3.0 release separated transport health from namespace readiness, made the connection check match the live cache path, migrated legacy owners and removed the inherited no-op hook layer. Earlier performance results do not predict every server. See the validation reports for the measured matrix.
 
 Sustained production load, native Relay topology/failover and production tracing agents remain acceptance gates. HarborCache does not claim WordPress.org approval or universal performance leadership. See [acceptance gates](docs/ACCEPTANCE.md).
 

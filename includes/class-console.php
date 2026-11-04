@@ -69,15 +69,21 @@ final class Console {
 		$console_page     = in_array( $hook, array( 'settings_page_harborcache', 'settings_page_harborcache-network' ), true );
 		$dashboard_widget = 'index.php' === $hook && self::dashboard_widget_visible();
 		$chart_page        = $console_page || $dashboard_widget;
+		$asset_version     = HARBORCACHE_VERSION . '.' . max(
+			(int) @filemtime( HARBORCACHE_PLUGIN_PATH . '/assets/css/console.css' ), // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			(int) @filemtime( HARBORCACHE_PLUGIN_PATH . '/assets/css/chart.css' ), // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			(int) @filemtime( HARBORCACHE_PLUGIN_PATH . '/assets/js/console.js' ), // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			(int) @filemtime( HARBORCACHE_PLUGIN_PATH . '/assets/js/adminbar.js' ) // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		);
 		$ui_data           = array( 'endpoint' => admin_url( 'admin-post.php' ), 'nonce' => wp_create_nonce( 'harborcache_action' ), 'ajax' => admin_url( 'admin-ajax.php' ), 'probeNonce' => wp_create_nonce( 'harborcache_probe' ), 'confirm' => __( 'Clear the selected cache scope? Cached entries will be rebuilt by subsequent requests.', 'harborcache-object-cache-with-redis' ), 'testing' => __( 'Testing the connection. This can take up to 5 seconds.', 'harborcache-object-cache-with-redis' ), 'probeFailed' => __( 'The connection check could not run. Reload the page and try again.', 'harborcache-object-cache-with-redis' ), 'copied' => __( 'Diagnostics copied.', 'harborcache-object-cache-with-redis' ), 'selected' => __( 'Report selected. Press Ctrl+C or Command+C to copy.', 'harborcache-object-cache-with-redis' ), 'flushing' => __( 'Clearing cache…', 'harborcache-object-cache-with-redis' ), 'done' => __( 'Cache cleared.', 'harborcache-object-cache-with-redis' ), 'failed' => __( 'The cache action failed. Open Diagnostics for details.', 'harborcache-object-cache-with-redis' ) );
-		if ( $console_page ) { wp_enqueue_style( 'harborcache-console', plugins_url( 'assets/css/console.css', HARBORCACHE_FILE ), array(), HARBORCACHE_VERSION ); }
+		if ( $console_page ) { wp_enqueue_style( 'harborcache-console', plugins_url( 'assets/css/console.css', HARBORCACHE_FILE ), array(), $asset_version ); }
 		if ( $chart_page ) {
-			wp_enqueue_style( 'harborcache-chart', plugins_url( 'assets/css/chart.css', HARBORCACHE_FILE ), array(), HARBORCACHE_VERSION );
-			wp_enqueue_script( 'harborcache-console', plugins_url( 'assets/js/console.js', HARBORCACHE_FILE ), array(), HARBORCACHE_VERSION, true );
+			wp_enqueue_style( 'harborcache-chart', plugins_url( 'assets/css/chart.css', HARBORCACHE_FILE ), array(), $asset_version );
+			wp_enqueue_script( 'harborcache-console', plugins_url( 'assets/js/console.js', HARBORCACHE_FILE ), array(), $asset_version, true );
 			wp_localize_script( 'harborcache-console', 'harborcacheUI', $ui_data );
 		}
 		if ( is_admin_bar_showing() ) {
-			wp_enqueue_script( 'harborcache-adminbar', plugins_url( 'assets/js/adminbar.js', HARBORCACHE_FILE ), array(), HARBORCACHE_VERSION, true );
+			wp_enqueue_script( 'harborcache-adminbar', plugins_url( 'assets/js/adminbar.js', HARBORCACHE_FILE ), array(), $asset_version, true );
 			wp_localize_script( 'harborcache-adminbar', 'harborcacheUI', $ui_data );
 		}
 	}

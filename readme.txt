@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,13 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.3.1 =
+* Refresh the readiness panel into a compact 2x2 health grid with a clear Ready/attention chip.
+* Replace the manual-test checklist with compact connection details and a warning when the saved connection differs from the live request.
+* Add a dashboard-widget summary for hit ratio, Redis time, commands and runtime entries, plus readable chart ticks.
+* Version the CSS and JavaScript with the file modification time, so a plugin update cannot leave an old cached stylesheet in place.
+* Refresh the listing screenshots and capture record for 1.3.1.
 
 = 1.3.0 =
 * Separate transport health from cache readiness, so a reachable Redis server is never reported as “Not connected” just because the namespace belongs to another installation.
