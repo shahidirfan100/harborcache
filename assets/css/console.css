@@ -15,6 +15,15 @@
 #harborcache .ch-status { border: 1px solid #806325; background: #fff5da; color: #624810; }
 #harborcache .ch-status::before { content: ""; width: 8px; height: 8px; background: currentColor; border-radius: 50%; margin-right: 8px; flex: none; }
 #harborcache .ch-status.is-connected { color: #064e42; border-color: #4b8375; background: #e9f5f0; }
+#harborcache .ch-status.is-degraded { color: #624810; border-color: #806325; background: #fff5da; }
+#harborcache .ch-readiness { list-style: none; margin: 16px 0; padding: 0; display: grid; gap: 1px; background: var(--ch-border); border: 1px solid var(--ch-border); }
+#harborcache .ch-readiness li { display: flex; justify-content: space-between; gap: 16px; padding: 12px 14px; background: #fff; }
+#harborcache .ch-readiness li span { color: var(--ch-muted); }
+#harborcache .ch-readiness li strong { text-align: right; }
+#harborcache .ch-readiness li.is-bad strong { color: #8a3b12; }
+#harborcache .ch-readiness li.is-ok strong { color: #064e42; }
+#harborcache .ch-test-actions { align-items: center; }
+#harborcache .ch-test-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0; }
 #harborcache .ch-tabs { display: flex; flex-wrap: wrap; margin: 16px 0 0; border-bottom: 1px solid var(--ch-border); }
 #harborcache .ch-tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; color: var(--ch-muted); text-decoration: none; border-bottom: 3px solid transparent; font-size: 16px; }
 #harborcache .ch-tabs a[aria-current=page] { color: var(--ch-accent); border-bottom-color: var(--ch-accent); font-weight: 600; }
@@ -36,6 +45,12 @@
 #harborcache .ch-probe { border: 1px solid var(--ch-border); background: #f7fbfa; padding: 14px 16px; margin: 16px 0; }
 #harborcache .ch-probe.is-connected { border-color: #4b8375; background: #e9f5f0; color: #064e42; }
 #harborcache .ch-probe.is-failed { border-color: #806325; background: #fff5da; color: #624810; }
+#harborcache .ch-probe.is-degraded { border-color: #806325; background: #fffaf0; color: #624810; }
+#harborcache .ch-probe-checks { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 1px; background: rgba(0,0,0,.08); border: 1px solid rgba(0,0,0,.08); }
+#harborcache .ch-probe-checks li { display: flex; justify-content: space-between; gap: 16px; padding: 8px 10px; background: #fff; }
+#harborcache .ch-probe-checks li span { color: var(--ch-muted); }
+#harborcache .ch-probe-checks li.is-bad strong { color: #8a3b12; }
+#harborcache .ch-probe-checks li.is-ok strong { color: #064e42; }
 #harborcache .ch-probe strong { display: block; font-size: 18px; line-height: 1.4; }
 #harborcache .ch-probe p { margin: 6px 0 0; font-size: 15px; line-height: 1.55; }
 #harborcache .ch-probe-meta { color: var(--ch-muted); font-size: 13px; }

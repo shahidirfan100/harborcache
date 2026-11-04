@@ -121,6 +121,8 @@ jobs:
           php tests/dropin-writer.php
           php tests/review-regressions.php
           php tests/safety-regressions.php
+          php tests/status-matrix.php
+          php tests/probe-parity.php
           php tests/metrics-failure.php
           python3 tools/build-release.py --check
           php tests/conflict-notice.php

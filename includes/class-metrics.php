@@ -82,6 +82,15 @@ class Metrics {
 
         add_action( 'shutdown', [ self::class, 'record' ] );
         add_action( 'harborcache_metrics_discard', [ self::class, 'discard' ] );
+
+        if ( ! empty( \HarborCache\Config::load()['analytics']['footnote'] ) ) {
+            add_action( 'wp_footer', static function () {
+                global $wp_object_cache;
+                if ( ! isset( $wp_object_cache ) || ! $wp_object_cache instanceof \HarborCache_Advanced_Cache || ! $wp_object_cache->redis_status() ) { return; }
+                $info = $wp_object_cache->info( false );
+                echo "\n<!-- HarborCache: hits=" . (int) $info->hits . ' misses=' . (int) $info->misses . " -->\n";
+            } );
+        }
     }
 
     /**
@@ -102,7 +111,10 @@ class Metrics {
         global $wp_object_cache;
 
         return self::is_enabled()
-            && Plugin::instance()->get_redis_status()
+            && isset( $wp_object_cache )
+            && is_object( $wp_object_cache )
+            && method_exists( $wp_object_cache, 'redis_status' )
+            && $wp_object_cache->redis_status()
             && method_exists( $wp_object_cache, 'info' )
             && method_exists( $wp_object_cache, 'redis_instance' );
     }
@@ -160,14 +172,15 @@ class Metrics {
     public function collect() {
         global $wp_object_cache;
 
-        $info = $wp_object_cache->info();
+        // Never serialize every cached value just to record a sample.
+        $info = $wp_object_cache->info( false );
 
         // phpcs:disable WordPress.WP.AlternativeFunctions.rand_mt_rand
         $this->id = substr( md5( uniqid( strval( mt_rand() ), true ) ), 12 );
         $this->hits = $info->hits;
         $this->misses = $info->misses;
         $this->ratio = $info->ratio;
-        $this->bytes = $info->bytes;
+        $this->bytes = (int) ( $info->bytes_estimate ?? 0 );
         $this->time = round( $info->time, 5 );
         $this->calls = $info->calls;
         $this->timestamp = time();
@@ -247,22 +260,17 @@ class Metrics {
         $analytics = \HarborCache\Config::load()['analytics'];
         if ( ! $analytics['enabled'] ) { return; }
         try {
-        $client = $wp_object_cache->redis_instance();
-        if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache ) {
-            $key = $wp_object_cache->build_key( 'metrics', 'harborcache' );
-            $wp_object_cache->ch_command( array( 'ZREMRANGEBYSCORE', $key, '-inf', time() - self::max_time() ) );
-        }
-            $saved = $client->zadd(
-                $wp_object_cache->build_key( 'metrics', 'harborcache' ),
-                $this->timestamp,
-                // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
-                serialize( $this )
-            );
-            if ( false === $saved ) { throw new \RuntimeException( 'Metrics write failed.' ); }
+            $client = $wp_object_cache->redis_instance();
+            $key    = $wp_object_cache->build_key( 'metrics', 'harborcache' );
             if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache ) {
-                if ( null !== $analytics['persist_limit'] ) { $wp_object_cache->ch_command( array( 'ZREMRANGEBYRANK', $key, 0, -$analytics['persist_limit'] - 1 ) ); }
+                // One bounded ZADD; retention and count trimming run on the hourly
+                // discard event instead of four commands on every sampled request.
+                $saved = $wp_object_cache->ch_command( array( 'ZADD', $key, (string) $this->timestamp, serialize( $this ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
                 $wp_object_cache->ch_command( array( 'EXPIRE', $key, self::max_time() ) );
+            } else {
+                $saved = $client->zadd( $key, $this->timestamp, serialize( $this ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
             }
+            if ( false === $saved ) { throw new \RuntimeException( 'Metrics write failed.' ); }
         } catch ( \Throwable $exception ) {
             self::log_failure( $exception );
         }
@@ -281,12 +289,16 @@ class Metrics {
         }
 
         try {
-            $removed = $wp_object_cache->redis_instance()->zremrangebyscore(
-                $wp_object_cache->build_key( 'metrics', 'harborcache' ),
-                0,
-                time() - self::max_time()
-            );
+            $key     = $wp_object_cache->build_key( 'metrics', 'harborcache' );
+            $removed = $wp_object_cache->redis_instance()->zremrangebyscore( $key, 0, time() - self::max_time() );
             if ( false === $removed ) { throw new \RuntimeException( 'Metrics cleanup failed.' ); }
+            if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache ) {
+                $analytics = \HarborCache\Config::load()['analytics'];
+                if ( null !== $analytics['persist_limit'] ) {
+                    $wp_object_cache->ch_command( array( 'ZREMRANGEBYRANK', $key, 0, -$analytics['persist_limit'] - 1 ) );
+                }
+                $wp_object_cache->ch_command( array( 'EXPIRE', $key, self::max_time() ) );
+            }
         } catch ( \Throwable $exception ) {
             self::log_failure( $exception );
         }

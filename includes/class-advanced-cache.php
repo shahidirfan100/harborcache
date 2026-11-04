@@ -50,6 +50,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_ignored_patterns = array();
 	private $ch_ignored_results = array();
 	public $ch_retries = 0;
+	public $ch_transport_ok = false;
+	private $ch_codec_ok = true;
 	private $ch_failure_reason = '';
 	private $ch_contexts = array();
 	private $ch_context_blog;
@@ -60,8 +62,9 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$this->ch_config = \HarborCache\Config::load();
 		$codec_error = null;
 		try { $this->ch_codec = new \HarborCache\Codec( $this->ch_config ); }
-		catch ( Throwable $error ) { $codec_error = $error; $this->ch_codec = new \HarborCache\Codec( array( 'serializer' => 'php', 'compression' => 'none' ) ); }
+		catch ( Throwable $error ) { $codec_error = $error; $this->ch_codec_ok = false; $this->ch_codec = new \HarborCache\Codec( array( 'serializer' => 'php', 'compression' => 'none' ) ); }
 		parent::__construct( true );
+		$this->ch_transport_ok = (bool) $this->redis_status();
 		if ( $codec_error ) { $this->handle_exception( $codec_error ); }
 		$this->ch_base = WP_REDIS_PREFIX . 'meta';
 		if ( $this->redis_status() ) {
@@ -88,12 +91,17 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$this->ch_ready = false;
 		$conflict = $exception instanceof \HarborCache\Prefix_Conflict;
 		$this->ch_failure_reason = $conflict ? 'prefix-conflict' : 'backend-unavailable';
+		// A namespace conflict is not a transport failure. Remember that Redis answered
+		// so the dashboard can report "Namespace conflict" instead of "Not connected".
+		$this->ch_transport_ok = $conflict ? true : (bool) $this->redis_status();
 		$message = $conflict ? 'Cache prefix belongs to another installation. Configure a distinct prefix or restore this installation identity.' : 'HarborCache backend unavailable. Check connection settings and Redis service.';
 		// Discard native sockets with potentially unread replies before a persistent pool can reuse them.
 		if ( $this->redis instanceof \Redis || $this->redis instanceof \RedisCluster || $this->redis instanceof \Relay\Relay || $this->redis instanceof \Relay\Cluster ) {
 			try { $this->redis->close(); } catch ( Throwable $ignored ) {}
 		}
-		if ( 'debug' === $this->ch_config['failure_mode'] || ( $this->ch_initializing && 'strict' === $this->ch_config['failure_mode'] ) ) {
+		// Only explicit debug mode may terminate the request. Strict ownership still
+		// falls back to request memory so a stale owner can never take down the site.
+		if ( 'debug' === $this->ch_config['failure_mode'] ) {
 			if ( $conflict ) { throw new RuntimeException( 'Cache prefix belongs to another installation. Configure a distinct prefix or restore this installation identity.' ); }
 			throw new RuntimeException( 'HarborCache backend unavailable. Check connection settings and Redis service.' );
 		}
@@ -527,7 +535,11 @@ if not cmp(ARGV[2],r) then return {0} end
 local t=redis.call('PTTL',KEYS[1]); redis.call('SET',KEYS[1],'N'..r); if t>0 then redis.call('PEXPIRE',KEYS[1],t) end; return {1,r}
 LUA;
 			$value = $this->ch_command( array( 'EVAL', $script, 1, $this->build_key( $key, $group ), (string) (int) $offset, (string) PHP_INT_MAX ) );
-			unset( $this->cache[ $this->build_key( $key, $group ) ] );
+			$derived = $this->build_key( $key, $group );
+			if ( array_key_exists( $derived, $this->cache ) ) {
+				$this->runtime_bytes -= $this->estimate_bytes( $this->cache[ $derived ] );
+				unset( $this->cache[ $derived ] );
+			}
 			return is_array( $value ) && 1 === (int) ( $value[0] ?? 0 ) && isset( $value[1] ) ? (int) $value[1] : false;
 		} catch ( Throwable $error ) { $this->handle_exception( $error ); return false; }
 		finally { $this->ch_writing = $previous; }
@@ -584,7 +596,8 @@ LUA;
 
 	public function ch_diagnostics( $with_bytes = true ) {
 		$info = $this->info( $with_bytes );
-		return array( 'connected' => $this->redis_status(), 'ready' => $this->ch_ready, 'reason' => $this->ch_ready ? '' : ( $this->ch_failure_reason ?: 'backend-unavailable' ), 'client' => $info->meta['Client'], 'redis' => $this->redis_version(), 'runtime_hits' => $this->runtime_hits, 'store_hits' => $this->store_hits, 'store_misses' => $this->store_misses, 'store_ratio' => $this->store_hits + $this->store_misses > 0 ? round( 100 * $this->store_hits / ( $this->store_hits + $this->store_misses ), 1 ) : null, 'hits' => $info->hits, 'misses' => $info->misses, 'ratio' => $info->ratio, 'calls' => $info->calls, 'milliseconds' => round( $info->time * 1000, 3 ), 'entries' => count( $this->cache ), 'bytes' => $info->bytes, 'serializer' => $this->ch_config['serializer'], 'compression' => $this->ch_config['compression'], 'max_ttl' => $this->ch_config['maxttl'] );
+		$namespace = $this->ch_ready ? 'owned' : ( 'prefix-conflict' === $this->ch_failure_reason ? 'conflict' : 'unknown' );
+		return array( 'connected' => $this->redis_status(), 'transport_ok' => (bool) $this->ch_transport_ok, 'ready' => $this->ch_ready, 'namespace' => $namespace, 'codec' => $this->ch_codec_ok ? 'ok' : 'error', 'reason' => $this->ch_ready ? '' : ( $this->ch_failure_reason ?: 'backend-unavailable' ), 'client' => $info->meta['Client'], 'redis' => $this->redis_version(), 'runtime_hits' => $this->runtime_hits, 'store_hits' => $this->store_hits, 'store_misses' => $this->store_misses, 'store_ratio' => $this->store_hits + $this->store_misses > 0 ? round( 100 * $this->store_hits / ( $this->store_hits + $this->store_misses ), 1 ) : null, 'hits' => $info->hits, 'misses' => $info->misses, 'ratio' => $info->ratio, 'calls' => $info->calls, 'milliseconds' => round( $info->time * 1000, 3 ), 'entries' => count( $this->cache ), 'bytes' => $info->bytes, 'bytes_estimate' => $info->bytes_estimate, 'serializer' => $this->ch_config['serializer'], 'compression' => $this->ch_config['compression'], 'max_ttl' => $this->ch_config['maxttl'] );
 	}
 
 	public function storage_summary() {

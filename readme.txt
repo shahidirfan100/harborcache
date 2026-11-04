@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.10
+Stable tag: 1.3.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,16 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.3.0 =
+* Separate transport health from cache readiness, so a reachable Redis server is never reported as “Not connected” just because the namespace belongs to another installation.
+* Report “Namespace conflict” with a confirmed reclaim action; migrate owners written by 1.2.x and keep the namespace stable when security salts rotate.
+* Make the connection check use the configured timeout, verify namespace ownership and round-trip a value through the active serializer and compression.
+* Add an end-to-end cache self-test through the WordPress cache API and a `wp harborcache doctor` command.
+* Load administration code only for admin, AJAX, cron, WP-CLI and logged-in admin-bar requests.
+* Record sampled analytics without serializing every cached value, and trim analytics on the hourly maintenance event instead of every sample.
+* Remove inherited no-op hooks and the duplicate status implementations used by the dashboard, Query Monitor and Site Health.
+* Use the readiness checklist, one primary action per state, and plain-language explanations on the Status and Settings screens.
 
 = 1.2.10 =
 * Separate the group clear button, the include-memory option and the group inspection button.

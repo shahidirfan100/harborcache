@@ -1,17 +1,22 @@
 <?php
-/** User-initiated connection check. Uses the configured client and the installation namespace. */
+/** User-initiated readiness check. Uses the configured client and installation namespace. */
 namespace HarborCache;
 
 defined( 'ABSPATH' ) || exit;
 
 require_once __DIR__ . '/ch-config.php';
+require_once __DIR__ . '/ch-codec.php';
 require_once __DIR__ . '/ch-namespace.php';
 
 final class Connection_Check {
-	const MIN_TIMEOUT = 5.0;
+	/**
+	 * Use the configured timeout. The previous five second floor made a probe
+	 * pass while the live cache (default one second) could not connect.
+	 */
+	const MIN_TIMEOUT = 0.1;
 
 	/**
-	 * Check the candidate configuration without touching cache data.
+	 * Check the candidate configuration without replacing live settings.
 	 *
 	 * @param array  $config  Validated configuration.
 	 * @param string $context Where the check started: manual, save, cli.
@@ -19,31 +24,47 @@ final class Connection_Check {
 	 */
 	public static function run( array $config, $context = 'manual' ) {
 		$started = microtime( true );
+		$timeout = max( self::MIN_TIMEOUT, min( 30.0, (float) ( $config['timeout'] ?? 1 ) ) );
 		$result  = array(
-			'ok'             => false,
-			'client'         => isset( $config['client'] ) ? (string) $config['client'] : 'predis',
-			'client_version' => '',
-			'redis_version'  => '',
-			'database'       => isset( $config['database'] ) ? (int) $config['database'] : 0,
-			'scheme'         => isset( $config['scheme'] ) ? (string) $config['scheme'] : 'tcp',
-			'host'           => self::endpoint( $config ),
-			'elapsed_ms'     => 0.0,
-			'checked_at'     => time(),
-			'error_code'     => '',
-			'message'        => '',
-			'detail'         => '',
-			'context'        => (string) $context,
+			'ok'                   => false,
+			'transport_ok'         => false,
+			'namespace'            => 'unknown',
+			'namespace_fingerprint' => '',
+			'codec'                => 'unknown',
+			'client'               => isset( $config['client'] ) ? (string) $config['client'] : 'predis',
+			'client_version'       => '',
+			'redis_version'        => '',
+			'database'             => isset( $config['database'] ) ? (int) $config['database'] : 0,
+			'scheme'               => isset( $config['scheme'] ) ? (string) $config['scheme'] : 'tcp',
+			'host'                 => self::endpoint( $config ),
+			'timeout'              => $timeout,
+			'elapsed_ms'           => 0.0,
+			'checked_at'           => time(),
+			'error_code'           => '',
+			'message'              => '',
+			'detail'               => '',
+			'context'              => (string) $context,
 		);
 
-		$timeout = max( self::MIN_TIMEOUT, min( 30.0, (float) ( $config['timeout'] ?? 1 ) ) );
-		$client  = null;
+		$client = null;
 
 		try {
+			$result['codec'] = self::codec_check( $config );
 			$client = self::connect( $config, $timeout, $result );
 			$pong   = self::command( $client, array( 'PING' ) );
 			if ( ! self::is_pong( $pong ) ) {
 				throw new \RuntimeException( 'Redis answered, but not with PONG.' );
 			}
+			$result['transport_ok'] = true;
+
+			$owner = Namespace_Guard::owner_state(
+				static function ( $args ) use ( $client ) {
+					return self::command( $client, $args );
+				},
+				self::base( $config )
+			);
+			$result['namespace']             = $owner['state'];
+			$result['namespace_fingerprint'] = $owner['fingerprint'];
 
 			$key   = self::probe_key( $config );
 			$write = self::command( $client, array( 'SET', $key, '1', 'PX', '5000', 'NX' ) );
@@ -56,10 +77,24 @@ final class Connection_Check {
 				throw new \RuntimeException( 'Redis did not return the temporary value.' );
 			}
 
-			$info                    = self::command( $client, array( 'INFO', 'server' ) );
-			$result['redis_version'] = self::redis_version( $info );
-			$result['ok']            = true;
-			$result['message']       = __( 'Connected and verified with a temporary key.', 'harborcache-object-cache-with-redis' );
+			try {
+				$info                    = self::command( $client, array( 'INFO', 'server' ) );
+				$result['redis_version'] = self::redis_version( $info );
+			} catch ( \Throwable $ignored ) {
+				// Server information is optional; it must not hide working data access.
+				$result['redis_version'] = '';
+			}
+
+			if ( 'conflict' === $owner['state'] ) {
+				$result['error_code'] = 'namespace-conflict';
+				$result['message']    = __( 'Redis is reachable, but this cache namespace belongs to another installation. Choose a distinct prefix or reclaim the namespace after confirming the old owner is gone.', 'harborcache-object-cache-with-redis' );
+			} elseif ( 'error' === $result['codec'] ) {
+				$result['error_code'] = 'codec';
+				$result['message']    = __( 'Redis is reachable, but the configured serializer or compression could not round-trip a value.', 'harborcache-object-cache-with-redis' );
+			} else {
+				$result['ok']      = true;
+				$result['message'] = __( 'Connected and verified through the cache value format.', 'harborcache-object-cache-with-redis' );
+			}
 		} catch ( \Throwable $error ) {
 			$result = array_merge( $result, self::classify( $error ) );
 		} finally {
@@ -67,7 +102,48 @@ final class Connection_Check {
 			$result['elapsed_ms'] = round( ( microtime( true ) - $started ) * 1000, 1 );
 		}
 
+		if ( 'error' === $result['codec'] && empty( $result['error_code'] ) ) {
+			$result['error_code'] = 'codec';
+			$result['message']    = __( 'Redis is reachable, but the configured serializer or compression could not round-trip a value.', 'harborcache-object-cache-with-redis' );
+		}
+
 		return $result;
+	}
+
+	/** Round-trip one value through the exact serializer and compression pair. */
+	private static function codec_check( array $config ) {
+		try {
+			$codec = new Codec( $config );
+			$probe = array( 'check' => 'harborcache', 'number' => 42 );
+			return $codec->decode( $codec->encode( $probe ) ) === $probe ? 'ok' : 'error';
+		} catch ( \Throwable $error ) {
+			return 'error';
+		}
+	}
+
+	/**
+	 * Explicit namespace takeover after the operator confirms the old owner is gone.
+	 *
+	 * @return array{ok:bool,message:string}
+	 */
+	public static function reclaim( array $config ) {
+		$client  = null;
+		$timeout = max( self::MIN_TIMEOUT, min( 30.0, (float) ( $config['timeout'] ?? 1 ) ) );
+		$probe   = array();
+		try {
+			$client = self::connect( $config, $timeout, $probe );
+			Namespace_Guard::reclaim(
+				static function ( $args ) use ( $client ) {
+					return self::command( $client, $args );
+				},
+				self::base( $config )
+			);
+			return array( 'ok' => true, 'message' => __( 'This installation now owns the cache namespace. The next request will use it.', 'harborcache-object-cache-with-redis' ) );
+		} catch ( \Throwable $error ) {
+			return array( 'ok' => false, 'message' => $error->getMessage() );
+		} finally {
+			self::close( $client );
+		}
 	}
 
 	private static function connect( array $config, $timeout, array &$result ) {
@@ -97,8 +173,8 @@ final class Connection_Check {
 		}
 
 		$parameters = array(
-			'scheme'            => $config['scheme'],
-			'timeout'           => $timeout,
+			'scheme'             => $config['scheme'],
+			'timeout'            => $timeout,
 			'read_write_timeout' => $timeout,
 		);
 		if ( 'unix' === $config['scheme'] ) {
@@ -299,9 +375,16 @@ final class Connection_Check {
 		return '';
 	}
 
+	private static function prefix( array $config ) {
+		return defined( 'WP_REDIS_PREFIX' ) && ! defined( 'HARBORCACHE_PREFIX_FROM_CONFIG' ) ? WP_REDIS_PREFIX : 'ch:' . substr( hash( 'sha256', (string) $config['prefix'] ), 0, 24 ) . ':';
+	}
+
+	private static function base( array $config ) {
+		return self::prefix( $config ) . 'meta';
+	}
+
 	private static function probe_key( array $config ) {
-		$prefix = defined( 'WP_REDIS_PREFIX' ) && ! defined( 'HARBORCACHE_PREFIX_FROM_CONFIG' ) ? WP_REDIS_PREFIX : 'ch:' . substr( hash( 'sha256', (string) $config['prefix'] ), 0, 24 ) . ':';
-		return $prefix . 'probe:' . bin2hex( random_bytes( 6 ) );
+		return self::prefix( $config ) . 'probe:' . bin2hex( random_bytes( 6 ) );
 	}
 
 	private static function endpoint( array $config ) {
@@ -325,32 +408,38 @@ final class Connection_Check {
 		$text = strtolower( $raw );
 		$code = 'unreachable';
 
-		if ( false !== strpos( $text, 'noauth' ) || false !== strpos( $text, 'wrongpass' ) || false !== strpos( $text, 'invalid password' ) || false !== strpos( $text, 'without any password configured' ) || false !== strpos( $text, 'no password is set' ) ) {
-			$code = 'auth';
+		if ( false !== strpos( $text, 'namespace' ) || false !== strpos( $text, 'belongs to another' ) ) {
+			$code    = 'namespace-conflict';
+			$message = __( 'Redis is reachable, but this cache namespace belongs to another installation.', 'harborcache-object-cache-with-redis' );
+		} elseif ( false !== strpos( $text, 'serializer' ) || false !== strpos( $text, 'compression' ) || false !== strpos( $text, 'codec' ) ) {
+			$code    = 'codec';
+			$message = __( 'The configured serializer or compression is unavailable or cannot round-trip a value.', 'harborcache-object-cache-with-redis' );
+		} elseif ( false !== strpos( $text, 'noauth' ) || false !== strpos( $text, 'wrongpass' ) || false !== strpos( $text, 'invalid password' ) || false !== strpos( $text, 'without any password configured' ) || false !== strpos( $text, 'no password is set' ) ) {
+			$code    = 'auth';
 			$message = __( 'Redis rejected the password or ACL user.', 'harborcache-object-cache-with-redis' );
 		} elseif ( false !== strpos( $text, 'noperm' ) || false !== strpos( $text, 'permission' ) ) {
-			$code = 'acl';
+			$code    = 'acl';
 			$message = __( 'The Redis user is not allowed to run the commands this cache needs.', 'harborcache-object-cache-with-redis' );
 		} elseif ( false !== strpos( $text, 'refused' ) ) {
-			$code = 'refused';
+			$code    = 'refused';
 			$message = __( 'Nothing is accepting connections at that host and port.', 'harborcache-object-cache-with-redis' );
-		} elseif ( false !== strpos( $text, 'timed out' ) || false !== strpos( $text, 'timeout' ) ) {
-			$code = 'timeout';
+		} elseif ( false !== strpos( $text, 'timed out' ) || false !== strpos( $text, 'timeout' ) || false !== strpos( $text, 'period of time' ) || false !== strpos( $text, 'failed to respond' ) ) {
+			$code    = 'timeout';
 			$message = __( 'The connection timed out before Redis answered.', 'harborcache-object-cache-with-redis' );
 		} elseif ( false !== strpos( $text, 'certificate' ) || false !== strpos( $text, 'ssl' ) || false !== strpos( $text, 'tls' ) ) {
-			$code = 'tls';
+			$code    = 'tls';
 			$message = __( 'The TLS handshake or certificate check failed.', 'harborcache-object-cache-with-redis' );
 		} elseif ( false !== strpos( $text, 'getaddrinfo' ) || false !== strpos( $text, 'name or service not known' ) || false !== strpos( $text, 'php_network_getaddresses' ) || false !== strpos( $text, 'nodename nor servname' ) ) {
-			$code = 'dns';
+			$code    = 'dns';
 			$message = __( 'The host name could not be resolved.', 'harborcache-object-cache-with-redis' );
 		} elseif ( false !== strpos( $text, 'no such file' ) || false !== strpos( $text, 'socket' ) ) {
-			$code = 'socket';
+			$code    = 'socket';
 			$message = __( 'The Unix socket could not be opened.', 'harborcache-object-cache-with-redis' );
 		} elseif ( false !== strpos( $text, 'extension is not installed' ) || ( false !== strpos( $text, 'class' ) && false !== strpos( $text, 'not found' ) ) ) {
-			$code = 'extension';
+			$code    = 'extension';
 			$message = __( 'The selected PHP Redis extension is not available on this server.', 'harborcache-object-cache-with-redis' );
 		} elseif ( false !== strpos( $text, 'database' ) || false !== strpos( $text, 'select' ) || false !== strpos( $text, 'db index' ) ) {
-			$code = 'database';
+			$code    = 'database';
 			$message = __( 'Redis rejected the selected database.', 'harborcache-object-cache-with-redis' );
 		} else {
 			$message = __( 'Redis did not complete the connection check.', 'harborcache-object-cache-with-redis' );
@@ -366,20 +455,26 @@ final class Connection_Check {
 	/** Render one result card for the settings screen and AJAX replies. */
 	public static function render( array $probe ) {
 		$probe += array(
-			'ok'             => false,
-			'elapsed_ms'     => 0.0,
-			'client'         => '',
-			'client_version' => '',
-			'host'           => '',
-			'database'       => 0,
-			'redis_version'  => '',
-			'message'        => __( 'The connection check did not return a result.', 'harborcache-object-cache-with-redis' ),
-			'checked_at'     => time(),
+			'ok'                    => false,
+			'transport_ok'          => false,
+			'namespace'             => 'unknown',
+			'namespace_fingerprint' => '',
+			'codec'                 => 'unknown',
+			'elapsed_ms'            => 0.0,
+			'client'                => '',
+			'client_version'        => '',
+			'host'                  => '',
+			'database'              => 0,
+			'redis_version'         => '',
+			'timeout'               => 0,
+			'message'               => __( 'The connection check did not return a result.', 'harborcache-object-cache-with-redis' ),
+			'checked_at'            => time(),
 		);
-		$ok     = ! empty( $probe['ok'] );
-		$class  = $ok ? 'is-connected' : 'is-failed';
-		$client = (string) ( $probe['client'] ?? '' );
-		$html   = '<div class="ch-probe ' . esc_attr( $class ) . '" role="status" aria-live="polite">';
+		$ok        = ! empty( $probe['ok'] );
+		$transport = ! empty( $probe['transport_ok'] );
+		$class     = $ok ? 'is-connected' : ( $transport ? 'is-degraded' : 'is-failed' );
+		$client    = (string) ( $probe['client'] ?? '' );
+		$html      = '<div class="ch-probe ' . esc_attr( $class ) . '" role="status" aria-live="polite">';
 
 		if ( $ok ) {
 			$html .= '<strong>' . esc_html( sprintf(
@@ -387,6 +482,20 @@ final class Connection_Check {
 				__( 'Connected in %s ms', 'harborcache-object-cache-with-redis' ),
 				number_format_i18n( (float) $probe['elapsed_ms'], 1 )
 			) ) . '</strong>';
+		} elseif ( $transport ) {
+			$html .= '<strong>' . esc_html__( 'Redis reached, cache not ready', 'harborcache-object-cache-with-redis' ) . '</strong>';
+		} else {
+			$html .= '<strong>' . esc_html__( 'Not connected', 'harborcache-object-cache-with-redis' ) . '</strong>';
+		}
+
+		$html .= '<p>' . esc_html( (string) $probe['message'] ) . '</p>';
+		$html .= '<ul class="ch-probe-checks">';
+		foreach ( self::checks( $probe ) as $row ) {
+			$html .= '<li class="' . esc_attr( $row['ok'] ? 'is-ok' : 'is-bad' ) . '"><span>' . esc_html( $row['label'] ) . '</span><strong>' . esc_html( $row['value'] ) . '</strong></li>';
+		}
+		$html .= '</ul>';
+
+		if ( $ok ) {
 			$html .= '<p>' . esc_html( sprintf(
 				/* translators: 1: client and version, 2: endpoint, 3: database number, 4: Redis version. */
 				__( '%1$s at %2$s, database %3$d, Redis %4$s.', 'harborcache-object-cache-with-redis' ),
@@ -396,17 +505,45 @@ final class Connection_Check {
 				'' !== (string) $probe['redis_version'] ? $probe['redis_version'] : __( 'unknown', 'harborcache-object-cache-with-redis' )
 			) ) . '</p>';
 		} else {
-			$html .= '<strong>' . esc_html__( 'Not connected', 'harborcache-object-cache-with-redis' ) . '</strong>';
-			$html .= '<p>' . esc_html( (string) $probe['message'] ) . '</p>';
-			$html .= '<p class="ch-probe-next">' . esc_html__( 'Check that Redis is running, the host and port are reachable, and the password or ACL user matches. Then try again.', 'harborcache-object-cache-with-redis' ) . '</p>';
+			$html .= '<p class="ch-probe-next">' . esc_html__( 'Check that Redis is running, the host and port are reachable, the password or ACL user matches, and this installation owns its cache prefix. Then try again.', 'harborcache-object-cache-with-redis' ) . '</p>';
 		}
 
 		$html .= '<p class="ch-probe-meta">' . esc_html( sprintf(
-			/* translators: %s: date and time of the check. */
-			__( 'Checked %s.', 'harborcache-object-cache-with-redis' ),
+			/* translators: 1: timeout in seconds, 2: date and time of the check. */
+			__( 'Timeout %1$s s. Checked %2$s.', 'harborcache-object-cache-with-redis' ),
+			number_format_i18n( (float) ( $probe['timeout'] ?? 0 ), 2 ),
 			wp_date( 'M j, H:i:s', (int) $probe['checked_at'] )
 		) ) . '</p></div>';
 
 		return $html;
+	}
+
+	private static function checks( array $probe ) {
+		$namespace = (string) ( $probe['namespace'] ?? 'unknown' );
+		$codec     = (string) ( $probe['codec'] ?? 'unknown' );
+		$labels    = array(
+			'owned'     => __( 'Owned by this installation', 'harborcache-object-cache-with-redis' ),
+			'legacy'    => __( 'Legacy owner (will migrate)', 'harborcache-object-cache-with-redis' ),
+			'unclaimed' => __( 'Not claimed yet', 'harborcache-object-cache-with-redis' ),
+			'conflict'  => __( 'Owned by another installation', 'harborcache-object-cache-with-redis' ),
+			'unknown'   => __( 'Unknown', 'harborcache-object-cache-with-redis' ),
+		);
+		return array(
+			array(
+				'label' => __( 'Transport', 'harborcache-object-cache-with-redis' ),
+				'value' => ! empty( $probe['transport_ok'] ) ? __( 'Reachable', 'harborcache-object-cache-with-redis' ) : __( 'Unreachable', 'harborcache-object-cache-with-redis' ),
+				'ok'    => ! empty( $probe['transport_ok'] ),
+			),
+			array(
+				'label' => __( 'Namespace', 'harborcache-object-cache-with-redis' ),
+				'value' => ( $labels[ $namespace ] ?? $namespace ) . ( '' !== (string) ( $probe['namespace_fingerprint'] ?? '' ) ? ' · ' . $probe['namespace_fingerprint'] : '' ),
+				'ok'    => in_array( $namespace, array( 'owned', 'legacy', 'unclaimed' ), true ),
+			),
+			array(
+				'label' => __( 'Value codec', 'harborcache-object-cache-with-redis' ),
+				'value' => 'ok' === $codec ? __( 'Round trip passed', 'harborcache-object-cache-with-redis' ) : __( 'Round trip failed', 'harborcache-object-cache-with-redis' ),
+				'ok'    => 'ok' === $codec,
+			),
+		);
 	}
 }

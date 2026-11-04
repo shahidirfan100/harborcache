@@ -12,6 +12,8 @@ use Exception;
 
 defined( 'ABSPATH' ) || exit;
 
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-status.php';
+
 /**
  * Main plugin class definition
  */
@@ -75,8 +77,6 @@ class Plugin {
             $this->screen = 'settings_page_harborcache';
         }
 
-        Metrics::init();
-
         $this->add_actions_and_filters();
     }
 
@@ -86,27 +86,9 @@ class Plugin {
      * @return void
      */
     public function add_actions_and_filters() {
-        add_action( 'deactivate_plugin', [ $this, 'on_deactivation' ] );
-        add_action( 'admin_init', [ $this, 'maybe_update_dropin' ] );
         add_action( 'init', [ $this, 'init' ] );
-
         add_action( is_multisite() ? 'network_admin_menu' : 'admin_menu', [ $this, 'add_admin_menu_page' ] );
-
-        add_action( 'admin_notices', [ $this, 'show_admin_notices' ] );
-        add_action( 'network_admin_notices', [ $this, 'show_admin_notices' ] );
-
-        add_action( 'wp_dashboard_setup', [ $this, 'setup_dashboard_widget' ] );
-        add_action( 'wp_network_dashboard_setup', [ $this, 'setup_dashboard_widget' ] );
-
-
-        add_filter( 'gettext_redis-cache', [ $this, 'get_text' ], 10, 2 );
-
-        add_filter( 'plugin_row_meta', [ $this, 'add_plugin_row_meta' ], 10, 2 );
         add_filter( sprintf( '%splugin_action_links_%s', is_multisite() ? 'network_admin_' : '', HARBORCACHE_BASENAME ), [ $this, 'add_plugin_actions_links' ] );
-
-        add_action( 'wp_head', [ $this, 'register_shutdown_hooks' ] );
-
-
 
         add_filter( 'qm/collectors', [ $this, 'register_qm_collector' ], 25 );
         add_filter( 'qm/outputter/html', [ $this, 'register_qm_output' ] );
@@ -335,58 +317,20 @@ class Plugin {
      * @return string
      */
     public function get_status() {
-        global $wp_object_cache;
-
-        if ( defined( 'WP_REDIS_DISABLED' ) && WP_REDIS_DISABLED ) {
-            return __( 'Disabled (via config constant)', 'harborcache-object-cache-with-redis' );
-        }
-
-        if ( ! $this->object_cache_dropin_exists() ) {
-            return __( 'Not enabled', 'harborcache-object-cache-with-redis' );
-        }
-
-        if ( $this->object_cache_dropin_outdated() ) {
-            return __( 'Drop-in is outdated', 'harborcache-object-cache-with-redis' );
-        }
-
-        if ( ! $this->validate_object_cache_dropin() ) {
-            return __( 'Drop-in is invalid', 'harborcache-object-cache-with-redis' );
-        }
-
-        if ( method_exists( $wp_object_cache, 'redis_status' ) ) {
-            return $wp_object_cache->redis_status()
-                ? __( 'Connected', 'harborcache-object-cache-with-redis' )
-                : __( 'Not connected', 'harborcache-object-cache-with-redis' );
-        }
-
-        return __( 'Unknown', 'harborcache-object-cache-with-redis' );
+        return \HarborCache\Status::label( \HarborCache\Status::read() );
     }
 
     /**
-     * Retrieves the Redis connection status
+     * Retrieves the cache readiness status.
      *
-     * @return bool|null Boolean Redis connection status if available, null otherwise.
+     * @return bool|null True only when the cache can serve persistent reads and writes.
      */
     public function get_redis_status() {
-        global $wp_object_cache;
-
-        if ( defined( 'WP_REDIS_DISABLED' ) && WP_REDIS_DISABLED ) {
+        $status = \HarborCache\Status::read();
+        if ( 'disabled' === ( $status['state'] ?? '' ) ) {
             return null;
         }
-
-        if ( $this->object_cache_dropin_outdated() ) {
-            return null;
-        }
-
-        if ( ! $this->validate_object_cache_dropin() ) {
-            return null;
-        }
-
-        if ( ! method_exists( $wp_object_cache, 'redis_status' ) ) {
-            return null;
-        }
-
-        return $wp_object_cache->redis_status();
+        return ! empty( $status['ready'] );
     }
 
     /**
@@ -452,7 +396,7 @@ class Plugin {
     public function get_diagnostics() {
         global $wp_object_cache;
 
-        if ( ! $this->validate_object_cache_dropin() || ! property_exists( $wp_object_cache, 'diagnostics' ) ) {
+        if ( ! is_object( $wp_object_cache ) || ! property_exists( $wp_object_cache, 'diagnostics' ) ) {
             return null;
         }
 
@@ -493,10 +437,6 @@ class Plugin {
 
         // Do not display the dropin message if you want
         if ( defined( 'WP_REDIS_DISABLE_DROPIN_BANNERS' ) && WP_REDIS_DISABLE_DROPIN_BANNERS ) {
-            return;
-        }
-
-        if ( defined( 'RedisCachePro\Version' ) || defined( 'ObjectCachePro\Version' ) ) {
             return;
         }
 

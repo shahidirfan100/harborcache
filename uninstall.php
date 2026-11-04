@@ -23,3 +23,7 @@ delete_option( 'harborcache_metrics_cron_migrated' );
 wp_clear_scheduled_hook( 'harborcache_cleanup' );
 
 wp_clear_scheduled_hook( 'harborcache_queries' );
+
+foreach ( array( '_harborcache_connection_probe', '_harborcache_draft', '_harborcache_notice', '_harborcache_probe', '_harborcache_selftest' ) as $harborcache_meta ) {
+	delete_metadata( 'user', 0, $harborcache_meta, '', true );
+}

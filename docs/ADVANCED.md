@@ -18,7 +18,7 @@ Flush rotates namespace tokens. With async_flush=true, queued bounded jobs recla
 
 group_flush accepts atomic, scan, keys, incremental or full; pattern_flush accepts scan, keys or incremental. Atomic rotates tokens; incremental queues reclamation; scan/keys perform one deletion batch then queue remaining work. KEYS discovery itself can block Redis and should be avoided on large servers. Full invalidates this installation, never unrelated Redis data.
 
-Every installation requires a unique prefix. strict=true rotates the namespace when installation ownership changes. Shared prefixes between installations cause repeated protective invalidations and must be fixed. Server-wide statistics resets require allow_server_controls=true.
+Every installation requires a unique prefix. strict=true protects the prefix owner: a foreign owner is reported as “Namespace conflict”, the cache uses request-memory fallback and no foreign keys are overwritten. Owners written before 1.3.0 migrate automatically; rotating security salts no longer changes the identity. Use the confirmed reclaim action only after the old installation is gone, or configure a distinct prefix for clones. Server-wide statistics resets require allow_server_controls=true.
 
 shared=true hides server memory/key totals because other applications may be included. Set false only for dedicated storage. Capacity then sums primary-node memory and selected-database key counts. Server command statistics remain explicitly labeled.
 
