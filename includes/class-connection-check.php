@@ -91,6 +91,12 @@ final class Connection_Check {
 			} elseif ( 'error' === $result['codec'] ) {
 				$result['error_code'] = 'codec';
 				$result['message']    = __( 'Redis is reachable, but the configured serializer or compression could not round-trip a value.', 'harborcache-object-cache-with-redis' );
+			} elseif ( 'unclaimed' === $owner['state'] ) {
+				$result['ok']      = true;
+				$result['message'] = __( 'Connected. This prefix is not claimed yet; enabling the cache claims it.', 'harborcache-object-cache-with-redis' );
+			} elseif ( 'legacy' === $owner['state'] ) {
+				$result['ok']      = true;
+				$result['message'] = __( 'Connected. The legacy namespace owner migrates on the next cache request.', 'harborcache-object-cache-with-redis' );
 			} else {
 				$result['ok']      = true;
 				$result['message'] = __( 'Connected and verified through the cache value format.', 'harborcache-object-cache-with-redis' );
@@ -452,7 +458,7 @@ final class Connection_Check {
 		);
 	}
 
-	/** Render one result card for the settings screen and AJAX replies. */
+	/** Render one compact result card for the settings screen and AJAX replies. */
 	public static function render( array $probe ) {
 		$probe += array(
 			'ok'                    => false,
@@ -474,76 +480,57 @@ final class Connection_Check {
 		$transport = ! empty( $probe['transport_ok'] );
 		$class     = $ok ? 'is-connected' : ( $transport ? 'is-degraded' : 'is-failed' );
 		$client    = (string) ( $probe['client'] ?? '' );
+		$namespace = self::namespace_label( (string) ( $probe['namespace'] ?? 'unknown' ) );
+		$codec     = 'ok' === ( $probe['codec'] ?? '' ) ? __( 'Passed', 'harborcache-object-cache-with-redis' ) : __( 'Failed', 'harborcache-object-cache-with-redis' );
 		$html      = '<div class="ch-probe ' . esc_attr( $class ) . '" role="status" aria-live="polite">';
 
+		$html .= '<div class="ch-probe-head"><strong>';
 		if ( $ok ) {
-			$html .= '<strong>' . esc_html( sprintf(
+			$html .= esc_html( sprintf(
 				/* translators: %s: elapsed time in milliseconds. */
 				__( 'Connected in %s ms', 'harborcache-object-cache-with-redis' ),
 				number_format_i18n( (float) $probe['elapsed_ms'], 1 )
-			) ) . '</strong>';
+			) );
 		} elseif ( $transport ) {
-			$html .= '<strong>' . esc_html__( 'Redis reached, cache not ready', 'harborcache-object-cache-with-redis' ) . '</strong>';
+			$html .= esc_html__( 'Redis reached, cache not ready', 'harborcache-object-cache-with-redis' );
 		} else {
-			$html .= '<strong>' . esc_html__( 'Not connected', 'harborcache-object-cache-with-redis' ) . '</strong>';
+			$html .= esc_html__( 'Not connected', 'harborcache-object-cache-with-redis' );
 		}
+		$html .= '</strong><span class="ch-probe-meta">' . esc_html( sprintf(
+			/* translators: %s: date and time of the check. */
+			__( 'Checked %s', 'harborcache-object-cache-with-redis' ),
+			wp_date( 'M j, H:i:s', (int) $probe['checked_at'] )
+		) ) . '</span></div>';
 
 		$html .= '<p>' . esc_html( (string) $probe['message'] ) . '</p>';
-		$html .= '<ul class="ch-probe-checks">';
-		foreach ( self::checks( $probe ) as $row ) {
-			$html .= '<li class="' . esc_attr( $row['ok'] ? 'is-ok' : 'is-bad' ) . '"><span>' . esc_html( $row['label'] ) . '</span><strong>' . esc_html( $row['value'] ) . '</strong></li>';
+		$html .= '<dl class="ch-probe-details">';
+		foreach ( array(
+			__( 'Client', 'harborcache-object-cache-with-redis' )   => '' !== (string) $probe['client_version'] ? $probe['client_version'] : $client,
+			__( 'Endpoint', 'harborcache-object-cache-with-redis' ) => (string) $probe['host'],
+			__( 'Database', 'harborcache-object-cache-with-redis' ) => (string) (int) $probe['database'],
+			__( 'Redis', 'harborcache-object-cache-with-redis' )    => '' !== (string) $probe['redis_version'] ? $probe['redis_version'] : __( 'unknown', 'harborcache-object-cache-with-redis' ),
+			__( 'Timeout', 'harborcache-object-cache-with-redis' )  => number_format_i18n( (float) ( $probe['timeout'] ?? 0 ), 2 ) . ' s',
+		) as $label => $value ) {
+			$html .= '<div><dt>' . esc_html( $label ) . '</dt><dd>' . esc_html( (string) $value ) . '</dd></div>';
 		}
-		$html .= '</ul>';
+		$html .= '</dl>';
+		$html .= '<p class="ch-probe-flags">' . esc_html__( 'Namespace', 'harborcache-object-cache-with-redis' ) . ': <strong>' . esc_html( $namespace ) . '</strong> · ' . esc_html__( 'Codec', 'harborcache-object-cache-with-redis' ) . ': <strong>' . esc_html( $codec ) . '</strong></p>';
 
-		if ( $ok ) {
-			$html .= '<p>' . esc_html( sprintf(
-				/* translators: 1: client and version, 2: endpoint, 3: database number, 4: Redis version. */
-				__( '%1$s at %2$s, database %3$d, Redis %4$s.', 'harborcache-object-cache-with-redis' ),
-				'' !== (string) $probe['client_version'] ? $probe['client_version'] : $client,
-				$probe['host'],
-				(int) $probe['database'],
-				'' !== (string) $probe['redis_version'] ? $probe['redis_version'] : __( 'unknown', 'harborcache-object-cache-with-redis' )
-			) ) . '</p>';
-		} else {
-			$html .= '<p class="ch-probe-next">' . esc_html__( 'Check that Redis is running, the host and port are reachable, the password or ACL user matches, and this installation owns its cache prefix. Then try again.', 'harborcache-object-cache-with-redis' ) . '</p>';
+		if ( ! $ok ) {
+			$html .= '<p class="ch-probe-next">' . esc_html__( 'Check the endpoint, credentials and prefix ownership, then run the test again.', 'harborcache-object-cache-with-redis' ) . '</p>';
 		}
 
-		$html .= '<p class="ch-probe-meta">' . esc_html( sprintf(
-			/* translators: 1: timeout in seconds, 2: date and time of the check. */
-			__( 'Timeout %1$s s. Checked %2$s.', 'harborcache-object-cache-with-redis' ),
-			number_format_i18n( (float) ( $probe['timeout'] ?? 0 ), 2 ),
-			wp_date( 'M j, H:i:s', (int) $probe['checked_at'] )
-		) ) . '</p></div>';
-
-		return $html;
+		return $html . '</div>';
 	}
 
-	private static function checks( array $probe ) {
-		$namespace = (string) ( $probe['namespace'] ?? 'unknown' );
-		$codec     = (string) ( $probe['codec'] ?? 'unknown' );
-		$labels    = array(
-			'owned'     => __( 'Owned by this installation', 'harborcache-object-cache-with-redis' ),
-			'legacy'    => __( 'Legacy owner (will migrate)', 'harborcache-object-cache-with-redis' ),
+	private static function namespace_label( $state ) {
+		$labels = array(
+			'owned'     => __( 'Owned', 'harborcache-object-cache-with-redis' ),
+			'legacy'    => __( 'Legacy, migrates next request', 'harborcache-object-cache-with-redis' ),
 			'unclaimed' => __( 'Not claimed yet', 'harborcache-object-cache-with-redis' ),
 			'conflict'  => __( 'Owned by another installation', 'harborcache-object-cache-with-redis' ),
 			'unknown'   => __( 'Unknown', 'harborcache-object-cache-with-redis' ),
 		);
-		return array(
-			array(
-				'label' => __( 'Transport', 'harborcache-object-cache-with-redis' ),
-				'value' => ! empty( $probe['transport_ok'] ) ? __( 'Reachable', 'harborcache-object-cache-with-redis' ) : __( 'Unreachable', 'harborcache-object-cache-with-redis' ),
-				'ok'    => ! empty( $probe['transport_ok'] ),
-			),
-			array(
-				'label' => __( 'Namespace', 'harborcache-object-cache-with-redis' ),
-				'value' => ( $labels[ $namespace ] ?? $namespace ) . ( '' !== (string) ( $probe['namespace_fingerprint'] ?? '' ) ? ' · ' . $probe['namespace_fingerprint'] : '' ),
-				'ok'    => in_array( $namespace, array( 'owned', 'legacy', 'unclaimed' ), true ),
-			),
-			array(
-				'label' => __( 'Value codec', 'harborcache-object-cache-with-redis' ),
-				'value' => 'ok' === $codec ? __( 'Round trip passed', 'harborcache-object-cache-with-redis' ) : __( 'Round trip failed', 'harborcache-object-cache-with-redis' ),
-				'ok'    => 'ok' === $codec,
-			),
-		);
+		return $labels[ $state ] ?? $state;
 	}
 }

@@ -238,42 +238,106 @@ final class Console {
 		return Status::explain( $status );
 	}
 
-	private static function readiness_list( array $status ) {
+	private static function health_panel( array $status ) {
+		$config  = Config::load();
+		$ready   = ! empty( $status['ready'] );
+		$loaded  = ! empty( $status['loaded'] );
+		$chip    = $ready ? __( 'Ready', 'harborcache-object-cache-with-redis' ) : self::state_label( $status );
+		$endpoint = 'unix' === ( $config['scheme'] ?? 'tcp' ) ? (string) $config['path'] : $config['host'] . ':' . $config['port'];
+		$client  = (string) ( $status['client'] ?? $config['client'] );
+		$redis   = (string) ( $status['redis'] ?? '' );
 		$namespace = (string) ( $status['namespace'] ?? 'unknown' );
 		$namespace_labels = array(
 			'owned'     => __( 'Owned by this installation', 'harborcache-object-cache-with-redis' ),
-			'legacy'    => __( 'Legacy owner, will migrate', 'harborcache-object-cache-with-redis' ),
+			'legacy'    => __( 'Legacy owner, migrates on the next request', 'harborcache-object-cache-with-redis' ),
 			'unclaimed' => __( 'Not claimed yet', 'harborcache-object-cache-with-redis' ),
 			'conflict'  => __( 'Owned by another installation', 'harborcache-object-cache-with-redis' ),
 			'unknown'   => __( 'Unknown', 'harborcache-object-cache-with-redis' ),
 		);
-		$rows = array(
+		$transport_ok      = 'connected' === ( $status['transport'] ?? '' );
+		$namespace_ok      = in_array( $namespace, array( 'owned', 'legacy', 'unclaimed' ), true );
+		$codec_ok          = 'ok' === ( $status['codec'] ?? '' );
+		$items = array(
 			array(
-				'label' => __( 'Transport', 'harborcache-object-cache-with-redis' ),
-				'value' => 'connected' === ( $status['transport'] ?? '' ) ? __( 'Redis answered', 'harborcache-object-cache-with-redis' ) : __( 'Not reachable', 'harborcache-object-cache-with-redis' ),
-				'ok'    => 'connected' === ( $status['transport'] ?? '' ),
+				'label'   => __( 'Transport', 'harborcache-object-cache-with-redis' ),
+				'value'   => $transport_ok ? __( 'Redis answered', 'harborcache-object-cache-with-redis' ) : ( $loaded ? __( 'Not reachable', 'harborcache-object-cache-with-redis' ) : __( 'Not checked', 'harborcache-object-cache-with-redis' ) ),
+				'detail'  => $loaded ? trim( $client . ( '' !== $redis ? ' · Redis ' . $redis : '' ) . ' · ' . $endpoint, ' ·' ) : __( 'The drop-in is not loaded for this request.', 'harborcache-object-cache-with-redis' ),
+				'ok'      => $transport_ok,
+				'neutral' => ! $loaded,
 			),
 			array(
-				'label' => __( 'Namespace', 'harborcache-object-cache-with-redis' ),
-				'value' => $namespace_labels[ $namespace ] ?? $namespace,
-				'ok'    => in_array( $namespace, array( 'owned', 'legacy', 'unclaimed' ), true ),
+				'label'   => __( 'Namespace', 'harborcache-object-cache-with-redis' ),
+				'value'   => $loaded ? ( $namespace_labels[ $namespace ] ?? $namespace ) : __( 'Not checked', 'harborcache-object-cache-with-redis' ),
+				'detail'  => $loaded ? __( 'The cache prefix is isolated to this installation.', 'harborcache-object-cache-with-redis' ) : __( 'Enable the cache to claim the namespace.', 'harborcache-object-cache-with-redis' ),
+				'ok'      => $loaded && $namespace_ok,
+				'neutral' => ! $loaded || 'unknown' === $namespace,
 			),
 			array(
-				'label' => __( 'Value codec', 'harborcache-object-cache-with-redis' ),
-				'value' => 'ok' === ( $status['codec'] ?? '' ) ? __( 'Round trip passed', 'harborcache-object-cache-with-redis' ) : __( 'Round trip failed', 'harborcache-object-cache-with-redis' ),
-				'ok'    => 'ok' === ( $status['codec'] ?? '' ),
+				'label'   => __( 'Value codec', 'harborcache-object-cache-with-redis' ),
+				'value'   => $loaded ? ( $codec_ok ? __( 'Round trip passed', 'harborcache-object-cache-with-redis' ) : __( 'Round trip failed', 'harborcache-object-cache-with-redis' ) ) : __( 'Not checked', 'harborcache-object-cache-with-redis' ),
+				'detail'  => $config['serializer'] . ' / ' . $config['compression'],
+				'ok'      => $loaded && $codec_ok,
+				'neutral' => ! $loaded || 'unknown' === ( $status['codec'] ?? 'unknown' ),
 			),
 			array(
-				'label' => __( 'Drop-in', 'harborcache-object-cache-with-redis' ),
-				'value' => 'current' === ( $status['dropin'] ?? '' ) ? __( 'Current', 'harborcache-object-cache-with-redis' ) : (string) ( $status['dropin'] ?? 'missing' ),
-				'ok'    => 'current' === ( $status['dropin'] ?? '' ),
+				'label'   => __( 'Drop-in', 'harborcache-object-cache-with-redis' ),
+				'value'   => 'current' === ( $status['dropin'] ?? '' ) ? __( 'Current', 'harborcache-object-cache-with-redis' ) : ucfirst( (string) ( $status['dropin'] ?? 'missing' ) ),
+				'detail'  => __( 'Installed cache engine', 'harborcache-object-cache-with-redis' ) . ( defined( 'HARBORCACHE_VERSION' ) ? ' · ' . HARBORCACHE_VERSION : '' ),
+				'ok'      => 'current' === ( $status['dropin'] ?? '' ),
+				'neutral' => false,
 			),
 		);
-		echo '<ul class="ch-readiness">';
-		foreach ( $rows as $row ) {
-			echo '<li class="' . esc_attr( $row['ok'] ? 'is-ok' : 'is-bad' ) . '"><span>' . esc_html( $row['label'] ) . '</span><strong>' . esc_html( $row['value'] ) . '</strong></li>';
+
+		echo '<section class="ch-panel ch-health"><div class="ch-health-head"><div><h2>' . esc_html__( 'Readiness', 'harborcache-object-cache-with-redis' ) . '</h2><p>' . esc_html( self::state_explanation( $status ) ) . '</p></div><span class="ch-health-chip ' . esc_attr( Status::css_class( $status ) ) . '">' . esc_html( $chip ) . '</span></div>';
+		echo '<ul class="ch-health-grid">';
+		foreach ( $items as $item ) {
+			$item_class = ! empty( $item['neutral'] ) ? 'is-neutral' : ( $item['ok'] ? 'is-ok' : 'is-bad' );
+			echo '<li class="ch-health-item ' . esc_attr( $item_class ) . '"><span class="ch-health-dot" aria-hidden="true"></span><div><span class="ch-health-label">' . esc_html( $item['label'] ) . '</span><strong>' . esc_html( $item['value'] ) . '</strong><small>' . esc_html( $item['detail'] ) . '</small></div></li>';
 		}
-		echo '</ul>';
+		echo '</ul><div class="ch-actions">';
+		if ( 'not-installed' === $status['state'] ) {
+			self::button( 'enable', __( 'Connect to Redis', 'harborcache-object-cache-with-redis' ), true );
+		} elseif ( 'not-loaded' === $status['state'] ) {
+			echo '<a class="button button-primary" href="' . esc_url( self::url( 'overview' ) ) . '">' . esc_html__( 'Reload now', 'harborcache-object-cache-with-redis' ) . '</a>';
+		} elseif ( 'connected' === $status['state'] ) {
+			self::button( 'flush', __( 'Clear cache', 'harborcache-object-cache-with-redis' ), true );
+			self::button( 'self-test', __( 'Run cache self-test', 'harborcache-object-cache-with-redis' ) );
+		} else {
+			if ( 'namespace-conflict' === ( $status['reason'] ?? '' ) ) {
+				self::button( 'reclaim-namespace', __( 'Reclaim namespace', 'harborcache-object-cache-with-redis' ), false, '', __( 'Only reclaim if this installation is the rightful owner and the old site is gone. Other installations sharing this prefix will start reading your cache data.', 'harborcache-object-cache-with-redis' ) );
+			}
+			self::button( 'self-test', __( 'Run cache self-test', 'harborcache-object-cache-with-redis' ) );
+			self::button( 'disable', __( 'Disconnect', 'harborcache-object-cache-with-redis' ) );
+		}
+		echo '</div></section>';
+	}
+
+	private static function probe_section( array $status, $probe, $heading = true ) {
+		if ( $heading ) {
+			echo '<section class="ch-panel ch-probe-panel"><h2>' . esc_html__( 'Last manual test', 'harborcache-object-cache-with-redis' ) . '</h2>';
+		}
+		echo '<div id="ch-probe-result" aria-live="polite">';
+		if ( is_array( $probe ) ) {
+			echo Connection_Check::render( $probe ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The renderer escapes every field.
+			$age = time() - (int) ( $probe['checked_at'] ?? 0 );
+			if ( $age > 600 ) {
+				$age_label = function_exists( 'human_time_diff' ) ? human_time_diff( (int) ( $probe['checked_at'] ?? time() ), time() ) : ( $age . ' s' );
+				echo '<p class="description ch-probe-age">' . esc_html( sprintf(
+					/* translators: %s: human-readable age, for example "18 mins". */
+					__( 'This result is %s old. Run the test again for the saved settings.', 'harborcache-object-cache-with-redis' ),
+					$age_label
+				) ) . '</p>';
+			}
+			if ( ! empty( $status['ready'] ) && isset( $probe['namespace'] ) && 'owned' !== $probe['namespace'] ) {
+				echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The saved connection differs from the live request. Reload this page after saving before you test again.', 'harborcache-object-cache-with-redis' ) . '</p></div>';
+			}
+		} else {
+			echo '<p class="description">' . esc_html__( 'No manual test yet. The test uses the configured timeout, checks namespace ownership and round-trips a value through the active codec.', 'harborcache-object-cache-with-redis' ) . '</p>';
+		}
+		echo '</div>';
+		if ( $heading ) {
+			echo '</section>';
+		}
 	}
 
 	private static function stored_probe() {
@@ -584,7 +648,17 @@ final class Console {
 		echo '</div><p class="description">' . esc_html( self::state_explanation( $status ) ) . '</p>';
 		if ( ! empty( $status['ready'] ) ) {
 			$samples = Core\Metrics::get( null, 100 );
-			self::chart( $samples );
+			echo '<div class="ch-widget-summary">';
+			foreach ( array(
+				'ratio'        => array( __( 'Hit ratio', 'harborcache-object-cache-with-redis' ), '%', 1 ),
+				'milliseconds' => array( __( 'Redis time', 'harborcache-object-cache-with-redis' ), ' ms', 1 ),
+				'calls'        => array( __( 'Commands', 'harborcache-object-cache-with-redis' ), '', 0 ),
+				'entries'      => array( __( 'Runtime entries', 'harborcache-object-cache-with-redis' ), '', 0 ),
+			) as $key => $metric ) {
+				echo '<div><span>' . esc_html( $metric[0] ) . '</span><strong>' . esc_html( number_format_i18n( (float) ( $status[ $key ] ?? 0 ), $metric[2] ) . $metric[1] ) . '</strong></div>';
+			}
+			echo '</div>';
+			self::chart( $samples, true );
 			echo '<details class="ch-request-details"><summary>' . esc_html__( 'Current dashboard request', 'harborcache-object-cache-with-redis' ) . '</summary><div class="ch-table-scroll"><table class="widefat striped"><tbody>';
 			$rows = array(
 				'ratio'        => array( __( 'Hit ratio', 'harborcache-object-cache-with-redis' ), '%', 1 ),
@@ -618,29 +692,30 @@ final class Console {
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( 'Open cache dashboard', 'harborcache-object-cache-with-redis' ) . '</a> · <a href="' . esc_url( self::url( 'analytics' ) ) . '">' . esc_html__( 'View analytics', 'harborcache-object-cache-with-redis' ) . '</a></p>';
 	}
 
-	public static function chart( array $samples ) {
+	public static function chart( array $samples, $compact = false ) {
 		if ( ! $samples ) { return; }
 		$metrics = array(
-			'time' => array( __( 'Time', 'harborcache-object-cache-with-redis' ), __( 'Redis time', 'harborcache-object-cache-with-redis' ), 'ms', 1000 ),
-			'bytes' => array( __( 'Bytes', 'harborcache-object-cache-with-redis' ), __( 'Runtime cache size', 'harborcache-object-cache-with-redis' ), 'KiB', 1 / 1024 ),
-			'ratio' => array( __( 'Ratio', 'harborcache-object-cache-with-redis' ), __( 'Cache hit ratio', 'harborcache-object-cache-with-redis' ), '%', 1 ),
-			'calls' => array( __( 'Calls', 'harborcache-object-cache-with-redis' ), __( 'Cache operations', 'harborcache-object-cache-with-redis' ), '', 1 ),
+			'time'  => array( __( 'Redis time', 'harborcache-object-cache-with-redis' ), __( 'Redis time', 'harborcache-object-cache-with-redis' ), 'ms', 1000 ),
+			'bytes' => array( __( 'Size', 'harborcache-object-cache-with-redis' ), __( 'Runtime size (estimated)', 'harborcache-object-cache-with-redis' ), 'KiB', 1 / 1024 ),
+			'ratio' => array( __( 'Hit ratio', 'harborcache-object-cache-with-redis' ), __( 'Cache hit ratio', 'harborcache-object-cache-with-redis' ), '%', 1 ),
+			'calls' => array( __( 'Commands', 'harborcache-object-cache-with-redis' ), __( 'Cache operations', 'harborcache-object-cache-with-redis' ), '', 1 ),
 		);
 		$first = (int) $samples[0]->timestamp; $last = (int) end( $samples )->timestamp;
 		$id = wp_unique_id( 'ch-chart-' );
-		echo '<section class="ch-chart" aria-label="' . esc_attr__( 'Sampled cache performance', 'harborcache-object-cache-with-redis' ) . '"><div class="ch-chart-toolbar"><div class="ch-chart-controls" role="group" aria-label="' . esc_attr__( 'Chart metric', 'harborcache-object-cache-with-redis' ) . '">';
+		echo '<section class="ch-chart' . ( $compact ? ' is-compact' : '' ) . '" aria-label="' . esc_attr__( 'Sampled cache performance', 'harborcache-object-cache-with-redis' ) . '"><div class="ch-chart-toolbar"><div class="ch-chart-controls" role="group" aria-label="' . esc_attr__( 'Chart metric', 'harborcache-object-cache-with-redis' ) . '">';
 		foreach ( $metrics as $key => $metric ) { echo '<button type="button" data-ch-metric="' . esc_attr( $key ) . '" aria-controls="' . esc_attr( $id . $key ) . '" aria-pressed="' . ( 'time' === $key ? 'true' : 'false' ) . '">' . esc_html( $metric[0] ) . '</button>'; }
 		echo '</div><a href="' . esc_url( self::url( 'connection' ) ) . '">' . esc_html__( 'Settings', 'harborcache-object-cache-with-redis' ) . '</a></div>';
 		foreach ( $metrics as $key => $metric ) {
 			$values = array_map( static function ( $sample ) use ( $key, $metric ) { return max( 0, (float) $sample->$key * $metric[3] ); }, $samples );
 			$peak = max( $values ); $average = array_sum( $values ) / count( $values );
-			$max = 'ratio' === $key ? 100 : max( 1, ceil( $peak * 1.15 / pow( 10, floor( log10( max( 1, $peak ) ) ) ) ) * pow( 10, floor( log10( max( 1, $peak ) ) ) ) );
+			$max = self::axis_max( $peak, 'ratio' === $key );
 			$points = array();
 			foreach ( $samples as $i => $sample ) { $points[] = array( round( 100 + 486 * ( $last > $first ? ( $sample->timestamp - $first ) / ( $last - $first ) : .5 ), 2 ), round( 212 - 176 * min( 1, $values[ $i ] / $max ), 2 ) ); }
 			$line = implode( ' ', array_map( static function ( $point ) { return implode( ',', $point ); }, $points ) );
 			echo '<div id="' . esc_attr( $id . $key ) . '" class="ch-chart-panel" data-ch-panel="' . esc_attr( $key ) . '"' . ( 'time' === $key ? '' : ' hidden' ) . '><svg viewBox="0 0 610 250" data-single="' . ( 1 === count( $samples ) ? 'true' : 'false' ) . '" role="img" aria-labelledby="' . esc_attr( $id . $key . '-title' ) . '"><title id="' . esc_attr( $id . $key . '-title' ) . '">' . esc_html( $metric[1] . ' (' . $metric[2] . ')' ) . '</title>';
 			echo '<text x="100" y="22" text-anchor="start">' . esc_html( $metric[2] ) . '</text>';
-			for ( $tick = 0; $tick <= 4; ++$tick ) { $y = 212 - 44 * $tick; echo '<line class="ch-chart-grid" x1="100" x2="586" y1="' . esc_attr( (string) $y ) . '" y2="' . esc_attr( (string) $y ) . '"/><text x="92" y="' . esc_attr( (string) ( $y + 4 ) ) . '" text-anchor="end">' . esc_html( ( $max * $tick / 4 >= 10000 ? number_format_i18n( $max * $tick / 4000, 0 ) . 'k' : number_format_i18n( $max * $tick / 4, $max < 10 ? 1 : 0 ) ) ) . '</text>'; }
+			$decimals = $max < 4 ? 1 : 0;
+			for ( $tick = 0; $tick <= 5; ++$tick ) { $y = 212 - ( 176 * $tick / 5 ); $value = $max * $tick / 5; $label = $value >= 10000 ? number_format_i18n( $value / 1000, 0 ) . 'k' : number_format_i18n( $value, $decimals ); echo '<line class="ch-chart-grid" x1="100" x2="586" y1="' . esc_attr( (string) $y ) . '" y2="' . esc_attr( (string) $y ) . '"/><text x="92" y="' . esc_attr( (string) ( $y + 4 ) ) . '" text-anchor="end">' . esc_html( $label ) . '</text>'; }
 			echo '<polygon class="ch-chart-area" points="' . esc_attr( $points[0][0] . ',212 ' . $line . ' ' . end( $points )[0] . ',212' ) . '"/><polyline class="ch-chart-line" points="' . esc_attr( $line ) . '"/>';
 			foreach ( $points as $i => $point ) { echo '<circle class="ch-chart-point" cx="' . esc_attr( (string) $point[0] ) . '" cy="' . esc_attr( (string) $point[1] ) . '" r="3"><title>' . esc_html( wp_date( 'H:i:s', $samples[ $i ]->timestamp ) . ': ' . number_format_i18n( $values[ $i ], 2 ) . ' ' . $metric[2] ) . '</title></circle>'; }
 			foreach ( array( 0, .5, 1 ) as $position ) { echo '<text x="' . esc_attr( (string) ( 100 + 486 * $position ) ) . '" y="238" text-anchor="' . ( 0 === $position ? 'start' : ( 1 === $position ? 'end' : 'middle' ) ) . '">' . esc_html( wp_date( 'H:i', (int) ( $first + ( $last - $first ) * $position ) ) ) . '</text>'; }
@@ -653,6 +728,23 @@ final class Console {
 		echo '</tbody></table></div></details>';
 		/* translators: 1: sample count, 2: configured sampling percentage, 3: last sample date and time. */
 		echo '<p class="ch-chart-caption">' . esc_html( sprintf( __( '%1$s recent sampled requests · %2$s%% sampling · Last sample: %3$s · Samples are delayed by one minute. Site timezone.', 'harborcache-object-cache-with-redis' ), number_format_i18n( count( $samples ) ), number_format_i18n( Config::load()['analytics']['sample_rate'], 1 ), wp_date( 'M j, H:i:s', $last ) ) ) . '</p><noscript><p>' . esc_html__( 'Enable JavaScript to switch chart metrics. The Time chart and request details remain available.', 'harborcache-object-cache-with-redis' ) . '</p></noscript></section>';
+	}
+
+	private static function axis_max( $peak, $ratio = false ) {
+		if ( $ratio ) { return 100; }
+		$peak   = max( 0.0, (float) $peak );
+		$step   = self::nice_step( $peak > 0 ? $peak / 5 : 0.2 );
+		return max( $step * 5, $step );
+	}
+
+	private static function nice_step( $value ) {
+		$value = max( (float) $value, 1e-9 );
+		$base  = pow( 10, floor( log10( $value ) ) );
+		$n     = $value / $base;
+		foreach ( array( 1, 2, 2.5, 5, 10 ) as $nice ) {
+			if ( $n <= $nice ) { return $nice * $base; }
+		}
+		return 10 * $base;
 	}
 
 	private static function button( $operation, $label, $primary = false, $group = '', $confirm = '' ) {
@@ -713,32 +805,15 @@ final class Console {
 		echo '</nav><main class="ch-main">';
 
 		if ( 'overview' === $view ) {
-			echo '<section class="ch-panel ch-state-panel"><h2 class="ch-state-title">' . esc_html__( 'Readiness', 'harborcache-object-cache-with-redis' ) . '</h2><p class="ch-state-text">' . esc_html( self::state_explanation( $status ) ) . '</p>';
-			self::readiness_list( $status );
-			if ( $probe ) { echo Connection_Check::render( $probe ); } // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The renderer escapes every field.
+			self::health_panel( $status );
+			if ( $probe ) {
+				self::probe_section( $status, $probe );
+			}
 			$selftest = get_user_meta( get_current_user_id(), '_harborcache_selftest', true );
 			if ( is_array( $selftest ) && time() - (int) ( $selftest['checked_at'] ?? 0 ) < 300 ) {
 				require_once __DIR__ . '/class-self-test.php';
-				echo Self_Test::render( $selftest ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The renderer escapes every field.
+				echo '<section class="ch-panel"><h2>' . esc_html__( 'Last self-test', 'harborcache-object-cache-with-redis' ) . '</h2>' . Self_Test::render( $selftest ) . '</section>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The renderer escapes every field.
 			}
-			echo '<div class="ch-actions">';
-			if ( 'not-installed' === $state ) {
-				self::button( 'enable', __( 'Connect to Redis', 'harborcache-object-cache-with-redis' ), true );
-			} elseif ( 'not-loaded' === $state ) {
-				echo '<a class="button button-primary" href="' . esc_url( self::url( 'overview' ) ) . '">' . esc_html__( 'Reload now', 'harborcache-object-cache-with-redis' ) . '</a>';
-			} elseif ( 'connected' === $state ) {
-				self::button( 'flush', __( 'Clear cache', 'harborcache-object-cache-with-redis' ), true );
-				self::button( 'self-test', __( 'Run cache self-test', 'harborcache-object-cache-with-redis' ) );
-				self::button( 'update', __( 'Update drop-in', 'harborcache-object-cache-with-redis' ) );
-			} else {
-				self::button( 'test-connection', __( 'Test connection', 'harborcache-object-cache-with-redis' ), true );
-				if ( 'namespace-conflict' === ( $status['reason'] ?? '' ) ) {
-					self::button( 'reclaim-namespace', __( 'Reclaim namespace', 'harborcache-object-cache-with-redis' ), false, '', __( 'Only reclaim if this installation is the rightful owner and the old site is gone. Other installations sharing this prefix will start reading your cache data.', 'harborcache-object-cache-with-redis' ) );
-				}
-				self::button( 'self-test', __( 'Run cache self-test', 'harborcache-object-cache-with-redis' ) );
-				self::button( 'disable', __( 'Disconnect', 'harborcache-object-cache-with-redis' ) );
-			}
-			echo '</div></section>';
 
 			if ( 'connected' === $state ) {
 				echo '<div class="ch-metrics">';
@@ -888,16 +963,7 @@ final class Console {
 		if ( ! $status['ready'] ) {
 			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html( self::state_label( $status ) ) . '.</strong> ' . esc_html( self::state_explanation( $status ) ) . '</p></div>';
 		}
-		echo '<h3>' . esc_html__( 'Last manual test', 'harborcache-object-cache-with-redis' ) . '</h3><div id="ch-probe-result" aria-live="polite">';
-		if ( is_array( $probe ) ) {
-			echo Connection_Check::render( $probe ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The renderer escapes every field.
-			if ( ! $status['ready'] ) {
-				echo '<p class="description">' . esc_html__( 'A successful manual test proves Redis and the namespace answer. The live cache still needs the readiness items above.', 'harborcache-object-cache-with-redis' ) . '</p>';
-			}
-		} else {
-			echo '<p class="description">' . esc_html__( 'No manual test yet. Run one below; it checks the configured timeout, namespace ownership and value format.', 'harborcache-object-cache-with-redis' ) . '</p>';
-		}
-		echo '</div>';
+		self::probe_section( $status, $probe );
 		if ( defined( 'WP_REDIS_CLIENT' ) && ! defined( 'HARBORCACHE_CLIENT_FROM_CONFIG' ) ) {
 			echo '<p class="description">' . esc_html__( 'The client is fixed by WP_REDIS_CLIENT in wp-config.php.', 'harborcache-object-cache-with-redis' ) . '</p>';
 		}

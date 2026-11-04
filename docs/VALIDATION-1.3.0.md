@@ -1,6 +1,6 @@
 # HarborCache 1.3.0 validation
 
-Runtime commit: `950db70`. Release archive: `dist/harborcache-1.3.0.zip`, 602 files, SHA256 `260d0656817c6c91fc097af60365f2c3ef3a2619ed3c8249f2a692e086c81337`. The build verifier passed source and ZIP parity. GitHub Actions run [41841805430](https://github.com/shahidirfan100/harborcache/actions/runs/41841805430) passed all fourteen jobs.
+Runtime commit: `950db70`. Release archive: `dist/harborcache-1.3.0.zip`, 602 files, SHA256 `7e9409c8b99c633d23406d94ca59ee2b69b5a0a3e8de3be48c7834b0519b8606`. The build verifier passed source and ZIP parity. GitHub Actions run [41841805430](https://github.com/shahidirfan100/harborcache/actions/runs/41841805430) passed all fourteen jobs.
 
 ## What changed
 

@@ -140,7 +140,7 @@ for (const [file, view] of [
 
 await page.goto(pageUrl('overview'), { waitUntil: 'domcontentloaded' });
 await settle(page);
-const readinessRows = await page.locator('#harborcache .ch-readiness li').count();
+const readinessRows = await page.locator('#harborcache .ch-health-item').count();
 if (4 !== readinessRows) failures.push(`Status readiness expected 4 rows, found ${readinessRows}`);
 const statusText = (await page.locator('#harborcache .ch-status').innerText()).trim();
 if (!statusText) failures.push('Status chip is empty');
