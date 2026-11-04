@@ -1,6 +1,6 @@
 # HarborCache 1.3.0 validation
 
-Runtime commit: `109ed1e`. Release archive: `dist/harborcache-1.3.0.zip`, 602 files, SHA256 `260d0656817c6c91fc097af60365f2c3ef3a2619ed3c8249f2a692e086c81337`. The build verifier passed source and ZIP parity. GitHub Actions run [41839016372](https://github.com/shahidirfan100/harborcache/actions/runs/41839016372) passed all ten jobs.
+Runtime commit: `950db70`. Release archive: `dist/harborcache-1.3.0.zip`, 602 files, SHA256 `260d0656817c6c91fc097af60365f2c3ef3a2619ed3c8249f2a692e086c81337`. The build verifier passed source and ZIP parity. GitHub Actions run [41841805430](https://github.com/shahidirfan100/harborcache/actions/runs/41841805430) passed all fourteen jobs.
 
 ## What changed
 
@@ -10,7 +10,7 @@ The release also loads administration code only for admin, AJAX, cron, CLI, WP-C
 
 ## Linux CI matrix
 
-Run [41839016372](https://github.com/shahidirfan100/harborcache/actions/runs/41839016372) passed all ten jobs: PHP 7.4, 8.2, 8.3, 8.4 and 8.5; Redis 6, 7 and 8; WordPress 6.6 and latest; Predis, PhpRedis and Credis; PHP/igbinary with none/LZF/LZ4/Zstandard; ACL, trusted TLS, rejected certificate and Unix socket; concurrent workers; Redis stop/start; WooCommerce; multisite; PHP-FPM HTTP smoke and restart; Relay default/adaptive; relocated ZIP, Plugin Check and package parity.
+Run [41841805430](https://github.com/shahidirfan100/harborcache/actions/runs/41841805430) passed all fourteen jobs: PHP 7.4, 8.2, 8.3, 8.4 and 8.5; Redis 6, 7 and 8; WordPress 6.6, 6.7, 6.8, 7.0, 7.1 and latest; Predis, PhpRedis and Credis; PHP/igbinary with none/LZF/LZ4/Zstandard; ACL, trusted TLS, rejected certificate and Unix socket; concurrent workers; Redis stop/start; WooCommerce; multisite; PHP-FPM HTTP smoke and restart; Relay default/adaptive; relocated ZIP; and package parity. Plugin Check 2.1.0 on the exact ZIP reported `Success: Checks complete. No errors found.` and the report gate reported no errors or warnings.
 
 ## Interface capture
 
