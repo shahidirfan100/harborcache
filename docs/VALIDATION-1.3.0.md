@@ -1,6 +1,6 @@
 # HarborCache 1.3.0 validation
 
-Runtime commit: `14fd3aa`. Release archive: `dist/harborcache-1.3.0.zip`, 602 files, SHA256 `260d0656817c6c91fc097af60365f2c3ef3a2619ed3c8249f2a692e086c81337`. The build verifier passed source and ZIP parity. GitHub Actions run [41831513936](https://github.com/shahidirfan100/harborcache/actions/runs/41831513936) passed all ten jobs.
+Runtime commit: `71488aa`. Release archive: `dist/harborcache-1.3.0.zip`, 602 files, SHA256 `260d0656817c6c91fc097af60365f2c3ef3a2619ed3c8249f2a692e086c81337`. The build verifier passed source and ZIP parity. GitHub Actions run [41834235680](https://github.com/shahidirfan100/harborcache/actions/runs/41834235680) passed all ten jobs.
 
 ## What changed
 
@@ -10,15 +10,15 @@ The release also loads administration code only for admin, AJAX, cron, CLI, WP-C
 
 ## Linux CI matrix
 
-Run [41831513936](https://github.com/shahidirfan100/harborcache/actions/runs/41831513936) passed all ten jobs: PHP 7.4, 8.2, 8.3, 8.4 and 8.5; Redis 6, 7 and 8; WordPress 6.6 and latest; Predis, PhpRedis and Credis; PHP/igbinary with none/LZF/LZ4/Zstandard; ACL, trusted TLS, rejected certificate and Unix socket; concurrent workers; Redis stop/start; WooCommerce; multisite; PHP-FPM HTTP smoke and restart; Relay default/adaptive; relocated ZIP, Plugin Check and package parity.
+Run [41834235680](https://github.com/shahidirfan100/harborcache/actions/runs/41834235680) passed all ten jobs: PHP 7.4, 8.2, 8.3, 8.4 and 8.5; Redis 6, 7 and 8; WordPress 6.6 and latest; Predis, PhpRedis and Credis; PHP/igbinary with none/LZF/LZ4/Zstandard; ACL, trusted TLS, rejected certificate and Unix socket; concurrent workers; Redis stop/start; WooCommerce; multisite; PHP-FPM HTTP smoke and restart; Relay default/adaptive; relocated ZIP, Plugin Check and package parity.
 
 ## Interface capture
 
-Run [41832984245](https://github.com/shahidirfan100/harborcache/actions/runs/41832984245) captured the five screens and the widget from the exact 1.3.0 ZIP on WordPress 7.1.4, PHP 8.3, PhpRedis 6.3.0 and Redis 7.4.12. The capture reported zero console errors, zero width/size failures and no PHP notices on the served pages. The Status screen now shows the readiness checklist; Settings labels the stored result as “Last manual test” and places Save/Test/Self-test on one action row.
+Run [41834276922](https://github.com/shahidirfan100/harborcache/actions/runs/41834276922) captured the five screens and the widget from the exact 1.3.0 ZIP on WordPress 7.1.4, PHP 8.3, PhpRedis 6.3.0 and Redis 7.4.12. The capture reported zero console errors, zero width/size failures and no PHP notices on the served pages. The Status screen shows the readiness checklist; Settings labels the stored result as “Last manual test” and places Save, Test and Self-test on one action row at 1440px and stacks them cleanly at 375px.
 
 ## Equal-workload comparison
 
-Artifact `linux-performance-applications`, 30 rotating blocks per engine, full-plugin and engine lanes, native PhpRedis, PHP 8.3.36, WordPress 7.1.4. Median paired changes against Redis Object Cache 3.0.0:
+Artifact `linux-performance-applications` from run [41831513936](https://github.com/shahidirfan100/harborcache/actions/runs/41831513936), 30 rotating blocks per engine, full-plugin and engine lanes, native PhpRedis, PHP 8.3.36, WordPress 7.1.4. Median paired changes against Redis Object Cache 3.0.0:
 
 | Measurement | Full plugin | Engine only |
 | --- | ---: | ---: |
