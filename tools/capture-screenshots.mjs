@@ -96,6 +96,13 @@ async function capture(page, { file, view, url, selector, minWidth }) {
   const destination = path.join(out, file);
   await target.screenshot({ path: destination, animations: 'disabled' });
   const size = await pngSize(destination);
+  const layout = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+  }));
+  if (layout.document > layout.viewport + 1) {
+    failures.push(`${file} overflows horizontally at ${layout.viewport}px (${layout.document}px document)`);
+  }
   captures.push({ file, view, url, selector: selector || 'page', minWidth, ...size, viewport: page.viewportSize() });
 }
 
@@ -130,6 +137,18 @@ for (const [file, view] of [
   await settle(page);
   await capture(page, { file, view, url: pageUrl(view), selector: '#harborcache', minWidth: 1000 });
 }
+
+await page.goto(pageUrl('overview'), { waitUntil: 'domcontentloaded' });
+await settle(page);
+const readinessRows = await page.locator('#harborcache .ch-readiness li').count();
+if (4 !== readinessRows) failures.push(`Status readiness expected 4 rows, found ${readinessRows}`);
+const statusText = (await page.locator('#harborcache .ch-status').innerText()).trim();
+if (!statusText) failures.push('Status chip is empty');
+
+await page.goto(pageUrl('connection'), { waitUntil: 'domcontentloaded' });
+await settle(page);
+const actionButtons = await page.locator('#harborcache .ch-settings-actions button').count();
+if (actionButtons < 3) failures.push(`Settings expected 3 action buttons, found ${actionButtons}`);
 
 // The raw report screenshot shows the expanded Report panel from Diagnostics.
 await page.goto(pageUrl('diagnostics'), { waitUntil: 'domcontentloaded' });
