@@ -59,14 +59,22 @@ final class Codec {
 		if ( ! is_string( $data ) ) {
 			throw new \RuntimeException( 'Value decoding failed.' );
 		}
-		// Suppression avoids installing and restoring an error handler for every
-		// cached value. A false result is only valid for a serialized boolean false.
-		$value = 'php' === $this->serializer
-			? @unserialize( $data ) // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize, WordPress.PHP.NoSilencedErrors.Discouraged
-			: @igbinary_unserialize( $data ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-		if ( false === $value && 'b:0;' !== $data ) {
-			throw new \RuntimeException( 'Corrupt serialized cache value.' );
+		if ( 'php' === $this->serializer ) {
+			// Suppression avoids installing and restoring an error handler for
+			// every value. A false result is only valid for serialized false.
+			$value = @unserialize( $data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize, WordPress.PHP.NoSilencedErrors.Discouraged
+			if ( false === $value && 'b:0;' !== $data ) {
+				throw new \RuntimeException( 'Corrupt serialized cache value.' );
+			}
+			return $value;
 		}
-		return $value;
+		// igbinary uses a binary envelope where false is a valid value; keep the
+		// warning handler so corrupt payloads still fail as exceptions.
+		set_error_handler( $this->decode_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
+		try {
+			return igbinary_unserialize( $data );
+		} finally {
+			restore_error_handler();
+		}
 	}
 }

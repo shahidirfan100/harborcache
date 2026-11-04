@@ -1,6 +1,6 @@
 # HarborCache 1.3.0 validation
 
-Runtime commit: pending the CI run recorded in the pull request. Release archive: `dist/harborcache-1.3.0.zip`, 602 files, SHA256 `7bd7c8060e45676310ae7f823c622fb25b00cbb38e83e277197172e742c42579`. The build verifier passed source and ZIP parity.
+Runtime commit: pending the CI run recorded in the pull request. Release archive: `dist/harborcache-1.3.0.zip`, 602 files, SHA256 `d07a638925ddae8cab6802c4fd2590a98aacf541d9b62c5bda18ca24583dbe0f`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
