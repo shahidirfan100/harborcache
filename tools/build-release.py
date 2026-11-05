@@ -46,6 +46,14 @@ def main():
     for required in ["harborcache.php", "readme.txt", "LICENSE.md", "vendor/predis/predis/LICENSE", "vendor/colinmollenhour/credis/LICENSE", "includes/ch-paths.php", "includes/ch-namespace.php"]:
         assert required in names, f"Missing runtime or license file: {required}"
     assert not any(rel.endswith(".markdown") or rel.startswith(("tests/", "tools/", "media/", "dist/", ".git")) or re.search(r"docs/(NAME-REVIEW|RELEASE-|VALIDATION-|COMPARISON-)", rel) for rel in names)
+    # Keep the installable plugin free of another commercial product's identity.
+    forbidden = (b"objectcache.pro", b"Object Cache Pro", b"RedisCachePro")
+    for path, rel in included:
+        if path.suffix.lower() not in {".php", ".js", ".css", ".txt", ".md", ".json", ".xml", ".svg"}:
+            continue
+        body = path.read_bytes()
+        for token in forbidden:
+            assert token not in body, f"Competitor reference in shipped file: {rel}"
     # Prevent silent deletion of the readable source corresponding to runtime libraries.
     assert "vendor/predis/predis/src/Client.php" in names
     if args.check:

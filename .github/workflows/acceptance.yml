@@ -52,7 +52,8 @@ jobs:
           wp config set WP_DEBUG_DISPLAY false --raw --path="$WP_ROOT"
           wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
           wp core install --path="$WP_ROOT" --url=http://localhost --title='HarborCache review' --admin_user=ci --admin_password=ci-disposable-only --admin_email=ci@example.org --skip-email
-          unzip -q dist/harborcache-*.zip -d "$HC_EXTENSIONS"
+          HC_ZIP="$(ls -1 dist/harborcache-*.zip | sort -V | tail -n1)"
+          unzip -q "$HC_ZIP" -d "$HC_EXTENSIONS"
           wp plugin activate harborcache-object-cache-with-redis --path="$WP_ROOT"
           wp plugin install plugin-check --activate --path="$WP_ROOT"
           wp plugin check harborcache-object-cache-with-redis --slug=harborcache-object-cache-with-redis --format=json --require="$HC_EXTENSIONS/plugin-check/cli.php" --path="$WP_ROOT" | tee evidence/plugin-check.json
@@ -90,6 +91,18 @@ jobs:
             redis: '6'
           - php: '8.3'
             redis: '8'
+          - php: '8.3'
+            redis: '7'
+            wp: '6.7'
+          - php: '8.3'
+            redis: '7'
+            wp: '6.8'
+          - php: '8.3'
+            redis: '7'
+            wp: '7.0'
+          - php: '8.3'
+            redis: '7'
+            wp: '7.1'
     services:
       mysql:
         image: mysql:8.0
@@ -121,6 +134,12 @@ jobs:
           php tests/dropin-writer.php
           php tests/review-regressions.php
           php tests/safety-regressions.php
+          php tests/status-matrix.php
+          php tests/query-pruning.php
+          php tests/probe-parity.php
+          php tests/probe-topology.php
+          php tests/config-parity.php
+          php tests/capability.php
           php tests/metrics-failure.php
           python3 tools/build-release.py --check
           php tests/conflict-notice.php
@@ -222,6 +241,11 @@ jobs:
           php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           export HC_TEST_CONFIG='{"client":"phpredis"}'
           php tests/acceptance.php recovery | tee evidence/lifecycle-recovery.txt
+      - name: Uninstall cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          HC_UNINSTALL_FILE="$WP_ROOT/wp-content/plugins/harborcache/uninstall.php" wp eval-file tests/uninstall.php --path="$WP_ROOT" | tee evidence/uninstall.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

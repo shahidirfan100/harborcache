@@ -48,6 +48,17 @@ final class Config {
 		return $options;
 	}
 
+	/** A host typed in Settings replaces a saved socket instead of keeping the stale unix path. */
+	public static function apply_host( array $config, $host ) {
+		if ( ! is_string( $host ) || '' === $host ) { return $config; }
+		$config['host'] = $host;
+		if ( 'unix' === ( $config['scheme'] ?? 'tcp' ) && 0 !== strpos( $host, '/' ) && ! preg_match( '#^(tcp|tls)://#', $host ) ) {
+			$config['scheme'] = 'tcp';
+			$config['path']   = '';
+		}
+		return $config;
+	}
+
 	public static function load( $refresh = false ) {
 		if ( ! $refresh && null !== self::$loaded ) { return self::$loaded; }
 		$input = defined( 'HARBORCACHE_CONFIG' ) ? HARBORCACHE_CONFIG : array();
@@ -98,7 +109,16 @@ final class Config {
 		}
 		if ( is_string( $config['host'] ) && 0 === strpos( $config['host'], '/' ) ) { $config['scheme'] = 'unix'; $config['path'] = $config['host']; }
 		elseif ( is_string( $config['host'] ) && preg_match( '#^(tcp|tls)://([^/]+)$#D', $config['host'], $parts ) ) { $config['scheme'] = $parts[1]; $config['host'] = $parts[2]; }
-		if ( $legacy_overrides ) { foreach ( array( 'host', 'port', 'database', 'client', 'username', 'password', 'timeout', 'read_timeout', 'persistent', 'maxttl' ) as $legacy ) { if ( defined( 'WP_REDIS_' . strtoupper( $legacy ) ) ) { $config[ $legacy ] = constant( 'WP_REDIS_' . strtoupper( $legacy ) ); } } }
+		if ( $legacy_overrides ) {
+			foreach ( array( 'host', 'port', 'scheme', 'path', 'database', 'client', 'username', 'password', 'timeout', 'read_timeout', 'persistent', 'maxttl' ) as $legacy ) { if ( defined( 'WP_REDIS_' . strtoupper( $legacy ) ) ) { $config[ $legacy ] = constant( 'WP_REDIS_' . strtoupper( $legacy ) ); } }
+			// Topology constants are the upstream connection API; they win over a stale saved file.
+			if ( defined( 'WP_REDIS_CLUSTER' ) ) { $config['cluster'] = is_array( WP_REDIS_CLUSTER ) ? WP_REDIS_CLUSTER : array( WP_REDIS_CLUSTER ); $config['servers'] = array(); $config['sentinels'] = array(); $config['service'] = ''; }
+			if ( defined( 'WP_REDIS_SERVERS' ) ) {
+				$servers = is_array( WP_REDIS_SERVERS ) ? WP_REDIS_SERVERS : array( WP_REDIS_SERVERS ); $config['cluster'] = array();
+				if ( defined( 'WP_REDIS_SENTINEL' ) ) { $config['sentinels'] = $servers; $config['service'] = (string) WP_REDIS_SENTINEL; }
+				else { $config['servers'] = $servers; $config['sentinels'] = array(); $config['service'] = ''; }
+			}
+		}
 		if ( is_string( $config['host'] ) && 0 === strpos( $config['host'], '/' ) ) { $config['scheme'] = 'unix'; $config['path'] = $config['host']; }
 		elseif ( is_string( $config['host'] ) && preg_match( '#^(tcp|tls)://([^/]+)$#D', $config['host'], $parts ) ) { $config['scheme'] = $parts[1]; $config['host'] = $parts[2]; }
 		$config['analytics'] = array_replace( self::defaults()['analytics'], (array) $config['analytics'] );

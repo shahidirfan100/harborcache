@@ -96,6 +96,13 @@ async function capture(page, { file, view, url, selector, minWidth }) {
   const destination = path.join(out, file);
   await target.screenshot({ path: destination, animations: 'disabled' });
   const size = await pngSize(destination);
+  const layout = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+  }));
+  if (layout.document > layout.viewport + 1) {
+    failures.push(`${file} overflows horizontally at ${layout.viewport}px (${layout.document}px document)`);
+  }
   captures.push({ file, view, url, selector: selector || 'page', minWidth, ...size, viewport: page.viewportSize() });
 }
 
@@ -131,6 +138,18 @@ for (const [file, view] of [
   await capture(page, { file, view, url: pageUrl(view), selector: '#harborcache', minWidth: 1000 });
 }
 
+await page.goto(pageUrl('overview'), { waitUntil: 'domcontentloaded' });
+await settle(page);
+const readinessRows = await page.locator('#harborcache .ch-health-item').count();
+if (4 !== readinessRows) failures.push(`Status readiness expected 4 rows, found ${readinessRows}`);
+const statusText = (await page.locator('#harborcache .ch-status').innerText()).trim();
+if (!statusText) failures.push('Status chip is empty');
+
+await page.goto(pageUrl('connection'), { waitUntil: 'domcontentloaded' });
+await settle(page);
+const actionButtons = await page.locator('#harborcache .ch-settings-actions button').count();
+if (actionButtons < 3) failures.push(`Settings expected 3 action buttons, found ${actionButtons}`);
+
 // The raw report screenshot shows the expanded Report panel from Diagnostics.
 await page.goto(pageUrl('diagnostics'), { waitUntil: 'domcontentloaded' });
 await settle(page);
@@ -164,6 +183,34 @@ await settle(mobilePage);
 await mobilePage.locator('#harborcache_status').scrollIntoViewIfNeeded();
 await settle(mobilePage);
 await capture(mobilePage, { file: 'screenshot-widget-mobile.png', view: 'dashboard widget', url: `${admin}/index.php`, selector: '#harborcache_status', minWidth: 300 });
+
+// Exercise the two connection actions after the captures. These are the
+// controls an operator uses when the dashboard reports a problem.
+await mobilePage.goto(pageUrl('connection'), { waitUntil: 'domcontentloaded' });
+await settle(mobilePage);
+await mobilePage.locator('#ch-test-form button[type="submit"]').click();
+await mobilePage.locator('#ch-probe-result .ch-probe').waitFor({ state: 'visible' });
+const probeText = (await mobilePage.locator('#ch-probe-result .ch-probe').innerText()).trim();
+if (!/connected|not ready|not connected/i.test(probeText)) failures.push('Test saved connection did not render a result');
+
+await mobilePage.getByRole('button', { name: 'Run cache self-test' }).click();
+await mobilePage.waitForURL(/view=overview/, { timeout: 15000 });
+const noticeText = (await mobilePage.locator('#harborcache .notice').first().innerText()).trim();
+if (!/self-test/i.test(noticeText)) failures.push('Cache self-test did not report a result');
+
+await mobilePage.goto(pageUrl('overview'), { waitUntil: 'domcontentloaded' });
+await settle(mobilePage);
+const focusTrail = [];
+for (let index = 0; index < 8; index++) {
+  await mobilePage.keyboard.press('Tab');
+  focusTrail.push(await mobilePage.evaluate(() => ({
+    tag: document.activeElement?.tagName || '',
+    label: (document.activeElement?.innerText || document.activeElement?.getAttribute('aria-label') || '').trim().slice(0, 40),
+  })));
+}
+if (!focusTrail.some((item) => ['A', 'BUTTON', 'INPUT', 'SELECT'].includes(item.tag))) {
+  failures.push('Keyboard focus did not reach an interactive control');
+}
 
 await mobile.context.close();
 await browser.close();

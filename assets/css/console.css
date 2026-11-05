@@ -15,6 +15,34 @@
 #harborcache .ch-status { border: 1px solid #806325; background: #fff5da; color: #624810; }
 #harborcache .ch-status::before { content: ""; width: 8px; height: 8px; background: currentColor; border-radius: 50%; margin-right: 8px; flex: none; }
 #harborcache .ch-status.is-connected { color: #064e42; border-color: #4b8375; background: #e9f5f0; }
+#harborcache .ch-status.is-degraded { color: #624810; border-color: #806325; background: #fff5da; }
+#harborcache .ch-health { padding: 20px 24px; }
+#harborcache .ch-health-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+#harborcache .ch-health-head h2 { margin: 0 0 4px; font-size: 20px; line-height: 1.3; }
+#harborcache .ch-health-head p { margin: 0; max-width: 70ch; color: var(--ch-muted); }
+#harborcache .ch-health-chip { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 4px 12px; border: 1px solid #806325; background: #fff5da; color: #624810; font-size: 14px; font-weight: 600; white-space: nowrap; }
+#harborcache .ch-health-chip::before { content: ""; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: currentColor; }
+#harborcache .ch-health-chip.is-connected { border-color: #4b8375; background: #e9f5f0; color: #064e42; }
+#harborcache .ch-health-chip.is-degraded { border-color: #806325; background: #fff5da; color: #624810; }
+#harborcache .ch-health-grid { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--ch-border); border: 1px solid var(--ch-border); }
+#harborcache .ch-health-item { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; background: #fff; }
+#harborcache .ch-health-dot { flex: none; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: #a34b12; }
+#harborcache .ch-health-item.is-ok .ch-health-dot { background: var(--ch-accent); }
+#harborcache .ch-health-item.is-neutral .ch-health-dot { background: #8c9a9a; }
+#harborcache .ch-health-item.is-neutral strong { color: var(--ch-ink); }
+#harborcache .ch-health-label { display: block; color: var(--ch-muted); font-size: 13px; line-height: 1.4; }
+#harborcache .ch-health-item strong { display: block; font-size: 16px; line-height: 1.4; }
+#harborcache .ch-health-item small { display: block; color: var(--ch-muted); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+#harborcache .ch-health-item.is-bad strong { color: #8a3b12; }
+#harborcache .ch-probe-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+#harborcache .ch-probe-head strong { font-size: 18px; }
+#harborcache .ch-probe-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 12px 0; background: rgba(0,0,0,.08); border: 1px solid rgba(0,0,0,.08); }
+#harborcache .ch-probe-details div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 10px; background: #fff; }
+#harborcache .ch-probe-details dt { color: var(--ch-muted); }
+#harborcache .ch-probe-details dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+#harborcache .ch-probe-flags { font-size: 14px; }
+#harborcache .ch-probe-age { margin-top: 8px; }
+#harborcache .ch-test-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0; }
 #harborcache .ch-tabs { display: flex; flex-wrap: wrap; margin: 16px 0 0; border-bottom: 1px solid var(--ch-border); }
 #harborcache .ch-tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; color: var(--ch-muted); text-decoration: none; border-bottom: 3px solid transparent; font-size: 16px; }
 #harborcache .ch-tabs a[aria-current=page] { color: var(--ch-accent); border-bottom-color: var(--ch-accent); font-weight: 600; }
@@ -36,6 +64,7 @@
 #harborcache .ch-probe { border: 1px solid var(--ch-border); background: #f7fbfa; padding: 14px 16px; margin: 16px 0; }
 #harborcache .ch-probe.is-connected { border-color: #4b8375; background: #e9f5f0; color: #064e42; }
 #harborcache .ch-probe.is-failed { border-color: #806325; background: #fff5da; color: #624810; }
+#harborcache .ch-probe.is-degraded { border-color: #806325; background: #fffaf0; color: #624810; }
 #harborcache .ch-probe strong { display: block; font-size: 18px; line-height: 1.4; }
 #harborcache .ch-probe p { margin: 6px 0 0; font-size: 15px; line-height: 1.55; }
 #harborcache .ch-probe-meta { color: var(--ch-muted); font-size: 13px; }
@@ -45,7 +74,7 @@
 #harborcache .ch-advanced > .ch-form-grid { padding: 0 20px; margin-top: 20px; }
 #harborcache .ch-advanced > fieldset.ch-settings-section { margin: 20px; }
 #harborcache .ch-test-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; padding: 0 24px; }
-#harborcache .ch-settings > .ch-actions { padding: 0 24px; }
+#harborcache .ch-settings > .ch-actions, #harborcache .ch-settings-actions { padding: 0 24px; }
 #harborcache .ch-test-status { color: var(--ch-muted); font-size: 15px; }
 #harborcache .ch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
 #harborcache .ch-action { display: inline-block; margin: 0; vertical-align: middle; }
@@ -94,11 +123,14 @@
   #harborcache .ch-metrics > div { border-bottom: 0; border-right: 1px solid var(--ch-border); }
   #harborcache .ch-details { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
 }
+@media (max-width: 782px) {
+  #harborcache .ch-health-grid, #harborcache .ch-probe-details { grid-template-columns: 1fr; }
+}
 @media (max-width: 430px) {
   #harborcache .ch-identity img { width: 32px; height: 32px; }
   #harborcache .ch-tabs a { padding: 0 10px; }
   #harborcache .ch-panel, #harborcache .ch-settings-section, #harborcache .ch-settings fieldset.ch-settings-section { padding: 16px; }
-  #harborcache .ch-settings > .ch-actions, #harborcache .ch-test-form { padding: 0 16px; }
+  #harborcache .ch-settings > .ch-actions, #harborcache .ch-settings-actions, #harborcache .ch-test-form { padding: 0 16px; }
   #harborcache .ch-details > div { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {

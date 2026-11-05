@@ -38,7 +38,7 @@ echo $this->before_non_tabular_output();
 
     <section>
         <h3><?php esc_html_e( 'Size', 'harborcache-object-cache-with-redis' ); ?></h3>
-        <p class="qm-ltr"><code><?php echo esc_html( size_format( $data['bytes'], 2 ) ); ?></code></p>
+        <p class="qm-ltr"><code><?php echo esc_html( size_format( (int) ( $data['bytes'] ?? 0 ), 2 ) ); ?></code></p>
     </section>
 
 </div>

@@ -18,6 +18,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	use HarborCache_Topology;
 	use HarborCache_Operations;
 	use HarborCache_Relay_Options;
+	// shortcut: above 1000 distinct groups, discovery and epoch metadata evict an arbitrary group; old values stay TTL-bound. Move to per-group expiring token keys if dynamic group names are expected.
+	const CH_GROUP_CAP = 1000;
 	public $ch_config;
 	// Also declare counters here so an older owned drop-in can load the upgraded plugin until refresh.
 	public $runtime_hits = 0;
@@ -50,6 +52,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_ignored_patterns = array();
 	private $ch_ignored_results = array();
 	public $ch_retries = 0;
+	public $ch_transport_ok = false;
+	private $ch_codec_ok = true;
 	private $ch_failure_reason = '';
 	private $ch_contexts = array();
 	private $ch_context_blog;
@@ -60,8 +64,9 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$this->ch_config = \HarborCache\Config::load();
 		$codec_error = null;
 		try { $this->ch_codec = new \HarborCache\Codec( $this->ch_config ); }
-		catch ( Throwable $error ) { $codec_error = $error; $this->ch_codec = new \HarborCache\Codec( array( 'serializer' => 'php', 'compression' => 'none' ) ); }
+		catch ( Throwable $error ) { $codec_error = $error; $this->ch_codec_ok = false; $this->ch_codec = new \HarborCache\Codec( array( 'serializer' => 'php', 'compression' => 'none' ) ); }
 		parent::__construct( true );
+		$this->ch_transport_ok = (bool) $this->redis_status();
 		if ( $codec_error ) { $this->handle_exception( $codec_error ); }
 		$this->ch_base = WP_REDIS_PREFIX . 'meta';
 		if ( $this->redis_status() ) {
@@ -88,12 +93,17 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$this->ch_ready = false;
 		$conflict = $exception instanceof \HarborCache\Prefix_Conflict;
 		$this->ch_failure_reason = $conflict ? 'prefix-conflict' : 'backend-unavailable';
+		// A namespace conflict is not a transport failure. Remember that Redis answered
+		// so the dashboard can report "Namespace conflict" instead of "Not connected".
+		$this->ch_transport_ok = $conflict ? true : (bool) $this->redis_status();
 		$message = $conflict ? 'Cache prefix belongs to another installation. Configure a distinct prefix or restore this installation identity.' : 'HarborCache backend unavailable. Check connection settings and Redis service.';
 		// Discard native sockets with potentially unread replies before a persistent pool can reuse them.
 		if ( $this->redis instanceof \Redis || $this->redis instanceof \RedisCluster || $this->redis instanceof \Relay\Relay || $this->redis instanceof \Relay\Cluster ) {
 			try { $this->redis->close(); } catch ( Throwable $ignored ) {}
 		}
-		if ( 'debug' === $this->ch_config['failure_mode'] || ( $this->ch_initializing && 'strict' === $this->ch_config['failure_mode'] ) ) {
+		// Only explicit debug mode may terminate the request. Strict ownership still
+		// falls back to request memory so a stale owner can never take down the site.
+		if ( 'debug' === $this->ch_config['failure_mode'] ) {
 			if ( $conflict ) { throw new RuntimeException( 'Cache prefix belongs to another installation. Configure a distinct prefix or restore this installation identity.' ); }
 			throw new RuntimeException( 'HarborCache backend unavailable. Check connection settings and Redis service.' );
 		}
@@ -291,8 +301,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			return $value;
 		}
 		$candidate = bin2hex( random_bytes( 12 ) );
-		$script    = "local v=redis.call('HGET',KEYS[1],ARGV[1]); if not v then redis.call('HSET',KEYS[1],ARGV[1],ARGV[2]); redis.call('EXPIRE',KEYS[1],ARGV[3]); v=ARGV[2] end; return v";
-		$value     = $this->ch_command( array( 'EVAL', $script, 1, $this->ch_epochs_key, $field, $candidate, $this->ch_config['maxttl'] * 2 ) );
+		$script    = "local v=redis.call('HGET',KEYS[1],ARGV[1]); if not v then redis.call('HSET',KEYS[1],ARGV[1],ARGV[2]); redis.call('EXPIRE',KEYS[1],ARGV[3]); v=ARGV[2]; local n=redis.call('HLEN',KEYS[1]); local cap=tonumber(ARGV[4]); if n>cap then local fields=redis.call('HKEYS',KEYS[1]); for i=1,n-cap do redis.call('HDEL',KEYS[1],fields[i]) end end end; return v";
+		$value     = $this->ch_command( array( 'EVAL', $script, 1, $this->ch_epochs_key, $field, $candidate, $this->ch_config['maxttl'] * 2, self::CH_GROUP_CAP ) );
 		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { $value = $this->ch_command( array( 'HGET', $this->ch_epochs_key, $field ) ); }
 		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { throw new RuntimeException( 'Cache namespace metadata is invalid.' ); }
 		$this->ch_epochs[ $field ] = $value;
@@ -320,36 +330,25 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	}
 
 	private function ch_register_group( $scope, $group_key, $group ) {
+		// A read of a group creates only its epoch field. The first write registers it and refreshes metadata TTLs.
+		if ( ! $this->ch_writing ) { return; }
 		$registry = $this->ch_base . ':' . $this->ch_root . ':groups';
 		$member   = $this->ch_scope( $group ) . '|' . rawurlencode( $group );
-		$this->ch_registry_load();
-		$this->ch_epochs_load();
-		$known = isset( $this->ch_registry[ $member ] ) && isset( $this->ch_epochs[ $member ] );
-		if ( $known && ! $this->ch_writing ) { return; }
+		if ( isset( $this->ch_touched[ $member ] ) ) { return; }
+		$this->ch_touched[ $member ] = true;
 		$expiry = $this->ch_config['maxttl'] * 2;
-		if ( $known ) {
-			if ( isset( $this->ch_touched[ $member ] ) ) { return; }
-			$this->ch_touched[ $member ] = true;
-			$keys = array( $scope . ':epoch', $group_key . ':epoch', $registry, $this->ch_epochs_key );
-			if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
-				$script = "for i=1,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[1]) end; return 1";
-				$this->ch_command( array_merge( array( 'EVAL', $script, count( $keys ) ), $keys, array( $expiry ) ) );
-			} else {
-				foreach ( $keys as $key ) { $this->ch_command( array( 'EXPIRE', $key, $expiry ) ); }
-			}
-			return;
-		}
-		// A read of a group with no registry entry creates only its epoch field. The first write registers it.
-		if ( ! $this->ch_writing ) { return; }
+		$keys   = array( $registry, $scope . ':epoch', $group_key . ':epoch', $this->ch_epochs_key );
 		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
-			$script = "redis.call('SADD',KEYS[1],ARGV[1]); for i=2,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[2]) end; return 1";
-			$this->ch_command( array_merge( array( 'EVAL', $script, 4, $registry, $scope . ':epoch', $group_key . ':epoch', $this->ch_epochs_key, $member, $expiry ) ) );
+			$script = "redis.call('SADD',KEYS[1],ARGV[1]); local n=redis.call('SCARD',KEYS[1]); if n>tonumber(ARGV[3]) then redis.call('SPOP',KEYS[1],n-tonumber(ARGV[3])) end; for i=2,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[2]) end; return 1";
+			$this->ch_command( array_merge( array( 'EVAL', $script, count( $keys ) ), $keys, array( $member, $expiry, self::CH_GROUP_CAP ) ) );
 		} else {
-			$this->ch_command( array( 'SADD', $registry, $member ) );
-			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $registry, $this->ch_epochs_key ) as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $expiry ) ); }
+			if ( $this->ch_command( array( 'SADD', $registry, $member ) ) ) {
+				$count = (int) $this->ch_command( array( 'SCARD', $registry ) );
+				if ( $count > self::CH_GROUP_CAP ) { $this->ch_command( array( 'SPOP', $registry, $count - self::CH_GROUP_CAP ) ); }
+			}
+			foreach ( $keys as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $expiry ) ); }
 		}
 		$this->ch_registry[ $member ] = true;
-		$this->ch_touched[ $member ] = true;
 	}
 
 	public function add_global_groups( $groups ) {
@@ -527,7 +526,11 @@ if not cmp(ARGV[2],r) then return {0} end
 local t=redis.call('PTTL',KEYS[1]); redis.call('SET',KEYS[1],'N'..r); if t>0 then redis.call('PEXPIRE',KEYS[1],t) end; return {1,r}
 LUA;
 			$value = $this->ch_command( array( 'EVAL', $script, 1, $this->build_key( $key, $group ), (string) (int) $offset, (string) PHP_INT_MAX ) );
-			unset( $this->cache[ $this->build_key( $key, $group ) ] );
+			$derived = $this->build_key( $key, $group );
+			if ( array_key_exists( $derived, $this->cache ) ) {
+				$this->runtime_bytes -= $this->estimate_bytes( $this->cache[ $derived ] );
+				unset( $this->cache[ $derived ] );
+			}
 			return is_array( $value ) && 1 === (int) ( $value[0] ?? 0 ) && isset( $value[1] ) ? (int) $value[1] : false;
 		} catch ( Throwable $error ) { $this->handle_exception( $error ); return false; }
 		finally { $this->ch_writing = $previous; }
@@ -584,7 +587,8 @@ LUA;
 
 	public function ch_diagnostics( $with_bytes = true ) {
 		$info = $this->info( $with_bytes );
-		return array( 'connected' => $this->redis_status(), 'ready' => $this->ch_ready, 'reason' => $this->ch_ready ? '' : ( $this->ch_failure_reason ?: 'backend-unavailable' ), 'client' => $info->meta['Client'], 'redis' => $this->redis_version(), 'runtime_hits' => $this->runtime_hits, 'store_hits' => $this->store_hits, 'store_misses' => $this->store_misses, 'store_ratio' => $this->store_hits + $this->store_misses > 0 ? round( 100 * $this->store_hits / ( $this->store_hits + $this->store_misses ), 1 ) : null, 'hits' => $info->hits, 'misses' => $info->misses, 'ratio' => $info->ratio, 'calls' => $info->calls, 'milliseconds' => round( $info->time * 1000, 3 ), 'entries' => count( $this->cache ), 'bytes' => $info->bytes, 'serializer' => $this->ch_config['serializer'], 'compression' => $this->ch_config['compression'], 'max_ttl' => $this->ch_config['maxttl'] );
+		$namespace = $this->ch_ready ? 'owned' : ( 'prefix-conflict' === $this->ch_failure_reason ? 'conflict' : 'unknown' );
+		return array( 'connected' => $this->redis_status(), 'transport_ok' => (bool) $this->ch_transport_ok, 'ready' => $this->ch_ready, 'namespace' => $namespace, 'codec' => $this->ch_codec_ok ? 'ok' : 'error', 'reason' => $this->ch_ready ? '' : ( $this->ch_failure_reason ?: 'backend-unavailable' ), 'client' => $info->meta['Client'], 'redis' => $this->redis_version(), 'runtime_hits' => $this->runtime_hits, 'store_hits' => $this->store_hits, 'store_misses' => $this->store_misses, 'store_ratio' => $this->store_hits + $this->store_misses > 0 ? round( 100 * $this->store_hits / ( $this->store_hits + $this->store_misses ), 1 ) : null, 'hits' => $info->hits, 'misses' => $info->misses, 'ratio' => $info->ratio, 'calls' => $info->calls, 'milliseconds' => round( $info->time * 1000, 3 ), 'entries' => count( $this->cache ), 'bytes' => $info->bytes, 'bytes_estimate' => $info->bytes_estimate, 'serializer' => $this->ch_config['serializer'], 'compression' => $this->ch_config['compression'], 'max_ttl' => $this->ch_config['maxttl'] );
 	}
 
 	public function storage_summary() {

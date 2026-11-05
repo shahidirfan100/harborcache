@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HarborCache – Object Cache with Redis
  * Description: Fast Redis object caching for WordPress with clear insights, analytics and safe cache controls.
- * Version: 1.2.10
+ * Version: 1.3.3
  * Text Domain: harborcache-object-cache-with-redis
  * Domain Path: /languages
  * Network: true
@@ -35,13 +35,10 @@ if ( ! defined( 'HARBORCACHE_PLUGIN_PATH' ) ) {
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php';
 try { \HarborCache\Config::apply(); \HarborCache\Config::load(); }
 catch ( \Throwable $harborcache_error ) { error_log( 'HarborCache configuration is invalid. Review HARBORCACHE_CONFIG and wp-content/harborcache-config.php.' ); return; } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-require_once __DIR__ . '/includes/class-console.php';
-\HarborCache\Console::boot();
-
 define( 'HARBORCACHE_BASENAME', plugin_basename( HARBORCACHE_FILE ) );
 define( 'HARBORCACHE_PLUGIN_DIR', plugin_dir_url( HARBORCACHE_FILE ) );
 
-define( 'HARBORCACHE_VERSION', '1.2.10' );
+define( 'HARBORCACHE_VERSION', '1.3.3' );
 
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-autoloader.php';
 
@@ -49,7 +46,41 @@ $harborcache_autoloader = new HarborCache\Core\Autoloader();
 $harborcache_autoloader->register();
 $harborcache_autoloader->add_namespace( 'HarborCache\Core', HARBORCACHE_PLUGIN_PATH . '/includes' );
 
-HarborCache\Core\Plugin::instance();
+// Load the administration classes on first reference. This keeps anonymous
+// front-end requests light while preserving compatibility with scripts and
+// integrations that call Console/Status outside an admin request.
+spl_autoload_register( static function ( $class ) {
+    $map = array(
+        'HarborCache\\Console'          => '/includes/class-console.php',
+        'HarborCache\\Status'           => '/includes/class-status.php',
+        'HarborCache\\Self_Test'        => '/includes/class-self-test.php',
+        'HarborCache\\Connection_Check' => '/includes/class-connection-check.php',
+    );
+    if ( isset( $map[ $class ] ) ) {
+        require_once HARBORCACHE_PLUGIN_PATH . $map[ $class ];
+    }
+} );
+
+// Metrics are the only management feature needed on anonymous front-end
+// requests. Administration, WP-CLI, cron and logged-in admin-bar requests
+// additionally load the console and the integration layer.
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-metrics.php';
+HarborCache\Core\Metrics::init();
+
+$harborcache_needs_management = is_admin()
+    || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() )
+    || ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() )
+    || ( defined( 'WP_CLI' ) && WP_CLI )
+    || 'cli' === PHP_SAPI
+    || ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() );
+
+if ( $harborcache_needs_management ) {
+    require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-console.php';
+    \HarborCache\Console::boot();
+
+    require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-plugin.php';
+    HarborCache\Core\Plugin::instance();
+}
 
 if ( ! function_exists( 'redis_object_cache' ) ) {
     /**
@@ -58,6 +89,9 @@ if ( ! function_exists( 'redis_object_cache' ) ) {
      * @return HarborCache\Core\Plugin
      */
     function redis_object_cache() {
+        if ( ! class_exists( 'HarborCache\\Core\\Plugin' ) ) {
+            require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-plugin.php';
+        }
         return HarborCache\Core\Plugin::instance();
     }
 }

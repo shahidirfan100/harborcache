@@ -2,7 +2,7 @@
 /**
  * Drop-In Name: HarborCache Drop-In
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.2.10
+ * Version: 1.3.3
  * Author: Shahid Irfan
  * Author URI: https://profiles.wordpress.org/shahidirfan100/
  * License: GPL-3.0-only
@@ -510,6 +510,16 @@ class WP_Object_Cache {
     public $runtime_hits = 0;
     public $store_hits = 0;
     public $store_misses = 0;
+
+    /**
+     * Rough size of values held in request memory.
+     *
+     * Updated on writes so analytics never has to serialize every cached value
+     * at shutdown. Exact measurement remains available in Diagnostics.
+     *
+     * @var int
+     */
+    public $runtime_bytes = 0;
 
     /**
      * Track how may requests were not cached.
@@ -1563,6 +1573,7 @@ class WP_Object_Cache {
         $derived_key = $this->fast_build_key( $san_key, $san_group );
 
         if ( array_key_exists( $derived_key, $this->cache ) ) {
+            $this->runtime_bytes -= $this->estimate_bytes( $this->cache[ $derived_key ] );
             unset( $this->cache[ $derived_key ] );
             $result = true;
         }
@@ -1645,6 +1656,9 @@ class WP_Object_Cache {
 
                 $tx->del( $derived_key );
 
+                if ( array_key_exists( $derived_key, $this->cache ) ) {
+                    $this->runtime_bytes -= $this->estimate_bytes( $this->cache[ $derived_key ] );
+                }
                 unset( $this->cache[ $derived_key ] );
             }
 
@@ -1693,6 +1707,7 @@ class WP_Object_Cache {
      */
     public function flush_runtime() {
         $this->cache = [];
+        $this->runtime_bytes = 0;
 
         return true;
     }
@@ -1884,6 +1899,7 @@ class WP_Object_Cache {
 
         foreach ( $this->cache as $key => $value ) {
             if ( strpos( $key, "{$san_group}:" ) === 0 || strpos( $key, ":{$san_group}:" ) !== false ) {
+                $this->runtime_bytes -= $this->estimate_bytes( $value );
                 unset( $this->cache[ $key ] );
             }
         }
@@ -2638,6 +2654,7 @@ class WP_Object_Cache {
             'misses' => $this->cache_misses,
             'ratio' => $total > 0 ? round( $this->cache_hits / ( $total / 100 ), 1 ) : 100,
             'bytes' => $bytes,
+            'bytes_estimate' => $this->runtime_bytes(),
             'time' => $this->cache_time,
             'calls' => $this->cache_calls,
             'groups' => (object) [
@@ -2776,7 +2793,48 @@ class WP_Object_Cache {
             $value = clone $value;
         }
 
+        if ( array_key_exists( $derived_key, $this->cache ) ) {
+            $this->runtime_bytes -= $this->estimate_bytes( $this->cache[ $derived_key ] );
+        }
+
         $this->cache[ $derived_key ] = $value;
+        $this->runtime_bytes += $this->estimate_bytes( $value );
+    }
+
+    /**
+     * Cheap value-size estimate for request metrics.
+     *
+     * Arrays and objects are estimated, not serialized. Diagnostics can still
+     * request the exact figure with `info( true )`.
+     *
+     * @param mixed $value Cached value.
+     * @return int
+     */
+    public function estimate_bytes( $value ) {
+        if ( is_string( $value ) ) {
+            return strlen( $value );
+        }
+        if ( is_int( $value ) || is_float( $value ) ) {
+            return 8;
+        }
+        if ( is_bool( $value ) ) {
+            return 1;
+        }
+        if ( null === $value ) {
+            return 0;
+        }
+        if ( is_array( $value ) ) {
+            return 64 + ( count( $value ) * 16 );
+        }
+        if ( is_object( $value ) ) {
+            return 128;
+        }
+        return 16;
+    }
+
+    /** Rough request-memory bytes for this cache instance. */
+    public function runtime_bytes() {
+        return max( 0, (int) $this->runtime_bytes );
     }
 
     /**

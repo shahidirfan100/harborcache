@@ -38,7 +38,7 @@ $base = array(
 
 $bad = HarborCache\Connection_Check::run( $base, 'test' );
 hc_probe_gate( 'Refused endpoint fails', false === $bad['ok'] );
-hc_probe_gate( 'Refused endpoint reports a specific code', in_array( $bad['error_code'], array( 'refused', 'timeout' ), true ), $bad['error_code'] );
+hc_probe_gate( 'Refused endpoint reports a specific code', in_array( $bad['error_code'], array( 'refused', 'timeout' ), true ), $bad['error_code'] . ': ' . $bad['detail'] );
 hc_probe_gate( 'Refused endpoint keeps the endpoint label', false !== strpos( $bad['host'], '6390' ), $bad['host'] );
 hc_probe_gate( 'Refused endpoint returns a message', '' !== $bad['message'] );
 hc_probe_gate( 'Refused endpoint reports elapsed time', $bad['elapsed_ms'] >= 0 );
@@ -69,6 +69,16 @@ if ( $root ) {
 	$left = array();
 	foreach ( $redis->keys( $pattern ) as $key ) { $left[] = $key; }
 	hc_probe_gate( 'Probe removes its temporary key', $clean['ok'] && array() === $left, implode( ',', $left ) );
+
+	$meta = 'ch:' . substr( hash( 'sha256', $base['prefix'] ), 0, 24 ) . ':meta:owner';
+	$redis->set( $meta, 'another-installation' );
+	$conflict = HarborCache\Connection_Check::run( array_replace( $base, array( 'client' => 'phpredis', 'port' => 6379 ) ), 'test' );
+	hc_probe_gate( 'A foreign owner blocks readiness', false === $conflict['ok'] && true === $conflict['transport_ok'] && 'conflict' === $conflict['namespace'], $conflict['namespace'] . '/' . $conflict['error_code'] );
+	hc_probe_gate( 'A foreign owner is not reported as disconnected', false === strpos( HarborCache\Connection_Check::render( $conflict ), '>Not connected<' ) );
+	$reclaimed = HarborCache\Connection_Check::reclaim( array_replace( $base, array( 'client' => 'phpredis', 'port' => 6379 ) ) );
+	hc_probe_gate( 'Explicit reclaim replaces a foreign owner', true === $reclaimed['ok'] );
+	$after = HarborCache\Connection_Check::run( array_replace( $base, array( 'client' => 'phpredis', 'port' => 6379 ) ), 'test' );
+	hc_probe_gate( 'Reclaimed namespace passes the live probe', true === $after['ok'] && 'owned' === $after['namespace'], $after['namespace'] . '/' . $after['error_code'] );
 
 	$defaults = HarborCache\Config::defaults();
 	hc_probe_gate( 'Default client matches the available extension', 'phpredis' === $defaults['client'], $defaults['client'] );

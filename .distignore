@@ -8,6 +8,7 @@
 /dist
 /evidence
 /media
+/media-capture
 /assets/brand/*.png
 /assets/brand/*.ico
 /tests

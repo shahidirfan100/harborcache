@@ -1,6 +1,6 @@
 # HarborCache – Object Cache with Redis
 
-Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release build: **1.2.7**.
+Persistent Redis object caching for WordPress, with scoped invalidation, connection management, sampled analytics, diagnostics and a dashboard statistics widget. Current release build: **1.3.3**.
 
 HarborCache brings connection settings, local analytics, scoped invalidation and recovery controls into one administration workflow. It was developed around the day-to-day needs of the author's websites and continues as a separate project with its own interface and development direction.
 
@@ -8,11 +8,11 @@ HarborCache brings connection settings, local analytics, scoped invalidation and
 
 ## Install
 
-Install the [1.2.7 ZIP](dist/harborcache-1.2.7.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
+Install the [1.3.3 ZIP](dist/harborcache-1.3.3.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
 
 Requires WordPress 6.6+, PHP 7.4+ and a separately operated Redis service. Disable the existing object cache manager through its own controls first. Configure a distinct prefix in Settings → HarborCache, save the connection and enable the object cache. HarborCache refuses to overwrite another plugin's drop-in. Verify connection status and Site Health before using it on production.
 
-For upgrades, back up configuration and the owned drop-in. Upload the plugin, then update the HarborCache drop-in if prompted. Prefix ownership conflicts preserve the existing owner and use runtime-memory fallback; cloned sites should use a distinct prefix. See [configuration](docs/CONFIGURATION.md), [1.2.7 release notes](docs/RELEASE-1.2.7.md) and [acceptance gates](docs/ACCEPTANCE.md).
+For upgrades, back up configuration and the owned drop-in. Upload the plugin, then update the HarborCache drop-in if prompted. Prefix ownership conflicts are reported as “Namespace conflict”, preserve the existing owner and use runtime-memory fallback. Reclaim the namespace only after confirming the old site is gone, or configure a distinct prefix for clones. See [configuration](docs/CONFIGURATION.md) and [acceptance gates](docs/ACCEPTANCE.md).
 
 ## Features
 
@@ -36,7 +36,7 @@ No license key or account is required. No plugin REST endpoints are included. Op
 
 ## Validation and deployment gates
 
-The 1.2.7 release reuses key contexts, reduces bootstrap work and batches supported metadata commands while preserving ownership and critical-option safety. Dashboard assets remain unchanged; see [1.2.7 validation](docs/VALIDATION-1.2.7.md). Earlier release evidence remains in the versioned validation reports. Historical performance results in [the comparison](docs/COMPARISON-1.2.0.md) do not predict performance on every server or guarantee WordPress.org approval.
+The 1.3.3 release makes the connection check usable on Cluster and Sentinel/replica topologies, reads the upstream topology constants into the effective configuration, allows a saved socket connection to switch back to TCP, keeps a wp-config password out of the wp-content settings file, removes endpoints from the copyable diagnostics report, honors WP_REDIS_MANAGER_CAPABILITY in the dashboard gate, and caps group registry and epoch metadata at 1,000 entries. The 1.3.2 release removed the legacy Predis client and its public FLUSHDB path, rotated namespaces with the selected client, trimmed analytics every minute, read the live connection in the Status summary, required a server-side reclaim confirmation, pruned only changed query groups, and added the query-pruning, status-read and uninstall checks to CI. The 1.3.1 release rebuilt the Status panel as a compact health grid and versioned CSS/JS by file modification time. The 1.3.0 release separated transport health from namespace readiness, made the connection check match the live cache path, migrated legacy owners and removed the inherited no-op hook layer. Earlier performance results do not predict every server. See the validation reports for the measured matrix.
 
 Sustained production load, native Relay topology/failover and production tracing agents remain acceptance gates. HarborCache does not claim WordPress.org approval or universal performance leadership. See [acceptance gates](docs/ACCEPTANCE.md).
 

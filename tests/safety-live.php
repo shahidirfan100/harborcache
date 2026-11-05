@@ -57,9 +57,8 @@ try {
             $control->rawCommand( 'ACL', 'SETUSER', $user, '+' . $command );
         }
     } elseif ( 'restricted' === $mode ) {
-        $probe = new \HarborCache\Core\Predis();
-        $probe->connect();
-        $probe->invalidate_namespace();
+        $rotation = \HarborCache\Connection_Check::rotate( \HarborCache\Config::load() );
+        safety_gate( 'Restricted ACL can rotate the cache namespace', ! empty( $rotation['ok'] ) );
         $cache = new HarborCache_Advanced_Cache();
         safety_gate( 'ACL probe and fresh cache work without INFO or SELECT', $cache->redis_status() );
         safety_gate( 'Optional denied server version stays unavailable', null === $cache->redis_version() && null === $cache->redis_version() );
@@ -76,11 +75,8 @@ try {
             $other = new HarborCache_Advanced_Cache();
             safety_gate( 'Collision uses request-memory fallback', ! $other->redis_status() && $other->set( 'fallback', 42, 'safety' ) && 42 === $other->get( 'fallback', 'safety' ) );
             safety_gate( 'Collision preserves foreign owner and root', str_repeat( 'f', 64 ) === $control->get( $owner_key ) && $root === $control->get( $root_key ) );
-            $probe = new \HarborCache\Core\Predis();
-            $probe->connect();
-            $rejected = false;
-            try { $probe->invalidate_namespace(); } catch ( \HarborCache\Prefix_Conflict $error ) { $rejected = true; }
-            safety_gate( 'Lifecycle probe cannot take ownership', $rejected && $root === $control->get( $root_key ) );
+            $rotation = \HarborCache\Connection_Check::rotate( \HarborCache\Config::load() );
+            safety_gate( 'Lifecycle probe cannot take ownership', empty( $rotation['ok'] ) && $root === $control->get( $root_key ) );
             $control->set( $owner_key, $owner );
             $control->set( $root_key, 'corrupt' );
             $broken = new HarborCache_Advanced_Cache();

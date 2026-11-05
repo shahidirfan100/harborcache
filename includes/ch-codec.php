@@ -59,10 +59,20 @@ final class Codec {
 		if ( ! is_string( $data ) ) {
 			throw new \RuntimeException( 'Value decoding failed.' );
 		}
-		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Let callers handle malformed serialization as an exception.
-		set_error_handler( $this->decode_error );
+		if ( 'php' === $this->serializer ) {
+			// Suppression avoids installing and restoring an error handler for
+			// every value. A false result is only valid for serialized false.
+			$value = @unserialize( $data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize, WordPress.PHP.NoSilencedErrors.Discouraged
+			if ( false === $value && 'b:0;' !== $data ) {
+				throw new \RuntimeException( 'Corrupt serialized cache value.' );
+			}
+			return $value;
+		}
+		// igbinary uses a binary envelope where false is a valid value; keep the
+		// warning handler so corrupt payloads still fail as exceptions.
+		set_error_handler( $this->decode_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
 		try {
-			return 'php' === $this->serializer ? unserialize( $data ) : igbinary_unserialize( $data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
+			return igbinary_unserialize( $data );
 		} finally {
 			restore_error_handler();
 		}

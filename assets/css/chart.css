@@ -33,4 +33,12 @@
 #harborcache_status .inside { font-size: 16px; line-height: 1.6; }
 #harborcache_status .inside p, #harborcache_status .description, #harborcache_status table, #harborcache_status th, #harborcache_status td { font-size: 15px; line-height: 1.6; }
 #harborcache_status .ch-chart-controls button { font-size: 16px; }
+
+:where(#harborcache, #harborcache_status) .ch-chart.is-compact svg { height: 180px; }
+:where(#harborcache, #harborcache_status) .ch-chart.is-compact .ch-chart-summary dd { font-size: 16px; }
+
+#harborcache_status .ch-widget-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 12px 0; background: #dbe4e2; border: 1px solid #dbe4e2; }
+#harborcache_status .ch-widget-summary > div { padding: 8px 10px; background: #fff; }
+#harborcache_status .ch-widget-summary span { display: block; color: #485e65; font-size: 13px; line-height: 1.4; }
+#harborcache_status .ch-widget-summary strong { display: block; color: #182c32; font-size: 16px; line-height: 1.4; font-variant-numeric: tabular-nums; }
 #harborcache_status .ch-table-scroll { overflow-x: auto; }

@@ -1,6 +1,6 @@
-# HarborCache feature ledger (1.2.10)
+# HarborCache feature ledger (1.3.3)
 
-HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.2.10 corrects two panel spacing defects found while capturing the listing screenshots and regenerates the translation template; the engine, key format, settings, palette and product name are unchanged. Version 1.2.9 replaces per-group epoch reads with one shared Redis hash and one registry read per request, so a 30-group request uses a fixed metadata cost instead of one GET and one registration per group. The existing key format, legacy epoch keys, cleanup guards and scoped invalidation remain. Version 1.2.8 added the selected-client connection check, five dashboard screens and the restored widget.
+HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and contributors with original additions. This ledger describes implemented behavior and its verification boundaries. Version 1.3.3 makes the connection check use a concrete cluster node and the primary for replica topologies, reads the upstream topology constants, allows a socket-to-TCP switch, keeps wp-config passwords out of the saved file, strips endpoints from the copyable report and bounds group metadata. Version 1.3.2 removes the legacy Predis client and its public FLUSHDB path, rotates namespaces with the selected client, trims analytics every minute, reads the live connection on Status, requires a server-side reclaim confirmation, and prunes only changed query groups. Version 1.3.1 rebuilds the readiness panel as a compact health grid, adds a widget summary and readable chart ticks, and versions CSS/JS by file modification time. Version 1.3.0 separates transport health from namespace readiness, makes the connection check match the live cache path, migrates legacy namespace owners, loads administration code only when needed and removes the inherited no-op hook layer. Version 1.2.9 replaced per-group epoch reads with one shared Redis hash and one registry read per request; the existing key format, cleanup guards and scoped invalidation remain. Version 1.2.8 added the selected-client connection check, five dashboard screens and the restored widget.
 
 | Area | Behavior and evidence |
 | --- | --- |
@@ -25,6 +25,14 @@ HarborCache extends the GPL Redis Object Cache 3.0.0 engine by Till Krüss and c
 | Administration | Five responsive tabs, guarded settings/drop-in forms, actions, copyable diagnostics, dashboard widget, admin bar, Site Health, WP-CLI and protected admin-post actions. Original teal branding, icons, banners and favicon. |
 | Shared servers | Shared mode hides memory/key totals which would include other applications; dedicated mode sums primary memory and selected-database key counts. Server command statistics are explicitly labeled. |
 | Protection | Strict prefix ownership, foreign drop-in preservation, verified drop-in staging, interrupted-write recovery and removal of incomplete canonical files, saved-password retention, credential-redacted diagnostics, corrupt-entry isolation and safe uninstall. |
+
+## 1.3.0 readiness and request overhead
+
+The dashboard, Site Health, Query Monitor and WP-CLI read one status model. Transport (`connected`/`unreachable`), namespace (`owned`/`legacy`/`unclaimed`/`conflict`), value codec and drop-in currency are separate facts. A reachable Redis server with a foreign prefix owner is reported as “Namespace conflict”, not “Not connected”; the cache stays in request-memory fallback until an operator reclaims the namespace or chooses a distinct prefix. Owners written by 1.2.x (which included `AUTH_KEY`) migrate on the first request, so rotating salts no longer disables a healthy cache.
+
+The connection check uses the configured timeout, reads namespace ownership without writing, round-trips a value through the active serializer/compression, writes and deletes one probe key, and reports each step separately. A separate self-test exercises `wp_cache_set/get/delete` through the live drop-in and is available from the Status/Settings screens and `wp harborcache self-test`. `wp harborcache doctor` exits non-zero when the cache is not ready.
+
+Administration, WP-CLI, cron and logged-in admin-bar requests load the console and integration layer; anonymous front-end requests load only the drop-in and the lightweight metrics recorder. Sampled analytics use an estimated runtime byte counter instead of serializing every cached value, and retention trimming runs on the hourly maintenance event. Cache values are decoded without installing an error handler per value.
 
 ## 1.2.9 namespace metadata
 
@@ -99,7 +107,7 @@ Query Monitor and Debug Bar are optional integrations; the validation report ide
 
 Plugin Check does not grant WordPress.org approval. Preliminary name searches do not establish trademark clearance or reserve a directory slug. Complete the applicable deployment checks above for your server configuration before production deployment.
 
-Comparison references: [public features](https://objectcache.pro/) and [configuration reference](https://objectcache.pro/docs/configuration-options/). These are references, not license grants.
+Feature comparisons in this project describe HarborCache's own implemented behavior. They do not bundle, copy or license another product's private code or services.
 
 ## Stable dashboard and overhead
 

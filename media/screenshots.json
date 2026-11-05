@@ -1,20 +1,20 @@
 {
-  "version": "1.2.10",
-  "capturedAt": "2026-10-28T14:24:18.358Z",
+  "version": "1.3.3",
+  "capturedAt": "2026-11-05T14:41:27.212Z",
   "pluginListingName": "HarborCache - Object Cache with Redis",
-  "environment": "GitHub Actions ubuntu-24.04 with the exact harborcache-1.2.10.zip release, WordPress 7.1.3, PHP 8.3.36, PhpRedis 6.3.0, Redis 7.4.12 and MySQL 8.0. Headless Chromium at device scale factor 1. Analytics history is seeded demonstration data, disclosed in README.md; every other value comes from the live fixture.",
+  "environment": "GitHub Actions ubuntu-24.04 with the exact harborcache-1.3.3.zip release, WordPress 7.1.4, PHP 8.3.36, PhpRedis 6.3.0, Redis 7.4.12 and MySQL 8.0. Headless Chromium at device scale factor 1. Analytics history is seeded demonstration data, disclosed in README.md; every other value comes from the live fixture.",
   "captureWorkflow": ".github/workflows/screenshots.yml",
-  "captureRun": "https://github.com/shahidirfan100/harborcache/actions/runs/40704836977",
+  "captureRun": "https://github.com/shahidirfan100/harborcache/actions/runs/42044669760",
   "javascriptErrors": [],
   "consoleErrors": [],
   "files": [
     {
       "file": "screenshot-1.png",
-      "view": "status",
+      "view": "overview",
       "selector": "#harborcache",
       "viewport": 1440,
       "width": 1180,
-      "height": 1480
+      "height": 1686
     },
     {
       "file": "screenshot-2.png",
@@ -26,11 +26,11 @@
     },
     {
       "file": "screenshot-3.png",
-      "view": "settings",
+      "view": "connection",
       "selector": "#harborcache",
       "viewport": 1440,
       "width": 1180,
-      "height": 1108
+      "height": 1328
     },
     {
       "file": "screenshot-4.png",
@@ -54,7 +54,7 @@
       "selector": "section.ch-panel:has(#ch-diagnostics)",
       "viewport": 1440,
       "width": 1180,
-      "height": 2464
+      "height": 2619
     },
     {
       "file": "screenshot-7.png",
@@ -62,7 +62,7 @@
       "selector": "#harborcache_status",
       "viewport": 1440,
       "width": 605,
-      "height": 880
+      "height": 932
     },
     {
       "file": "screenshot-mobile.png",
@@ -70,7 +70,7 @@
       "selector": "#harborcache",
       "viewport": 375,
       "width": 353,
-      "height": 1616
+      "height": 2018
     },
     {
       "file": "screenshot-widget-mobile.png",
@@ -78,7 +78,7 @@
       "selector": "#harborcache_status",
       "viewport": 375,
       "width": 353,
-      "height": 980
+      "height": 1116
     }
   ]
 }

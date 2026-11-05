@@ -63,12 +63,13 @@ class QM_Collector extends QM_BaseCollector {
             return;
         }
 
-        $info = $wp_object_cache->info();
+        // Query Monitor must not serialize every cached value just to show a size.
+        $info = $wp_object_cache->info( false );
 
         $this->data['hits'] = $info->hits;
         $this->data['misses'] = $info->misses;
         $this->data['ratio'] = $info->ratio;
-        $this->data['bytes'] = $info->bytes;
+        $this->data['bytes'] = $info->bytes_estimate ?? null;
 
         $this->data['errors'] = $info->errors;
         $this->data['meta'] = $info->meta;

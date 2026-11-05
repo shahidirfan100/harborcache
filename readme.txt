@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.10
+Stable tag: 1.3.3
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,40 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.3.3 =
+* Probe Redis Cluster through a concrete node and Sentinel/replica setups through the primary, so the connection check can enable and save those topologies.
+* Read WP_REDIS_CLUSTER, WP_REDIS_SERVERS, WP_REDIS_SENTINEL, WP_REDIS_SCHEME and WP_REDIS_PATH into the effective configuration.
+* Allow a saved Unix-socket connection to switch back to TCP from Settings.
+* Keep a wp-config password out of the saved wp-content configuration file.
+* Remove endpoints and raw probe host details from the copyable diagnostics report and Site Health debug info.
+* Honor WP_REDIS_MANAGER_CAPABILITY in the dashboard gate, and cap group registry/epoch metadata at 1,000 entries.
+
+= 1.3.2 =
+* Remove the legacy Predis client and its public FLUSHDB path; namespace rotation now uses the selected client.
+* Trim analytics every minute so the sampled sorted set cannot grow for an hour.
+* Read endpoint, database, serializer, compression and TTL from the live cache on Status; the settings form keeps the saved values.
+* Require a server-side confirmation for namespace reclaim, and fix the namespace and drop-in detail text.
+* Rotate only query groups whose source data changed, limit the group table to 100 rows, and render chart points only on the visible panel.
+* Delete the inherited no-op plugin methods, warn when the connection file is group/world readable, and make uninstall remove older config files.
+* Add query-pruning, status-read and uninstall checks to CI.
+
+= 1.3.1 =
+* Refresh the readiness panel into a compact 2x2 health grid with a clear Ready/attention chip.
+* Replace the manual-test checklist with compact connection details and a warning when the saved connection differs from the live request.
+* Add a dashboard-widget summary for hit ratio, Redis time, commands and runtime entries, plus readable chart ticks.
+* Version the CSS and JavaScript with the file modification time, so a plugin update cannot leave an old cached stylesheet in place.
+* Refresh the listing screenshots and capture record for 1.3.1.
+
+= 1.3.0 =
+* Separate transport health from cache readiness, so a reachable Redis server is never reported as “Not connected” just because the namespace belongs to another installation.
+* Report “Namespace conflict” with a confirmed reclaim action; migrate owners written by 1.2.x and keep the namespace stable when security salts rotate.
+* Make the connection check use the configured timeout, verify namespace ownership and round-trip a value through the active serializer and compression.
+* Add an end-to-end cache self-test through the WordPress cache API and a `wp harborcache doctor` command.
+* Load administration code only for admin, AJAX, cron, WP-CLI and logged-in admin-bar requests.
+* Record sampled analytics without serializing every cached value, and trim analytics on the hourly maintenance event instead of every sample.
+* Remove inherited no-op hooks and the duplicate status implementations used by the dashboard, Query Monitor and Site Health.
+* Use the readiness checklist, one primary action per state, and plain-language explanations on the Status and Settings screens.
 
 = 1.2.10 =
 * Separate the group clear button, the include-memory option and the group inspection button.

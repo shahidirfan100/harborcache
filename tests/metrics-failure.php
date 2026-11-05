@@ -17,6 +17,7 @@ namespace {
     define( 'MINUTE_IN_SECONDS', 60 );
     require dirname( __DIR__ ) . '/includes/class-metrics.php';
     $wp_object_cache = new class {
+        public function redis_status() { return true; }
         public function info() { throw new Error( 'Sensitive fixture value must not be logged' ); }
         public function redis_instance() { return $this; }
         public function zremrangebyscore( ...$args ) { throw new Error( 'Sensitive fixture endpoint must not be logged' ); }
