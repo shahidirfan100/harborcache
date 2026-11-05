@@ -1,10 +1,10 @@
 {
   "version": "1.3.2",
-  "capturedAt": "2026-11-05T13:23:09.901Z",
+  "capturedAt": "2026-11-05T13:45:24.237Z",
   "pluginListingName": "HarborCache - Object Cache with Redis",
   "environment": "GitHub Actions ubuntu-24.04 with the exact harborcache-1.3.2.zip release, WordPress 7.1.4, PHP 8.3.36, PhpRedis 6.3.0, Redis 7.4.12 and MySQL 8.0. Headless Chromium at device scale factor 1. Analytics history is seeded demonstration data, disclosed in README.md; every other value comes from the live fixture.",
   "captureWorkflow": ".github/workflows/screenshots.yml",
-  "captureRun": "https://github.com/shahidirfan100/harborcache/actions/runs/42034457600",
+  "captureRun": "https://github.com/shahidirfan100/harborcache/actions/runs/42037744724",
   "javascriptErrors": [],
   "consoleErrors": [],
   "files": [

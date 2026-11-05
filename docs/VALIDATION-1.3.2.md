@@ -1,6 +1,6 @@
 # HarborCache 1.3.2 validation
 
-Runtime commit: `dcd7764`. Release archive: `dist/harborcache-1.3.2.zip`, 602 files, SHA256 `923371294bf374f548ad06325fda5b2cbef8de140ac40a0e95d07e5e74a9e266`. The build verifier passed source and ZIP parity. GitHub Actions run [42033643274](https://github.com/shahidirfan100/harborcache/actions/runs/42033643274) passed all fourteen jobs.
+Runtime commit: `ffd9bce`. Release archive: `dist/harborcache-1.3.2.zip`, 602 files, SHA256 `923371294bf374f548ad06325fda5b2cbef8de140ac40a0e95d07e5e74a9e266`. The build verifier passed source and ZIP parity. GitHub Actions run [42036749648](https://github.com/shahidirfan100/harborcache/actions/runs/42036749648) passed all fourteen jobs.
 
 ## What changed
 
@@ -8,11 +8,11 @@ Runtime commit: `dcd7764`. Release archive: `dist/harborcache-1.3.2.zip`, 602 fi
 
 ## Linux CI matrix
 
-Run [42033643274](https://github.com/shahidirfan100/harborcache/actions/runs/42033643274) passed all fourteen jobs: PHP 7.4, 8.2, 8.3, 8.4 and 8.5; Redis 6, 7 and 8; WordPress 6.6, 6.7, 6.8, 7.0, 7.1 and latest; Predis, PhpRedis and Credis; PHP/igbinary with none/LZF/LZ4/Zstandard; ACL, trusted TLS, rejected certificate and Unix socket; concurrent workers; Redis stop/start; WooCommerce; multisite; PHP-FPM HTTP smoke and restart; Relay default/adaptive; relocated ZIP; package parity; and uninstall cleanup. Plugin Check 2.1.0 on the exact ZIP reported `Success: Checks complete. No errors found.`
+Run [42036749648](https://github.com/shahidirfan100/harborcache/actions/runs/42036749648) passed all fourteen jobs: PHP 7.4, 8.2, 8.3, 8.4 and 8.5; Redis 6, 7 and 8; WordPress 6.6, 6.7, 6.8, 7.0, 7.1 and latest; Predis, PhpRedis and Credis; PHP/igbinary with none/LZF/LZ4/Zstandard; ACL, trusted TLS, rejected certificate and Unix socket; concurrent workers; Redis stop/start; WooCommerce; multisite; PHP-FPM HTTP smoke and restart; Relay default/adaptive; relocated ZIP; package parity; and uninstall cleanup. Plugin Check 2.1.0 on the exact ZIP reported `Success: Checks complete. No errors found.`
 
 ## Interface capture
 
-Run [42034457600](https://github.com/shahidirfan100/harborcache/actions/runs/42034457600) captured the five screens and the widget from the exact 1.3.2 ZIP on WordPress 7.1.4, PHP 8.3, PhpRedis 6.3.0 and Redis 7.4.12. The capture reported zero console errors, zero size failures and no PHP notices. It checked four readiness items, three settings actions, no horizontal overflow, clicked Test saved connection, ran the cache self-test and tabbed to an interactive control. The PNGs in `media/` and `media-capture/` and the record in `media/screenshots.json` are refreshed.
+Run [42037744724](https://github.com/shahidirfan100/harborcache/actions/runs/42037744724) captured the five screens and the widget from the exact 1.3.2 ZIP on WordPress 7.1.4, PHP 8.3, PhpRedis 6.3.0 and Redis 7.4.12. The capture reported zero console errors, zero size failures and no PHP notices. It checked four readiness items, three settings actions, no horizontal overflow, clicked Test saved connection, ran the cache self-test and tabbed to an interactive control. The PNGs in `media/` and `media-capture/` and the record in `media/screenshots.json` are refreshed.
 
 ## Local checks (Windows, PHP 8.5.10)
 
