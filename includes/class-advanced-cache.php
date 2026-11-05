@@ -587,7 +587,7 @@ LUA;
 	/** A prefetch manifest is useful only for cacheable page views. */
 	private function ch_prefetchable_request() {
 		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) ) { return false; }
-		$method = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( $_SERVER['REQUEST_METHOD'] ) : '';
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : '';
 		return ( 'GET' === $method || 'HEAD' === $method ) && ! empty( $_SERVER['REQUEST_URI'] );
 	}
 
@@ -614,7 +614,7 @@ LUA;
 		$user = function_exists( 'get_current_user_id' ) ? get_current_user_id() : 0;
 		$host = isset( $_SERVER['HTTP_HOST'] ) && is_string( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
 		$uri  = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
-		$verb = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( $_SERVER['REQUEST_METHOD'] ) : '';
+		$verb = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : '';
 		return $this->ch_base . ':prefetch:' . hash( 'sha256', $this->blog_prefix . ':' . $user . ':' . $verb . ':' . $host . ':' . $uri );
 	}
 	public function track_prefetch( $key, $value, $group, $force, $found, $time ) {

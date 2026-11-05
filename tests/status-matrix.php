@@ -22,6 +22,8 @@ if ( ! function_exists( 'add_filter' ) ) { function add_filter() {} }
 if ( ! function_exists( 'add_action' ) ) { function add_action() {} }
 if ( ! function_exists( 'do_action' ) ) { function do_action() {} }
 if ( ! function_exists( 'apply_filters' ) ) { function apply_filters( $name, $value ) { return $value; } }
+if ( ! function_exists( 'sanitize_text_field' ) ) { function sanitize_text_field( $value ) { return trim( (string) $value ); } }
+if ( ! function_exists( 'wp_unslash' ) ) { function wp_unslash( $value ) { return $value; } }
 
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php';
 \HarborCache\Config::apply();
