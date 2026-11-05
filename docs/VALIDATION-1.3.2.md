@@ -1,10 +1,10 @@
 # HarborCache 1.3.2 validation
 
-Runtime commit: `dcd7764`. Release archive: `dist/harborcache-1.3.2.zip`, 601 files, SHA256 `2098b99b2674735089f8123a7aa0dd33fe986067b3c6df32854a7423a3593aef`. The build verifier passed source and ZIP parity. GitHub Actions run [42033643274](https://github.com/shahidirfan100/harborcache/actions/runs/42033643274) passed all fourteen jobs.
+Runtime commit: `dcd7764`. Release archive: `dist/harborcache-1.3.2.zip`, 602 files, SHA256 `923371294bf374f548ad06325fda5b2cbef8de140ac40a0e95d07e5e74a9e266`. The build verifier passed source and ZIP parity. GitHub Actions run [42033643274](https://github.com/shahidirfan100/harborcache/actions/runs/42033643274) passed all fourteen jobs.
 
 ## What changed
 
-1.3.2 closes the audit findings. It deletes the legacy Predis wrapper and its public `FLUSHDB` methods. Namespace rotation on first enable now uses the selected client and fails the enable if rotation fails, instead of silently reusing old entries. Analytics retention is checked every minute instead of every hour. Status reads endpoint, database, serializer, compression and TTL from the live cache, so a saved connection cannot be mistaken for the live one. Namespace reclaim requires a server-side `confirm=1`. Query maintenance rotates only groups whose `wp_cache_get_last_changed()` moved. The group table is capped at 100 rows, chart points render only on the visible panel, and the inherited no-op plugin methods are gone. The connection file gets a group/world-readable warning, uninstall removes older config files, and CI now includes query-pruning, status-read and uninstall checks.
+1.3.2 closes the audit findings. It deletes the legacy Predis wrapper and its public `FLUSHDB` methods. Namespace rotation on first enable now uses the selected client and fails the enable if rotation fails, instead of silently reusing old entries. Analytics retention is checked every minute instead of every hour. Status reads endpoint, database, serializer, compression and TTL from the live cache, so a saved connection cannot be mistaken for the live one. Namespace reclaim requires a server-side `confirm=1`. Query maintenance rotates only groups whose `wp_cache_get_last_changed()` moved. The group table is capped at 100 rows, chart points render only on the visible panel, and the inherited no-op plugin methods are gone. The connection file gets a group/world-readable warning, uninstall removes older config files, and CI now includes query-pruning, status-read and uninstall checks. WP-CLI commands moved to `includes/class-commands.php`; the dashboard view code remains in `class-console.php` and is the next structural cleanup.
 
 ## Linux CI matrix
 
@@ -27,7 +27,7 @@ Run [42034457600](https://github.com/shahidirfan100/harborcache/actions/runs/420
 | `php tests/connection-check.php` | passed |
 | `php tests/metrics-failure.php` | passed |
 | `php tests/conflict-notice.php` | passed |
-| `python tools/build-release.py --verify` | 601 files, source/ZIP parity passed |
+| `python tools/build-release.py --verify` | 602 files, source/ZIP parity passed |
 
 ## Performance
 

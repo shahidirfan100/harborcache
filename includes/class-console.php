@@ -9,6 +9,7 @@ require_once __DIR__ . '/ch-codec.php';
 require_once __DIR__ . '/class-analytics.php';
 require_once __DIR__ . '/class-dropin-writer.php';
 require_once __DIR__ . '/class-status.php';
+require_once __DIR__ . '/class-commands.php';
 
 final class Console {
 	private static $dropin_owned;
@@ -595,6 +596,31 @@ final class Console {
 		exit;
 	}
 
+	/** Cache optional server diagnostics briefly instead of querying on every render. */
+	private static function server_stats() {
+		$cached = get_transient( 'harborcache_server_stats' );
+		if ( is_array( $cached ) && isset( $cached['commands'], $cached['slowlog'] ) ) {
+			return $cached;
+		}
+		try {
+			$cached = array( 'commands' => self::read( 'commands' ), 'slowlog' => self::read( 'slowlog' ) );
+		} catch ( \Throwable $error ) {
+			return array( 'commands' => array(), 'slowlog' => array() );
+		}
+		set_transient( 'harborcache_server_stats', $cached, MINUTE_IN_SECONDS );
+		return $cached;
+	}
+
+	private static function capacity() {
+		$cached = get_transient( 'harborcache_capacity' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+		$cached = self::read( 'capacity' );
+		set_transient( 'harborcache_capacity', $cached, MINUTE_IN_SECONDS );
+		return $cached;
+	}
+
 	public static function read( $name ) {
 		if ( 'status' === $name ) { return self::status(); }
 		$config = Config::load();
@@ -871,7 +897,7 @@ final class Console {
 			echo '<div><dt>' . esc_html__( 'Redis allocation', 'harborcache-object-cache-with-redis' ) . '</dt><dd>' . esc_html( $config['shared'] ? __( 'Shared server', 'harborcache-object-cache-with-redis' ) : __( 'Dedicated server', 'harborcache-object-cache-with-redis' ) ) . '</dd></div></dl>';
 			if ( ! $config['shared'] && ! empty( $status['ready'] ) ) {
 				try {
-					$capacity = self::read( 'capacity' );
+					$capacity = self::capacity();
 					echo '<p>' . esc_html( sprintf(
 						/* translators: 1: memory in bytes across primary nodes, 2: key count in the selected database. */
 						__( 'Redis primary nodes: %1$s bytes used, %2$s keys in the selected database.', 'harborcache-object-cache-with-redis' ),
@@ -934,13 +960,9 @@ final class Console {
 			self::probe_controls();
 			echo '<section class="ch-panel"><h3>' . esc_html__( 'Server observability', 'harborcache-object-cache-with-redis' ) . '</h3><p>' . esc_html__( 'Command statistics describe the Redis server. Slow-log output omits keys and values.', 'harborcache-object-cache-with-redis' ) . '</p>';
 			if ( ! empty( $status['ready'] ) ) {
-				try {
-					$commands = self::read( 'commands' );
-					$slowlog  = self::read( 'slowlog' );
-				} catch ( \Throwable $ignored ) {
-					$commands = array();
-					$slowlog  = array();
-				}
+				$stats    = self::server_stats();
+				$commands = $stats['commands'];
+				$slowlog  = $stats['slowlog'];
 				echo '<div class="ch-table-scroll"><table class="widefat striped"><tbody><tr><th scope="row">' . esc_html__( 'Command statistics', 'harborcache-object-cache-with-redis' ) . '</th><td><details><summary>' . esc_html__( 'Show', 'harborcache-object-cache-with-redis' ) . '</summary><pre>' . esc_html( wp_json_encode( $commands, JSON_PRETTY_PRINT ) ) . '</pre></details></td></tr><tr><th scope="row">' . esc_html__( 'Slow commands', 'harborcache-object-cache-with-redis' ) . '</th><td><details><summary>' . esc_html__( 'Show', 'harborcache-object-cache-with-redis' ) . '</summary><pre>' . esc_html( wp_json_encode( $slowlog, JSON_PRETTY_PRINT ) ) . '</pre></details></td></tr></tbody></table></div>';
 			} else {
 				echo '<p class="description">' . esc_html__( 'Server statistics are available when the cache is ready.', 'harborcache-object-cache-with-redis' ) . '</p>';
@@ -1118,65 +1140,4 @@ final class Console {
 		$probe = get_user_meta( get_current_user_id(), '_harborcache_probe', true );
 		if ( is_array( $probe ) && $operation === ( $probe['operation'] ?? '' ) && time() - ( $probe['created'] ?? 0 ) < 300 ) { echo '<pre class="ch-probe-result">' . esc_html( wp_json_encode( $probe['data'], JSON_PRETTY_PRINT ) ) . '</pre>'; }
 	}
-}
-
-class Commands {
-	/** Display cache status. */
-	public function status() { \WP_CLI::line( wp_json_encode( Console::status(), JSON_PRETTY_PRINT ) ); }
-	/** Explain readiness and exit non-zero when the cache is not ready. */
-	public function doctor() {
-		$status = Console::status( true );
-		\WP_CLI::line( wp_json_encode( $status, JSON_PRETTY_PRINT ) );
-		if ( empty( $status['ready'] ) ) { \WP_CLI::halt( 1 ); }
-	}
-	/** Exercise the live WordPress cache path. */
-	public function self_test() {
-		require_once __DIR__ . '/class-self-test.php';
-		$result = Self_Test::run();
-		\WP_CLI::line( wp_json_encode( $result, JSON_PRETTY_PRINT ) );
-		if ( empty( $result['ok'] ) ) { \WP_CLI::halt( 1 ); }
-	}
-	/** Reclaim the namespace after confirming the old owner is gone. */
-	public function reclaim( $args, $assoc ) {
-		if ( empty( $assoc['yes'] ) ) { \WP_CLI::error( 'Pass --yes after confirming the old installation no longer uses this prefix.' ); }
-		require_once __DIR__ . '/class-connection-check.php';
-		$result = Connection_Check::reclaim( Config::load() );
-		\WP_CLI::line( wp_json_encode( $result, JSON_PRETTY_PRINT ) );
-		if ( empty( $result['ok'] ) ) { \WP_CLI::halt( 1 ); }
-	}
-	/** Display redacted diagnostics. */
-	public function diagnostics() { \WP_CLI::line( wp_json_encode( array( 'status' => Console::status(), 'options' => Console::read( 'options' ) ), JSON_PRETTY_PRINT ) ); }
-	/** Install the owned object-cache drop-in. */
-	public function enable() { $this->run( 'enable' ); }
-	/** Remove the owned object-cache drop-in. */
-	public function disable() { $this->run( 'disable' ); }
-	/** Refresh the owned drop-in. */
-	public function update() { $this->run( 'update' ); }
-	/** Flush the configured scope, or a selected group/site. */
-	public function flush( $args, $assoc ) { $this->run( isset( $assoc['group'] ) ? 'flush-group' : ( isset( $assoc['site'] ) ? 'flush-site' : 'flush' ), $assoc ); }
-	/** Show registered groups. */
-	public function groups( $args, $assoc ) { $cache = Console::cache(); $data = ! empty( $assoc['group'] ) && $cache ? $cache->group_diagnostics( $assoc['scope'] ?? ( 'site-' . get_current_blog_id() ), $assoc['group'], isset( $assoc['memory'] ) ) : Console::read( 'groups' ); \WP_CLI::line( wp_json_encode( $data, JSON_PRETTY_PRINT ) ); }
-	/** Reclaim invalidated entries in bounded batches. */
-	public function cleanup() { $this->run( 'cleanup' ); }
-	/** Show redacted slow commands. */
-	public function slowlog() { \WP_CLI::line( wp_json_encode( Console::read( 'slowlog' ), JSON_PRETTY_PRINT ) ); }
-	/** Show server command statistics. */
-	public function commands() { \WP_CLI::line( wp_json_encode( Console::read( 'commands' ), JSON_PRETTY_PRINT ) ); }
-	/** Summarize up to 1000 samples. Options: --window=7200 --interval=300 --csv. */
-	public function analytics( $args, $assoc ) { $rows = Core\Metrics::get( Analytics::window( $assoc['window'] ?? 7200 ), 1000 ); \WP_CLI::line( isset( $assoc['csv'] ) ? Analytics::csv( $rows ) : wp_json_encode( Analytics::summarize( $rows, $assoc['interval'] ?? 300 ), JSON_PRETTY_PRINT ) ); }
-	/** Display a sampled request digest. */
-	public function digest( $args, $assoc ) { $this->analytics( $args, $assoc ); }
-	/** Display interval aggregates. */
-	public function aggregate( $args, $assoc ) { $this->analytics( $args, $assoc ); }
-	/** Watch sampled analytics. Options: --iterations=10 --interval=2 --window=7200. */
-	public function watch( $args, $assoc ) { $iterations = max( 1, min( 10000, (int) ( $assoc['iterations'] ?? 10 ) ) ); $interval = max( 1, min( 60, (int) ( $assoc['interval'] ?? 2 ) ) ); for ( $i = 0; $i < $iterations; ++$i ) { $summary = Analytics::summarize( Core\Metrics::get( Analytics::window( $assoc['window'] ?? 7200 ), 1000 ) ); unset( $summary['buckets'] ); $summary['observed_at'] = gmdate( 'c' ); \WP_CLI::line( wp_json_encode( $summary ) ); if ( $i + 1 < $iterations ) { sleep( $interval ); } } }
-	/** Test connected Redis nodes without exposing connection endpoints. */
-	public function latency() { if ( ! Console::cache() ) { \WP_CLI::error( 'Cache is disconnected.' ); } \WP_CLI::line( wp_json_encode( Console::cache()->node_diagnostics(), JSON_PRETTY_PRINT ) ); }
-	/** Show operational Redis health. */
-	public function health() { if ( ! Console::cache() ) { \WP_CLI::error( 'Cache is disconnected.' ); } \WP_CLI::line( wp_json_encode( Console::cache()->operational_health(), JSON_PRETTY_PRINT ) ); }
-	/** Show Relay adaptive status; optional --key=... --group=.... */
-	public function relay( $args, $assoc ) { if ( ! Console::cache() ) { \WP_CLI::error( 'Cache is disconnected.' ); } \WP_CLI::line( wp_json_encode( Console::cache()->relay_diagnostics( $assoc['key'] ?? '', $assoc['group'] ?? 'default' ), JSON_PRETTY_PRINT ) ); }
-	/** Run an opt-in periodic query recycling batch. */
-	public function queries() { $this->run( 'query-maintenance' ); }
-	private function run( $name, $args = array() ) { try { if ( false === Console::execute( $name, $args ) ) { \WP_CLI::error( 'Operation failed.' ); } \WP_CLI::success( 'Operation completed.' ); } catch ( \Throwable $error ) { \WP_CLI::error( 'Operation failed. Check filesystem access and Redis configuration.' ); } }
 }
