@@ -15,7 +15,8 @@ file_put_contents( $hc_foreign, 'keep me' );
 update_user_meta( 1, '_harborcache_connection_probe', array( 'checked_at' => time() ) );
 
 define( 'WP_UNINSTALL_PLUGIN', true );
-include dirname( __DIR__ ) . '/uninstall.php';
+$hc_uninstall = getenv( 'HC_UNINSTALL_FILE' ) ?: dirname( __DIR__ ) . '/uninstall.php';
+include $hc_uninstall;
 
 $hc_failures = 0;
 $hc_gate = static function ( $name, $pass ) use ( &$hc_failures ) {

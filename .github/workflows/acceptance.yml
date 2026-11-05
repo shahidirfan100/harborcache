@@ -242,7 +242,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          wp eval-file tests/uninstall.php --path="$WP_ROOT" | tee evidence/uninstall.txt
+          HC_UNINSTALL_FILE="$WP_ROOT/wp-content/plugins/harborcache/uninstall.php" wp eval-file tests/uninstall.php --path="$WP_ROOT" | tee evidence/uninstall.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
