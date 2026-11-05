@@ -57,9 +57,8 @@ try {
             $control->rawCommand( 'ACL', 'SETUSER', $user, '+' . $command );
         }
     } elseif ( 'restricted' === $mode ) {
-        $probe = new \HarborCache\Core\Predis();
-        $probe->connect();
-        $probe->invalidate_namespace();
+        $rotation = \HarborCache\Connection_Check::rotate( \HarborCache\Config::load() );
+        safety_gate( 'Restricted ACL can rotate the cache namespace', ! empty( $rotation['ok'] ) );
         $cache = new HarborCache_Advanced_Cache();
         safety_gate( 'ACL probe and fresh cache work without INFO or SELECT', $cache->redis_status() );
         safety_gate( 'Optional denied server version stays unavailable', null === $cache->redis_version() && null === $cache->redis_version() );

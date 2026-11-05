@@ -49,7 +49,7 @@ hc_console_gate( 'Status separates transport, namespace and codec', false !== st
 hc_console_gate( 'Status offers an end-to-end self-test', false !== strpos( $overview, 'Run cache self-test' ) );
 hc_console_gate( 'Settings labels the stored probe as manual', false !== strpos( $settings, 'Last manual test' ) && false !== strpos( $settings, 'Run cache self-test' ) );
 hc_console_gate( 'Settings shows the probe timeout', false !== strpos( $settings, 'Timeout' ) || false !== strpos( $settings, 'configured timeout' ) );
-hc_console_gate( 'One readiness panel', 1 === substr_count( $overview, 'class="ch-health"' ) );
+hc_console_gate( 'One readiness panel', 1 === substr_count( $overview, 'class="ch-panel ch-health"' ) );
 hc_console_gate( 'Clear buttons carry the action-specific confirmation', false === strpos( $all, 'data-ch-confirm="1"' ) );
 hc_console_gate( 'Settings exposes a saved-connection test', false !== strpos( $settings, 'id="ch-test-form"' ) && false !== strpos( $settings, 'Test saved connection' ) );
 hc_console_gate( 'Advanced settings are collapsed', false !== strpos( $settings, 'Advanced settings' ) && false !== strpos( $settings, '<details' ) );
