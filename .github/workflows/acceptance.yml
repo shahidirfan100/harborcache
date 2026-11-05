@@ -137,6 +137,7 @@ jobs:
           php tests/status-matrix.php
           php tests/query-pruning.php
           php tests/probe-parity.php
+          php tests/probe-topology.php
           php tests/config-parity.php
           php tests/capability.php
           php tests/metrics-failure.php
