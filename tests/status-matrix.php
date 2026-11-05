@@ -153,6 +153,12 @@ $first_id  = $write->build_key( 'probe', 'audit-group' );
 $second_id = $write->build_key( 'probe', 'audit-group' );
 hc_status_gate( 'A repeated key build is memoized', $first_id === $second_id && 0 === $driver->commands, (string) $driver->commands );
 
+$original_compression = $write->ch_config['compression'];
+$write->ch_config['compression'] = 'none' === $original_compression ? 'lzf' : 'none';
+$layout_value = $write->get( 'probe', 'audit-group', false, $layout_found );
+hc_status_gate( 'Layout changes bypass the runtime hit', false === $layout_value && ! $layout_found );
+$write->ch_config['compression'] = $original_compression;
+
 $write->flush_group( 'audit-group' );
 $driver->commands = 0;
 $value = $write->get( 'probe', 'audit-group', false, $found );

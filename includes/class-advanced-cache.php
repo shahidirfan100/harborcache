@@ -375,9 +375,6 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		try {
 		if ( 'harborcache' === $group && 'metrics' === $key ) { return $this->ch_base . ( $this->ch_config['analytics']['persist'] ? '' : ':' . $this->ch_root ) . ':analytics:metrics'; }
 		$group  = $group ?: 'default';
-		$bucket = $this->blog_prefix;
-		if ( isset( $this->ch_ids[ $bucket ][ $group ][ $key ] ) ) { return $this->ch_ids[ $bucket ][ $group ][ $key ]; }
-		if ( $this->is_ignored_group( $group ) ) { return $this->ch_id( $bucket, $group, $key, parent::fast_build_key( $key, $group ) ); }
 		if (
 			null === $this->ch_layout_state ||
 			$this->ch_layout_state[0] !== $this->ch_config['serializer'] ||
@@ -392,6 +389,9 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			$this->ch_ids_count = 0;
 			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] );
 		}
+		$bucket = $this->blog_prefix;
+		if ( isset( $this->ch_ids[ $bucket ][ $group ][ $key ] ) ) { return $this->ch_ids[ $bucket ][ $group ][ $key ]; }
+		if ( $this->is_ignored_group( $group ) ) { return $this->ch_id( $bucket, $group, $key, parent::fast_build_key( $key, $group ) ); }
 		$layout = $this->ch_config['split_alloptions'] && 'relay' === $this->ch_config['client'] ? ':relay-options-v1' : '';
 		$context = $this->ch_context( $group );
 		$cacheable = is_string( $key ) || is_int( $key );
@@ -697,7 +697,15 @@ LUA;
 				$san_group = $this->sanitize_key_part( $group ?: 'default' );
 			}
 			$id = $this->ch_ids[ $this->blog_prefix ][ $san_group ][ $san_key ] ?? null;
-			if ( null !== $id && array_key_exists( $id, $this->cache ) ) {
+			if (
+				null !== $id &&
+				isset( $this->ch_layout_state[0] ) &&
+				$this->ch_layout_state[0] === $this->ch_config['serializer'] &&
+				$this->ch_layout_state[1] === $this->ch_config['compression'] &&
+				$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
+				$this->ch_layout_state[3] === $this->ch_config['client'] &&
+				array_key_exists( $id, $this->cache )
+			) {
 				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $id ] ) ? clone $this->cache[ $id ] : $this->cache[ $id ];
 			}
 		}
