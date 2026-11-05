@@ -56,6 +56,10 @@ hc_console_gate( 'Advanced settings are collapsed', false !== strpos( $settings,
 hc_console_gate( 'The probe result is announced', false !== strpos( $settings, 'id="ch-probe-result"' ) && false !== strpos( $settings, 'aria-live="polite"' ) );
 hc_console_gate( 'Diagnostics keeps the raw report behind a summary', false !== strpos( $diagnostics, 'Show raw report' ) );
 hc_console_gate( 'Diagnostics keeps the copy control', false !== strpos( $diagnostics, 'id="ch-copy"' ) );
+$hc_report = preg_match( '/<pre id="ch-diagnostics">(.*?)<\/pre>/s', $diagnostics, $hc_match ) ? json_decode( html_entity_decode( $hc_match[1], ENT_QUOTES, 'UTF-8' ), true ) : null;
+hc_console_gate( 'Diagnostics report is machine readable', is_array( $hc_report ) );
+hc_console_gate( 'Diagnostics report omits the live endpoint', is_array( $hc_report ) && ! isset( $hc_report['runtime']['endpoint'] ) );
+hc_console_gate( 'Diagnostics report omits probe host details', is_array( $hc_report ) && ! isset( $hc_report['probe']['host'] ) && ! isset( $hc_report['probe']['detail'] ) );
 hc_console_gate( 'Empty dead notice container is gone', false === strpos( $all, 'class="ch-notices"' ) );
 hc_console_gate( 'Widget keeps the request table', false !== strpos( $widget, 'Current dashboard request' ) );
 hc_console_gate( 'Widget keeps the sampled summary', false !== strpos( $widget, 'sampled requests' ) || false !== strpos( $widget, 'No recent samples' ) );

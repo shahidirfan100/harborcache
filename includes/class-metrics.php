@@ -263,7 +263,7 @@ class Metrics {
             $client = $wp_object_cache->redis_instance();
             $key    = $wp_object_cache->build_key( 'metrics', 'harborcache' );
             if ( $wp_object_cache instanceof \HarborCache_Advanced_Cache ) {
-                // One bounded ZADD; retention and count trimming run on the hourly
+                // One bounded ZADD; retention and count trimming run on the minute
                 // discard event instead of four commands on every sampled request.
                 $saved = $wp_object_cache->ch_command( array( 'ZADD', $key, (string) $this->timestamp, serialize( $this ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
                 $wp_object_cache->ch_command( array( 'EXPIRE', $key, self::max_time() ) );

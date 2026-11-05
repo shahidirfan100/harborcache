@@ -98,6 +98,7 @@ trait HarborCache_Operations {
 			$old = $this->ch_token( $base . ':epoch' ); $this->ch_rotate( $base . ':epoch' );
 			$this->ch_reclaim( $base . ':' . $old . ':*', $base . ':epoch', $old );
 			$state['last'][ $parts[1] ] = $last;
+			if ( count( $state['last'] ) > self::CH_GROUP_CAP ) { $state['last'] = array_slice( $state['last'], -self::CH_GROUP_CAP, null, true ); }
 			++$count;
 			if ( ( microtime( true ) - $start ) * 1000 > $this->ch_config['gc_budget_ms'] ) { break; }
 		}

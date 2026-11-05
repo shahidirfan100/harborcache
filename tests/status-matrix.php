@@ -56,8 +56,9 @@ class HC_Status_Driver {
 		if ( 'SET' === $command ) {
 			if ( in_array( 'NX', $args, true ) && isset( $this->values[ $key ] ) ) { return null; }
 			$this->values[ $key ] = $args[1];
-			return 'OK';
+			return true;
 		}
+		if ( 'SETEX' === $command ) { $this->values[ $key ] = $args[2]; return true; }
 		if ( 'HGETALL' === $command ) { return $this->hashes[ $key ] ?? array(); }
 		if ( 'HGET' === $command ) { return $this->hashes[ $key ][ $args[1] ?? '' ] ?? null; }
 		if ( 'HSET' === $command ) { $this->hashes[ $key ][ $args[1] ] = $args[2]; return 1; }
@@ -79,6 +80,7 @@ class HC_Status_Driver {
 		throw new RuntimeException( 'Unexpected fixture command: ' . $command );
 	}
 	public function set( ...$args ) { return $this->rawCommand( 'SET', ...$args ); }
+	public function setex( ...$args ) { return $this->rawCommand( 'SETEX', ...$args ); }
 }
 
 function hc_status_connector() {
@@ -128,6 +130,16 @@ $GLOBALS['hc_status_driver'] = $driver;
 $driver->values[ $base . ':owner' ] = \HarborCache\Namespace_Guard::legacy_identity();
 $cache = new HarborCache_Advanced_Cache( true );
 hc_status_gate( 'Legacy owner migrates without a conflict', $cache->redis_status() && hash_equals( \HarborCache\Namespace_Guard::identity(), $driver->values[ $base . ':owner' ] ) );
+
+$driver = new HC_Status_Driver();
+$GLOBALS['hc_status_driver'] = $driver;
+$driver->values[ $base . ':owner' ] = \HarborCache\Namespace_Guard::identity();
+$write = new HarborCache_Advanced_Cache( true );
+$set   = $write->set( 'probe', 'value', 'audit-group' );
+$root  = (string) ( $driver->values[ $base . ':root' ] ?? '' );
+hc_status_gate( 'A first group write succeeds', $set );
+hc_status_gate( 'A first group write registers discovery', isset( $driver->sets[ $base . ':' . $root . ':groups' ]['site-1|audit-group'] ) );
+hc_status_gate( 'A first group write stores its epoch', isset( $driver->hashes[ $base . ':' . $root . ':epochs' ]['site-1|audit-group'] ) );
 
 $GLOBALS['wp_object_cache'] = new class extends HarborCache_Advanced_Cache {
 	public $ch_config = array( 'scheme' => 'tcp', 'host' => '127.0.0.1', 'port' => 6379, 'database' => 2, 'serializer' => 'igbinary', 'compression' => 'lzf', 'maxttl' => 3600 );

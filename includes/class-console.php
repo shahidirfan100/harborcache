@@ -12,14 +12,16 @@ require_once __DIR__ . '/class-status.php';
 require_once __DIR__ . '/class-commands.php';
 
 final class Console {
-	private static $dropin_owned;
-	private static $dropin_matches;
 	private static $dropin_recovery_failed = false;
 	private static $probe_cache;
 	private static $probe_loaded = false;
-	public static function reset_dropin_state() { self::$dropin_owned = null; self::$dropin_matches = null; Status::reset(); }
+	public static function reset_dropin_state() { Status::reset(); }
 	private static function connection_check() { require_once __DIR__ . '/class-connection-check.php'; }
-	public static function capability() { $default = is_multisite() ? 'manage_network_options' : 'manage_options'; return apply_filters( 'harborcache_manager_capability', $default ); }
+	public static function capability() {
+		if ( defined( 'WP_REDIS_MANAGER_CAPABILITY' ) && WP_REDIS_MANAGER_CAPABILITY ) { return WP_REDIS_MANAGER_CAPABILITY; }
+		$default = is_multisite() ? 'manage_network_options' : 'manage_options';
+		return apply_filters( 'harborcache_manager_capability', $default );
+	}
 	public static function allowed() { return current_user_can( self::capability() ); }
 	public static function cache() { return isset( $GLOBALS['wp_object_cache'] ) && $GLOBALS['wp_object_cache'] instanceof \HarborCache_Advanced_Cache ? $GLOBALS['wp_object_cache'] : null; }
 
@@ -486,12 +488,14 @@ final class Console {
 		$saved = is_readable( Paths::content( 'harborcache-config.php' ) ) ? include Paths::content( 'harborcache-config.php' ) : array();
 		$saved = array_replace( Config::defaults(), is_array( $saved ) ? $saved : array() );
 		foreach ( $input as $value ) { if ( ! is_scalar( $value ) && null !== $value ) { throw new \InvalidArgumentException( esc_html__( 'Settings must contain scalar values.', 'harborcache-object-cache-with-redis' ) ); } }
-		foreach ( array( 'host', 'username', 'client', 'serializer', 'compression', 'network_flush', 'prefix', 'backoff', 'group_flush', 'pattern_flush', 'failure_mode' ) as $key ) { if ( isset( $input[ $key ] ) ) { $saved[ $key ] = sanitize_text_field( $input[ $key ] ); } }
+		foreach ( array( 'username', 'client', 'serializer', 'compression', 'network_flush', 'prefix', 'backoff', 'group_flush', 'pattern_flush', 'failure_mode' ) as $key ) { if ( isset( $input[ $key ] ) ) { $saved[ $key ] = sanitize_text_field( $input[ $key ] ); } }
+		if ( isset( $input['host'] ) ) { $saved = Config::apply_host( $saved, sanitize_text_field( $input['host'] ) ); }
 		foreach ( array( 'port', 'database', 'maxttl', 'queryttl', 'retry_interval', 'retries', 'gc_batch_size', 'gc_budget_ms' ) as $key ) { if ( isset( $input[ $key ] ) ) { if ( false === filter_var( $input[ $key ], FILTER_VALIDATE_INT ) ) { throw new \InvalidArgumentException( esc_html__( 'Port, database, retry interval and TTL must be whole numbers.', 'harborcache-object-cache-with-redis' ) ); } $saved[ $key ] = (int) $input[ $key ]; } }
 		foreach ( array( 'timeout', 'read_timeout' ) as $key ) { if ( isset( $input[ $key ] ) ) { $saved[ $key ] = (float) $input[ $key ]; } }
 		foreach ( array( 'split_alloptions', 'prefetch', 'debug', 'save_commands', 'persistent', 'shared', 'async_flush', 'strict', 'auto_update_dropin', 'query_maintenance' ) as $key ) { $saved[ $key ] = ! empty( $input[ $key ] ); }
 		foreach ( array( 'global_groups', 'non_persistent_groups', 'non_prefetchable_groups' ) as $key ) { $saved[ $key ] = array_values( array_filter( array_map( 'sanitize_text_field', explode( ',', $input[ $key ] ?? '' ) ) ) ); }
-		$saved['password'] = ! empty( $input['clear_password'] ) ? '' : ( isset( $input['password'] ) && '' !== (string) $input['password'] ? (string) $input['password'] : $old['password'] );
+		// A blank field keeps the settings file value; a wp-config constant is never copied into wp-content.
+		$saved['password'] = ! empty( $input['clear_password'] ) ? '' : ( isset( $input['password'] ) && '' !== (string) $input['password'] ? (string) $input['password'] : $saved['password'] );
 		$saved['analytics'] = array_replace( $saved['analytics'], array( 'enabled' => ! empty( $input['analytics'] ), 'retention' => max( 60, min( 86400, absint( $input['retention'] ?? 7200 ) ) ), 'sample_rate' => max( 0, min( 100, (float) ( $input['sample_rate'] ?? 10 ) ) ) ) );
 		if ( $saved['port'] < 1 || $saved['port'] > 65535 || $saved['database'] > 65535 || $saved['maxttl'] < 1 || $saved['maxttl'] > 2592000 || $saved['queryttl'] < 1 || $saved['queryttl'] > 2592000 ) { throw new \InvalidArgumentException( esc_html__( 'Check port, database and TTL values.', 'harborcache-object-cache-with-redis' ) ); }
 		foreach ( array( 'timeout', 'read_timeout' ) as $key ) { if ( $saved[ $key ] <= 0 || $saved[ $key ] > 30 ) { throw new \InvalidArgumentException( esc_html__( 'Timeouts must be above zero and at most 30 seconds.', 'harborcache-object-cache-with-redis' ) ); } }
@@ -672,7 +676,8 @@ final class Console {
 	}
 
 	public static function debug_info( $info ) {
-		$fields = array(); foreach ( self::status() as $key => $value ) { $fields[ $key ] = array( 'label' => $key, 'value' => is_bool( $value ) ? ( $value ? 'yes' : 'no' ) : $value ); }
+		$status = self::status(); unset( $status['endpoint'] );
+		$fields = array(); foreach ( $status as $key => $value ) { $fields[ $key ] = array( 'label' => $key, 'value' => is_bool( $value ) ? ( $value ? 'yes' : 'no' ) : $value ); }
 		$info['harborcache'] = array( 'label' => 'HarborCache', 'fields' => $fields ); return $info;
 	}
 
@@ -968,7 +973,11 @@ final class Console {
 				echo '<p class="description">' . esc_html__( 'Server statistics are available when the cache is ready.', 'harborcache-object-cache-with-redis' ) . '</p>';
 			}
 			echo '</section>';
-			echo '<section class="ch-panel"><h3>' . esc_html__( 'Report', 'harborcache-object-cache-with-redis' ) . '</h3><p>' . esc_html__( 'This report leaves out passwords, hosts, cached keys and values.', 'harborcache-object-cache-with-redis' ) . '</p><details><summary>' . esc_html__( 'Show raw report', 'harborcache-object-cache-with-redis' ) . '</summary><pre id="ch-diagnostics">' . esc_html( wp_json_encode( array( 'runtime' => self::status( true ), 'options' => self::read( 'options' ), 'probe' => $probe, 'php' => PHP_VERSION, 'wordpress' => get_bloginfo( 'version' ) ), JSON_PRETTY_PRINT ) ) . '</pre></details><button type="button" class="button" id="ch-copy">' . esc_html__( 'Copy report', 'harborcache-object-cache-with-redis' ) . '</button><p id="ch-feedback" role="status"></p></section>';
+			$runtime = self::status( true ); unset( $runtime['endpoint'] );
+			$report_probe = is_array( $probe ) ? $probe : null;
+			if ( is_array( $report_probe ) ) { unset( $report_probe['host'], $report_probe['detail'] ); }
+			$report = array( 'runtime' => $runtime, 'options' => self::read( 'options' ), 'probe' => $report_probe, 'php' => PHP_VERSION, 'wordpress' => get_bloginfo( 'version' ) );
+			echo '<section class="ch-panel"><h3>' . esc_html__( 'Report', 'harborcache-object-cache-with-redis' ) . '</h3><p>' . esc_html__( 'This report leaves out passwords, hosts, cached keys and values.', 'harborcache-object-cache-with-redis' ) . '</p><details><summary>' . esc_html__( 'Show raw report', 'harborcache-object-cache-with-redis' ) . '</summary><pre id="ch-diagnostics">' . esc_html( wp_json_encode( $report, JSON_PRETTY_PRINT ) ) . '</pre></details><button type="button" class="button" id="ch-copy">' . esc_html__( 'Copy report', 'harborcache-object-cache-with-redis' ) . '</button><p id="ch-feedback" role="status"></p></section>';
 		}
 
 		echo '</main><footer class="ch-footer">HarborCache ' . esc_html( HARBORCACHE_VERSION ) . '</footer></div>';

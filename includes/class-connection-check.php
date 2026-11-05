@@ -23,6 +23,7 @@ final class Connection_Check {
 	 * @return array
 	 */
 	public static function run( array $config, $context = 'manual' ) {
+		$config  = self::effective( $config );
 		$started = microtime( true );
 		$timeout = max( self::MIN_TIMEOUT, min( 30.0, (float) ( $config['timeout'] ?? 1 ) ) );
 		$result  = array(
@@ -51,15 +52,18 @@ final class Connection_Check {
 		try {
 			$result['codec'] = self::codec_check( $config );
 			$client = self::connect( $config, $timeout, $result );
-			$pong   = self::command( $client, array( 'PING' ) );
+			// Keyless commands need a concrete cluster node; replica reads need the primary.
+			$node  = $client instanceof \Predis\Client && ! empty( $config['cluster'] ) ? $client->getClientBy( 'slot', 0 ) : null;
+			$probe = $client instanceof \Predis\Client && ( ! empty( $config['servers'] ) || ! empty( $config['sentinels'] ) ) ? $client->getClientBy( 'role', 'master' ) : $client;
+			$pong  = self::command( $node ?: $probe, array( 'PING' ) );
 			if ( ! self::is_pong( $pong ) ) {
 				throw new \RuntimeException( 'Redis answered, but not with PONG.' );
 			}
 			$result['transport_ok'] = true;
 
 			$owner = Namespace_Guard::owner_state(
-				static function ( $args ) use ( $client ) {
-					return self::command( $client, $args );
+				static function ( $args ) use ( $probe ) {
+					return self::command( $probe, $args );
 				},
 				self::base( $config )
 			);
@@ -67,18 +71,18 @@ final class Connection_Check {
 			$result['namespace_fingerprint'] = $owner['fingerprint'];
 
 			$key   = self::probe_key( $config );
-			$write = self::command( $client, array( 'SET', $key, '1', 'PX', '5000', 'NX' ) );
+			$write = self::command( $probe, array( 'SET', $key, '1', 'PX', '5000', 'NX' ) );
 			if ( null !== $write && ! Namespace_Guard::is_ok( $write ) && true !== $write ) {
 				throw new \RuntimeException( 'Redis rejected a temporary write.' );
 			}
-			$value = self::command( $client, array( 'GET', $key ) );
-			self::command( $client, array( 'DEL', $key ) );
+			$value = self::command( $probe, array( 'GET', $key ) );
+			self::command( $probe, array( 'DEL', $key ) );
 			if ( '1' !== (string) $value ) {
 				throw new \RuntimeException( 'Redis did not return the temporary value.' );
 			}
 
 			try {
-				$info                    = self::command( $client, array( 'INFO', 'server' ) );
+				$info                    = self::command( $node ?: $probe, array( 'INFO', 'server' ) );
 				$result['redis_version'] = self::redis_version( $info );
 			} catch ( \Throwable $ignored ) {
 				// Server information is optional; it must not hide working data access.
@@ -116,6 +120,19 @@ final class Connection_Check {
 		return $result;
 	}
 
+	/** Probe the topology wp-config declares, even when the settings file is older. */
+	private static function effective( array $config ) {
+		if ( defined( 'WP_REDIS_CLUSTER' ) ) {
+			$config['cluster'] = is_array( WP_REDIS_CLUSTER ) ? WP_REDIS_CLUSTER : array( WP_REDIS_CLUSTER ); $config['servers'] = array(); $config['sentinels'] = array(); $config['service'] = '';
+		}
+		if ( defined( 'WP_REDIS_SERVERS' ) ) {
+			$servers = is_array( WP_REDIS_SERVERS ) ? WP_REDIS_SERVERS : array( WP_REDIS_SERVERS ); $config['cluster'] = array();
+			if ( defined( 'WP_REDIS_SENTINEL' ) ) { $config['sentinels'] = $servers; $config['service'] = (string) WP_REDIS_SENTINEL; }
+			else { $config['servers'] = $servers; $config['sentinels'] = array(); $config['service'] = ''; }
+		}
+		return $config;
+	}
+
 	/** Round-trip one value through the exact serializer and compression pair. */
 	private static function codec_check( array $config ) {
 		try {
@@ -133,6 +150,7 @@ final class Connection_Check {
 	 * @return array{ok:bool,message:string}
 	 */
 	public static function rotate( array $config ) {
+		$config  = self::effective( $config );
 		$client  = null;
 		$timeout = max( self::MIN_TIMEOUT, min( 30.0, (float) ( $config['timeout'] ?? 1 ) ) );
 		$probe   = array();
@@ -162,6 +180,7 @@ final class Connection_Check {
 	 * @return array{ok:bool,message:string}
 	 */
 	public static function reclaim( array $config ) {
+		$config  = self::effective( $config );
 		$client  = null;
 		$timeout = max( self::MIN_TIMEOUT, min( 30.0, (float) ( $config['timeout'] ?? 1 ) ) );
 		$probe   = array();

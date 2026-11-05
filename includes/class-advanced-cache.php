@@ -18,6 +18,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	use HarborCache_Topology;
 	use HarborCache_Operations;
 	use HarborCache_Relay_Options;
+	// shortcut: above 1000 distinct groups, discovery and epoch metadata evict an arbitrary group; old values stay TTL-bound. Move to per-group expiring token keys if dynamic group names are expected.
+	const CH_GROUP_CAP = 1000;
 	public $ch_config;
 	// Also declare counters here so an older owned drop-in can load the upgraded plugin until refresh.
 	public $runtime_hits = 0;
@@ -299,8 +301,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			return $value;
 		}
 		$candidate = bin2hex( random_bytes( 12 ) );
-		$script    = "local v=redis.call('HGET',KEYS[1],ARGV[1]); if not v then redis.call('HSET',KEYS[1],ARGV[1],ARGV[2]); redis.call('EXPIRE',KEYS[1],ARGV[3]); v=ARGV[2] end; return v";
-		$value     = $this->ch_command( array( 'EVAL', $script, 1, $this->ch_epochs_key, $field, $candidate, $this->ch_config['maxttl'] * 2 ) );
+		$script    = "local v=redis.call('HGET',KEYS[1],ARGV[1]); if not v then redis.call('HSET',KEYS[1],ARGV[1],ARGV[2]); redis.call('EXPIRE',KEYS[1],ARGV[3]); v=ARGV[2]; local n=redis.call('HLEN',KEYS[1]); local cap=tonumber(ARGV[4]); if n>cap then local fields=redis.call('HKEYS',KEYS[1]); for i=1,n-cap do redis.call('HDEL',KEYS[1],fields[i]) end end end; return v";
+		$value     = $this->ch_command( array( 'EVAL', $script, 1, $this->ch_epochs_key, $field, $candidate, $this->ch_config['maxttl'] * 2, self::CH_GROUP_CAP ) );
 		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { $value = $this->ch_command( array( 'HGET', $this->ch_epochs_key, $field ) ); }
 		if ( ! is_string( $value ) || ! preg_match( '/^[a-f0-9]{24}$/D', $value ) ) { throw new RuntimeException( 'Cache namespace metadata is invalid.' ); }
 		$this->ch_epochs[ $field ] = $value;
@@ -328,36 +330,25 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	}
 
 	private function ch_register_group( $scope, $group_key, $group ) {
+		// A read of a group creates only its epoch field. The first write registers it and refreshes metadata TTLs.
+		if ( ! $this->ch_writing ) { return; }
 		$registry = $this->ch_base . ':' . $this->ch_root . ':groups';
 		$member   = $this->ch_scope( $group ) . '|' . rawurlencode( $group );
-		$this->ch_registry_load();
-		$this->ch_epochs_load();
-		$known = isset( $this->ch_registry[ $member ] ) && isset( $this->ch_epochs[ $member ] );
-		if ( $known && ! $this->ch_writing ) { return; }
+		if ( isset( $this->ch_touched[ $member ] ) ) { return; }
+		$this->ch_touched[ $member ] = true;
 		$expiry = $this->ch_config['maxttl'] * 2;
-		if ( $known ) {
-			if ( isset( $this->ch_touched[ $member ] ) ) { return; }
-			$this->ch_touched[ $member ] = true;
-			$keys = array( $scope . ':epoch', $group_key . ':epoch', $registry, $this->ch_epochs_key );
-			if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
-				$script = "for i=1,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[1]) end; return 1";
-				$this->ch_command( array_merge( array( 'EVAL', $script, count( $keys ) ), $keys, array( $expiry ) ) );
-			} else {
-				foreach ( $keys as $key ) { $this->ch_command( array( 'EXPIRE', $key, $expiry ) ); }
-			}
-			return;
-		}
-		// A read of a group with no registry entry creates only its epoch field. The first write registers it.
-		if ( ! $this->ch_writing ) { return; }
+		$keys   = array( $registry, $scope . ':epoch', $group_key . ':epoch', $this->ch_epochs_key );
 		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
-			$script = "redis.call('SADD',KEYS[1],ARGV[1]); for i=2,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[2]) end; return 1";
-			$this->ch_command( array_merge( array( 'EVAL', $script, 4, $registry, $scope . ':epoch', $group_key . ':epoch', $this->ch_epochs_key, $member, $expiry ) ) );
+			$script = "redis.call('SADD',KEYS[1],ARGV[1]); local n=redis.call('SCARD',KEYS[1]); if n>tonumber(ARGV[3]) then redis.call('SPOP',KEYS[1],n-tonumber(ARGV[3])) end; for i=2,#KEYS do redis.call('EXPIRE',KEYS[i],ARGV[2]) end; return 1";
+			$this->ch_command( array_merge( array( 'EVAL', $script, count( $keys ) ), $keys, array( $member, $expiry, self::CH_GROUP_CAP ) ) );
 		} else {
-			$this->ch_command( array( 'SADD', $registry, $member ) );
-			foreach ( array( $scope . ':epoch', $group_key . ':epoch', $registry, $this->ch_epochs_key ) as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $expiry ) ); }
+			if ( $this->ch_command( array( 'SADD', $registry, $member ) ) ) {
+				$count = (int) $this->ch_command( array( 'SCARD', $registry ) );
+				if ( $count > self::CH_GROUP_CAP ) { $this->ch_command( array( 'SPOP', $registry, $count - self::CH_GROUP_CAP ) ); }
+			}
+			foreach ( $keys as $metadata ) { $this->ch_command( array( 'EXPIRE', $metadata, $expiry ) ); }
 		}
 		$this->ch_registry[ $member ] = true;
-		$this->ch_touched[ $member ] = true;
 	}
 
 	public function add_global_groups( $groups ) {

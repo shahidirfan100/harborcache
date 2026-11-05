@@ -16,6 +16,7 @@ require_once dirname( __DIR__ ) . '/includes/ch-operations.php';
 class HC_Query_Pruning_Fixture {
 	use HarborCache_Operations;
 
+	const CH_GROUP_CAP = 1000;
 	public $ch_config = array( 'query_maintenance' => true, 'gc_budget_ms' => 1000, 'maxttl' => 86400 );
 	public $ch_base = 'ch:meta';
 	public $ch_root = 'root';

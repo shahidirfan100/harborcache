@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,14 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.3.3 =
+* Probe Redis Cluster through a concrete node and Sentinel/replica setups through the primary, so the connection check can enable and save those topologies.
+* Read WP_REDIS_CLUSTER, WP_REDIS_SERVERS, WP_REDIS_SENTINEL, WP_REDIS_SCHEME and WP_REDIS_PATH into the effective configuration.
+* Allow a saved Unix-socket connection to switch back to TCP from Settings.
+* Keep a wp-config password out of the saved wp-content configuration file.
+* Remove endpoints and raw probe host details from the copyable diagnostics report and Site Health debug info.
+* Honor WP_REDIS_MANAGER_CAPABILITY in the dashboard gate, and cap group registry/epoch metadata at 1,000 entries.
 
 = 1.3.2 =
 * Remove the legacy Predis client and its public FLUSHDB path; namespace rotation now uses the selected client.
