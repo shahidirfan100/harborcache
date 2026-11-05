@@ -129,5 +129,19 @@ $driver->values[ $base . ':owner' ] = \HarborCache\Namespace_Guard::legacy_ident
 $cache = new HarborCache_Advanced_Cache( true );
 hc_status_gate( 'Legacy owner migrates without a conflict', $cache->redis_status() && hash_equals( \HarborCache\Namespace_Guard::identity(), $driver->values[ $base . ':owner' ] ) );
 
+$GLOBALS['wp_object_cache'] = new class extends HarborCache_Advanced_Cache {
+	public $ch_config = array( 'scheme' => 'tcp', 'host' => '127.0.0.1', 'port' => 6379, 'database' => 2, 'serializer' => 'igbinary', 'compression' => 'lzf', 'maxttl' => 3600 );
+	public function __construct() {}
+	public function ch_diagnostics( $with_bytes = false ) {
+		return array( 'connected' => true, 'transport_ok' => true, 'ready' => true, 'namespace' => 'owned', 'codec' => 'ok', 'client' => 'PhpRedis', 'redis' => '7.4.0', 'reason' => '', 'bytes_estimate' => 0 );
+	}
+};
+$live = \HarborCache\Status::read();
+hc_status_gate( 'Status reads the live endpoint', '127.0.0.1:6379' === ( $live['endpoint'] ?? '' ), (string) ( $live['endpoint'] ?? '' ) );
+hc_status_gate( 'Status reads the live database', 2 === ( $live['database'] ?? -1 ) );
+hc_status_gate( 'Status reads the live codec', 'igbinary' === ( $live['serializer'] ?? '' ) && 'lzf' === ( $live['compression'] ?? '' ) );
+hc_status_gate( 'Status keeps transport and namespace facts', 'connected' === ( $live['transport'] ?? '' ) && 'owned' === ( $live['namespace'] ?? '' ) && 'ok' === ( $live['codec'] ?? '' ) );
+hc_status_gate( 'Missing drop-in is still reported', 'not-installed' === ( $live['state'] ?? '' ), (string) ( $live['state'] ?? '' ) );
+
 echo 'RESULT ' . ( $failures ? 'FAILED' : 'PASSED' ) . ' with ' . $failures . " failure(s)\n";
 exit( $failures ? 1 : 0 );

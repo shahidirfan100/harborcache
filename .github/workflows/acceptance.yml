@@ -135,6 +135,7 @@ jobs:
           php tests/review-regressions.php
           php tests/safety-regressions.php
           php tests/status-matrix.php
+          php tests/query-pruning.php
           php tests/probe-parity.php
           php tests/metrics-failure.php
           python3 tools/build-release.py --check
@@ -237,6 +238,11 @@ jobs:
           php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           export HC_TEST_CONFIG='{"client":"phpredis"}'
           php tests/acceptance.php recovery | tee evidence/lifecycle-recovery.txt
+      - name: Uninstall cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          wp eval-file tests/uninstall.php --path="$WP_ROOT" | tee evidence/uninstall.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -129,6 +129,15 @@ final class Status {
 			'checked_at'  => 0,
 		) );
 
+		if ( $cache && isset( $cache->ch_config ) && is_array( $cache->ch_config ) ) {
+			$live = $cache->ch_config;
+			$snapshot['endpoint']    = 'unix' === ( $live['scheme'] ?? 'tcp' ) ? (string) ( $live['path'] ?? '' ) : (string) ( $live['host'] ?? '' ) . ':' . (int) ( $live['port'] ?? 0 );
+			$snapshot['database']    = (int) ( $live['database'] ?? 0 );
+			$snapshot['serializer']  = (string) ( $live['serializer'] ?? 'php' );
+			$snapshot['compression'] = (string) ( $live['compression'] ?? 'none' );
+			$snapshot['max_ttl']     = (int) ( $live['maxttl'] ?? 86400 );
+		}
+
 		// Legacy keys kept for integrations that still read them.
 		$snapshot['connected'] = ! empty( $details['connected'] );
 		return $snapshot;

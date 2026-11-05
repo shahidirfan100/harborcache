@@ -77,21 +77,28 @@ trait HarborCache_Operations {
 		return $result;
 	}
 
-	/** Recycle query groups gradually; this deliberately expires valid query entries too. */
+	/** Recycle query groups whose data changed; unchanged groups stay cached. */
 	public function maintain_queries() {
 		if ( ! $this->redis_status() || ! $this->ch_config['query_maintenance'] ) { return 0; }
 		$key = $this->ch_base . ':' . $this->ch_root . ':query-maintenance';
 		$state = json_decode( (string) $this->ch_command( array( 'GET', $key ) ), true );
-		$state = is_array( $state ) ? $state : array( 'cursor' => '0', 'pending' => array() );
-		if ( ! isset( $state['cursor'], $state['pending'] ) || ! is_array( $state['pending'] ) || ! ctype_digit( (string) $state['cursor'] ) ) { $state = array( 'cursor' => '0', 'pending' => array() ); }
+		$state = is_array( $state ) ? $state : array( 'cursor' => '0', 'pending' => array(), 'last' => array() );
+		if ( ! isset( $state['cursor'], $state['pending'] ) || ! is_array( $state['pending'] ) || ! ctype_digit( (string) $state['cursor'] ) ) { $state = array( 'cursor' => '0', 'pending' => array(), 'last' => array() ); }
+		if ( ! isset( $state['last'] ) || ! is_array( $state['last'] ) ) { $state['last'] = array(); }
 		if ( ! $state['pending'] ) { $page = $this->ch_command( array( 'SSCAN', $this->ch_base . ':' . $this->ch_root . ':groups', $state['cursor'], 'COUNT', 10 ) ); $state['cursor'] = (string) $page[0]; $state['pending'] = (array) $page[1]; }
 		$count = 0; $start = microtime( true );
 		for ( $i = 0; $i < 10 && $state['pending']; ++$i ) {
 			$row = array_shift( $state['pending'] ); $parts = explode( '|', $row, 2 );
 			if ( 2 !== count( $parts ) || ! preg_match( '/^(global|site-[1-9][0-9]*)$/D', $parts[0] ) || '-queries' !== substr( rawurldecode( $parts[1] ), -8 ) ) { continue; }
+			$group = rawurldecode( $parts[1] );
+			$last  = function_exists( 'wp_cache_get_last_changed' ) ? (float) wp_cache_get_last_changed( substr( $group, 0, -8 ) ) : 0.0;
+			$seen  = (float) ( $state['last'][ $parts[1] ] ?? 0 );
+			if ( $last > 0 && $last <= $seen ) { continue; }
 			$base = $this->ch_base . ':' . $this->ch_root . ':' . $parts[0]; $base .= ':' . $this->ch_token( $base . ':epoch' ) . ':g:' . $parts[1];
 			$old = $this->ch_token( $base . ':epoch' ); $this->ch_rotate( $base . ':epoch' );
-			$this->ch_reclaim( $base . ':' . $old . ':*', $base . ':epoch', $old ); ++$count;
+			$this->ch_reclaim( $base . ':' . $old . ':*', $base . ':epoch', $old );
+			$state['last'][ $parts[1] ] = $last;
+			++$count;
 			if ( ( microtime( true ) - $start ) * 1000 > $this->ch_config['gc_budget_ms'] ) { break; }
 		}
 		$this->flush_runtime();

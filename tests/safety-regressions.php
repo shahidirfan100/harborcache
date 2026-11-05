@@ -18,7 +18,7 @@ require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php';
 \HarborCache\Config::apply();
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/object-cache.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-advanced-cache.php';
-require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-predis.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-connection-check.php';
 
 class HC_Safety_Driver {
     public $values = array();
@@ -156,11 +156,8 @@ try {
     $before = $client->values;
     $cache = new HarborCache_Advanced_Cache();
     $check( 'Foreign prefix owner and root remain untouched', ! $cache->redis_status() && $before === $client->values );
-    $probe = new \HarborCache\Core\Predis();
-    $probe->connect();
-    $rejected = false;
-    try { $probe->invalidate_namespace(); } catch ( Throwable $error ) { $rejected = true; }
-    $check( 'Enable probe refuses to rotate a foreign owner namespace', $rejected && $before === $client->values );
+    $rotation = \HarborCache\Connection_Check::rotate( \HarborCache\Config::load() );
+    $check( 'Enable probe refuses to rotate a foreign owner namespace', empty( $rotation['ok'] ) && $before === $client->values );
 
     $client = $driver();
     $client->values['hc-safety:meta:root'] = 'corrupt';

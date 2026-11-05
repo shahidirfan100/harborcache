@@ -14,7 +14,12 @@ if ( WP_Filesystem() ) {
   }
  }
  $harborcache_config = \HarborCache\Paths::content( 'harborcache-config.php' );
- if ( ! is_link( $harborcache_config ) && $harborcache_fs->is_readable( $harborcache_config ) && false !== strpos( $harborcache_fs->get_contents( $harborcache_config ), '// HarborCache configuration.' ) ) { $harborcache_fs->delete( $harborcache_config ); }
+ if ( ! is_link( $harborcache_config ) && $harborcache_fs->is_readable( $harborcache_config ) ) {
+  $harborcache_config_text = $harborcache_fs->get_contents( $harborcache_config );
+  if ( is_string( $harborcache_config_text ) && false !== strpos( $harborcache_config_text, 'HarborCache configuration' ) && false !== strpos( $harborcache_config_text, "defined( 'ABSPATH' )" ) ) {
+   $harborcache_fs->delete( $harborcache_config );
+  }
+ }
 }
 wp_clear_scheduled_hook( 'harborcache_metrics_discard' );
 wp_clear_scheduled_hook( 'rediscache_discard_metrics' ); // Remove the event name used by earlier HarborCache builds.

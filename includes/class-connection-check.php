@@ -128,6 +128,35 @@ final class Connection_Check {
 	}
 
 	/**
+	 * Start a new namespace with the selected client. Used when the cache is first enabled.
+	 *
+	 * @return array{ok:bool,message:string}
+	 */
+	public static function rotate( array $config ) {
+		$client  = null;
+		$timeout = max( self::MIN_TIMEOUT, min( 30.0, (float) ( $config['timeout'] ?? 1 ) ) );
+		$probe   = array();
+		try {
+			$client = self::connect( $config, $timeout, $probe );
+			$command = static function ( $args ) use ( $client ) {
+				return self::command( $client, $args );
+			};
+			if ( ! empty( $config['strict'] ) ) {
+				Namespace_Guard::claim( $command, self::base( $config ) );
+			}
+			$reply = self::command( $client, array( 'SET', self::prefix( $config ) . 'meta:root', bin2hex( random_bytes( 12 ) ) ) );
+			if ( ! Namespace_Guard::is_ok( $reply ) ) {
+				throw new \RuntimeException( 'Redis rejected the cache namespace rotation.' );
+			}
+			return array( 'ok' => true, 'message' => __( 'Started a new cache namespace.', 'harborcache-object-cache-with-redis' ) );
+		} catch ( \Throwable $error ) {
+			return array( 'ok' => false, 'message' => $error->getMessage() );
+		} finally {
+			self::close( $client );
+		}
+	}
+
+	/**
 	 * Explicit namespace takeover after the operator confirms the old owner is gone.
 	 *
 	 * @return array{ok:bool,message:string}
@@ -481,7 +510,8 @@ final class Connection_Check {
 		$class     = $ok ? 'is-connected' : ( $transport ? 'is-degraded' : 'is-failed' );
 		$client    = (string) ( $probe['client'] ?? '' );
 		$namespace = self::namespace_label( (string) ( $probe['namespace'] ?? 'unknown' ) );
-		$codec     = 'ok' === ( $probe['codec'] ?? '' ) ? __( 'Passed', 'harborcache-object-cache-with-redis' ) : __( 'Failed', 'harborcache-object-cache-with-redis' );
+		$codec_state = (string) ( $probe['codec'] ?? 'unknown' );
+		$codec     = 'ok' === $codec_state ? __( 'Passed', 'harborcache-object-cache-with-redis' ) : ( 'error' === $codec_state ? __( 'Failed', 'harborcache-object-cache-with-redis' ) : __( 'Unknown', 'harborcache-object-cache-with-redis' ) );
 		$html      = '<div class="ch-probe ' . esc_attr( $class ) . '" role="status" aria-live="polite">';
 
 		$html .= '<div class="ch-probe-head"><strong>';

@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,15 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.3.2 =
+* Remove the legacy Predis client and its public FLUSHDB path; namespace rotation now uses the selected client.
+* Trim analytics every minute so the sampled sorted set cannot grow for an hour.
+* Read endpoint, database, serializer, compression and TTL from the live cache on Status; the settings form keeps the saved values.
+* Require a server-side confirmation for namespace reclaim, and fix the namespace and drop-in detail text.
+* Rotate only query groups whose source data changed, limit the group table to 100 rows, and render chart points only on the visible panel.
+* Delete the inherited no-op plugin methods, warn when the connection file is group/world readable, and make uninstall remove older config files.
+* Add query-pruning, status-read and uninstall checks to CI.
 
 = 1.3.1 =
 * Refresh the readiness panel into a compact 2x2 health grid with a clear Ready/attention chip.
