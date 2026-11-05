@@ -42,6 +42,7 @@ class HC_Status_Driver {
 	public $hashes = array();
 	public $sets = array();
 	public $last_error = '';
+	public $commands = 0;
 	public function ping() { return 'PONG'; }
 	public function getConnection() { return null; }
 	public function info( ...$args ) { return array( 'redis_version' => '7.0.0' ); }
@@ -49,6 +50,7 @@ class HC_Status_Driver {
 	public function isConnected() { return true; }
 	public function clearLastError() { $this->last_error = ''; }
 	public function rawCommand( ...$args ) {
+		++$this->commands;
 		$command = strtoupper( array_shift( $args ) );
 		$key     = $args[0] ?? '';
 		if ( 'PING' === $command ) { return 'PONG'; }
@@ -81,6 +83,7 @@ class HC_Status_Driver {
 	}
 	public function set( ...$args ) { return $this->rawCommand( 'SET', ...$args ); }
 	public function setex( ...$args ) { return $this->rawCommand( 'SETEX', ...$args ); }
+	public function get( ...$args ) { return $this->rawCommand( 'GET', ...$args ); }
 }
 
 function hc_status_connector() {
@@ -140,6 +143,20 @@ $root  = (string) ( $driver->values[ $base . ':root' ] ?? '' );
 hc_status_gate( 'A first group write succeeds', $set );
 hc_status_gate( 'A first group write registers discovery', isset( $driver->sets[ $base . ':' . $root . ':groups' ]['site-1|audit-group'] ) );
 hc_status_gate( 'A first group write stores its epoch', isset( $driver->hashes[ $base . ':' . $root . ':epochs' ]['site-1|audit-group'] ) );
+
+$driver->commands = 0;
+$value = $write->get( 'probe', 'audit-group', false, $found );
+hc_status_gate( 'A runtime hit returns the stored value', $found && 'value' === $value );
+hc_status_gate( 'A runtime hit sends no Redis command', 0 === $driver->commands, (string) $driver->commands );
+$driver->commands = 0;
+$first_id  = $write->build_key( 'probe', 'audit-group' );
+$second_id = $write->build_key( 'probe', 'audit-group' );
+hc_status_gate( 'A repeated key build is memoized', $first_id === $second_id && 0 === $driver->commands, (string) $driver->commands );
+
+$write->flush_group( 'audit-group' );
+$driver->commands = 0;
+$value = $write->get( 'probe', 'audit-group', false, $found );
+hc_status_gate( 'Group rotation drops the runtime hit', ! $found && false === $value );
 
 $GLOBALS['wp_object_cache'] = new class extends HarborCache_Advanced_Cache {
 	public $ch_config = array( 'scheme' => 'tcp', 'host' => '127.0.0.1', 'port' => 6379, 'database' => 2, 'serializer' => 'igbinary', 'compression' => 'lzf', 'maxttl' => 3600 );
