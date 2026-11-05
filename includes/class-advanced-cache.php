@@ -38,6 +38,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_registered = array();
 	public $ch_commands = array();
 	private $ch_prefetch_keys = array();
+	private $ch_prefetch_skip = array();
 	private $ch_prefetching = false;
 	private $ch_option_snapshots = array();
 	private $ch_reconnecting = false;
@@ -569,21 +570,59 @@ LUA;
 
 	public function prefetch( array $groups ) {
 		foreach ( $groups as $group => $keys ) {
-			if ( ! in_array( $group, $this->ch_config['non_prefetchable_groups'], true ) ) { $this->get_multiple( (array) $keys, $group ); }
+			$group = (string) $group;
+			$keys  = (array) $keys;
+			if ( in_array( $group, $this->ch_config['non_prefetchable_groups'], true ) || $this->is_ignored_group( $group ) || count( $keys ) < 2 ) { continue; }
+			if ( $this->ch_config['split_alloptions'] && 'options' === $group ) { $keys = array_values( array_diff( $keys, array( 'alloptions' ) ) ); }
+			if ( ! $keys ) { continue; }
+			foreach ( (array) $this->get_multiple( $keys, $group ) as $key => $value ) {
+				if ( $this->ch_prefetch_incomplete( $value ) ) {
+					$this->ch_prefetch_skip[ $group ][ (string) $key ] = true;
+					$this->ch_forget( $key, $group );
+				}
+			}
 		}
+	}
+
+	/** A prefetch manifest is useful only for cacheable page views. */
+	private function ch_prefetchable_request() {
+		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) ) { return false; }
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( $_SERVER['REQUEST_METHOD'] ) : '';
+		return ( 'GET' === $method || 'HEAD' === $method ) && ! empty( $_SERVER['REQUEST_URI'] );
+	}
+
+	/** Drop one replayed value from request memory without touching Redis. */
+	private function ch_forget( $key, $group ) {
+		$id = $this->build_key( $key, $group );
+		if ( array_key_exists( $id, $this->cache ) ) {
+			$this->runtime_bytes -= $this->estimate_bytes( $this->cache[ $id ] );
+			unset( $this->cache[ $id ] );
+		}
+	}
+
+	/** An incomplete class must not be replayed from a stored manifest. */
+	private function ch_prefetch_incomplete( $value ) {
+		if ( $value instanceof \__PHP_Incomplete_Class ) { return true; }
+		if ( ! is_array( $value ) && ! is_object( $value ) ) { return false; }
+		$found = false;
+		$data  = (array) $value;
+		array_walk_recursive( $data, static function ( $item ) use ( &$found ) { if ( $item instanceof \__PHP_Incomplete_Class ) { $found = true; } } );
+		return $found;
 	}
 
 	private function ch_prefetch_id() {
 		$user = function_exists( 'get_current_user_id' ) ? get_current_user_id() : 0;
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
-		return $this->ch_base . ':prefetch:' . hash( 'sha256', $this->blog_prefix . ':' . $user . ':' . $request_uri );
+		$host = isset( $_SERVER['HTTP_HOST'] ) && is_string( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+		$uri  = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
+		$verb = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( $_SERVER['REQUEST_METHOD'] ) : '';
+		return $this->ch_base . ':prefetch:' . hash( 'sha256', $this->blog_prefix . ':' . $user . ':' . $verb . ':' . $host . ':' . $uri );
 	}
 	public function track_prefetch( $key, $value, $group, $force, $found, $time ) {
-		if ( $this->ch_prefetching || ! $found || in_array( $group, $this->ch_config['non_prefetchable_groups'], true ) || $this->is_ignored_group( $group ) ) { return; }
-		if ( count( $this->ch_prefetch_keys, COUNT_RECURSIVE ) < 250 ) { $this->ch_prefetch_keys[ $group ][ (string) $key ] = $key; }
+		if ( $this->ch_prefetching || ! $found || in_array( $group, $this->ch_config['non_prefetchable_groups'], true ) || $this->is_ignored_group( $group ) || isset( $this->ch_prefetch_skip[ $group ][ (string) $key ] ) ) { return; }
+		if ( count( $this->ch_prefetch_keys, COUNT_RECURSIVE ) < 1000 ) { $this->ch_prefetch_keys[ $group ][ (string) $key ] = $key; }
 	}
 	public function prefetch_request() {
-		if ( ! $this->redis_status() ) { return; }
+		if ( ! $this->redis_status() || ! $this->ch_prefetchable_request() ) { return; }
 		try {
 			$data = $this->ch_command( array( 'GET', $this->ch_prefetch_id() ) );
 			$groups = is_string( $data ) ? json_decode( $data, true ) : array();
@@ -592,10 +631,12 @@ LUA;
 		finally { $this->ch_prefetching = false; }
 	}
 	public function save_prefetch() {
-		if ( $this->ch_prefetch_keys && $this->redis_status() ) {
-			try { $this->ch_command( array( 'SET', $this->ch_prefetch_id(), json_encode( array_map( 'array_values', $this->ch_prefetch_keys ) ), 'EX', min( 3600, $this->ch_config['maxttl'] ) ) ); }
-			catch ( Throwable $error ) { /* A failed prefetch manifest must not break the response. */ }
-		}
+		if ( ! $this->ch_prefetch_keys || ! $this->redis_status() || ! $this->ch_prefetchable_request() ) { return; }
+		foreach ( $this->ch_prefetch_skip as $group => $keys ) { foreach ( array_keys( $keys ) as $key ) { unset( $this->ch_prefetch_keys[ $group ][ $key ] ); } }
+		if ( $this->ch_config['split_alloptions'] ) { unset( $this->ch_prefetch_keys['options']['alloptions'] ); }
+		if ( ! $this->ch_prefetch_keys ) { return; }
+		try { $this->ch_command( array( 'SET', $this->ch_prefetch_id(), json_encode( array_map( 'array_values', $this->ch_prefetch_keys ) ), 'EX', 86400 ) ); }
+		catch ( Throwable $error ) { /* A failed prefetch manifest must not break the response. */ }
 	}
 
 	public function ch_groups() {
