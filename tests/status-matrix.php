@@ -22,6 +22,8 @@ if ( ! function_exists( 'add_filter' ) ) { function add_filter() {} }
 if ( ! function_exists( 'add_action' ) ) { function add_action() {} }
 if ( ! function_exists( 'do_action' ) ) { function do_action() {} }
 if ( ! function_exists( 'apply_filters' ) ) { function apply_filters( $name, $value ) { return $value; } }
+if ( ! function_exists( 'sanitize_text_field' ) ) { function sanitize_text_field( $value ) { return trim( (string) $value ); } }
+if ( ! function_exists( 'wp_unslash' ) ) { function wp_unslash( $value ) { return $value; } }
 
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-config.php';
 \HarborCache\Config::apply();
@@ -163,6 +165,21 @@ $write->flush_group( 'audit-group' );
 $driver->commands = 0;
 $value = $write->get( 'probe', 'audit-group', false, $found );
 hc_status_gate( 'Group rotation drops the runtime hit', ! $found && false === $value );
+
+$prefetchable = new ReflectionMethod( $write, 'ch_prefetchable_request' );
+$incomplete = new ReflectionMethod( $write, 'ch_prefetch_incomplete' );
+if ( PHP_VERSION_ID < 80100 ) { $prefetchable->setAccessible( true ); $incomplete->setAccessible( true ); }
+$_SERVER['REQUEST_METHOD'] = 'GET'; $_SERVER['REQUEST_URI'] = '/prefetch-fixture';
+hc_status_gate( 'Prefetch accepts GET', true === $prefetchable->invoke( $write ) );
+$_SERVER['REQUEST_METHOD'] = 'POST';
+hc_status_gate( 'Prefetch skips POST', false === $prefetchable->invoke( $write ) );
+$missing = @unserialize( 'O:22:"Missing_Prefetch_Class":0:{}' );
+hc_status_gate( 'Prefetch detects an incomplete class', true === $incomplete->invoke( $write, $missing ) );
+hc_status_gate( 'Prefetch detects a nested incomplete class', true === $incomplete->invoke( $write, array( 'x' => array( $missing ) ) ) );
+hc_status_gate( 'Prefetch accepts plain data', false === $incomplete->invoke( $write, array( 'x' => 1 ) ) );
+$driver->commands = 0;
+$write->prefetch( array( 'audit-group' => array( 'probe' ) ) );
+hc_status_gate( 'Prefetch skips a single-key group', 0 === $driver->commands, (string) $driver->commands );
 
 $GLOBALS['wp_object_cache'] = new class extends HarborCache_Advanced_Cache {
 	public $ch_config = array( 'scheme' => 'tcp', 'host' => '127.0.0.1', 'port' => 6379, 'database' => 2, 'serializer' => 'igbinary', 'compression' => 'lzf', 'maxttl' => 3600 );

@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,12 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.4.1 =
+* Store prefetch manifests only for GET and HEAD requests, excluding WP-CLI, REST and XML-RPC.
+* Raise the prefetch manifest to 1,000 keys and 24 hours, skip single-key groups, and omit `alloptions` when it is split.
+* Detect incomplete classes during replay, drop them from request memory and skip them in the next manifest.
+* No cache key format or configuration change.
 
 = 1.4.0 =
 * Memoize one request-local cache id per blog, group and key, so repeated reads skip namespace and context work.
