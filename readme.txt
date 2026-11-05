@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.3
+Stable tag: 1.4.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,12 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.4.0 =
+* Memoize one request-local cache id per blog, group and key, so repeated reads skip namespace and context work.
+* Precompute single-node, instrumentation and read-only routing flags used on every command.
+* Skip namespace metadata writes for non-persistent groups and remove a redundant group-type lookup.
+* No cache key format or configuration change.
 
 = 1.3.3 =
 * Probe Redis Cluster through a concrete node and Sentinel/replica setups through the primary, so the connection check can enable and save those topologies.

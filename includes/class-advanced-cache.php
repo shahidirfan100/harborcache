@@ -45,6 +45,11 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_derived = array();
 	private $ch_prefixes = array();
 	private $ch_derived_count = 0;
+	private $ch_ids = array();
+	private $ch_ids_count = 0;
+	private $ch_single;
+	private $ch_observe;
+	private $ch_readonly = array( 'get' => true, 'mget' => true, 'pttl' => true );
 	private $ch_layout_state;
 	private $ch_relay_bypass = false;
 	private $ch_ignored_source;
@@ -62,6 +67,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	public function __construct( $fail_gracefully = false ) {
 		$this->ch_default_sanitizer = __CLASS__ === get_class( $this );
 		$this->ch_config = \HarborCache\Config::load();
+		$this->ch_single  = ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'];
+		$this->ch_observe = $this->ch_config['save_commands'] || $this->ch_config['debug'] || $this->ch_config['retries'] > 0 || ( null !== $this->ch_config['tracer'] && 'none' !== $this->ch_config['tracer'] );
 		$codec_error = null;
 		try { $this->ch_codec = new \HarborCache\Codec( $this->ch_config ); }
 		catch ( Throwable $error ) { $codec_error = $error; $this->ch_codec_ok = false; $this->ch_codec = new \HarborCache\Codec( array( 'serializer' => 'php', 'compression' => 'none' ) ); }
@@ -127,10 +134,10 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	}
 	protected function redis_call( $method, ...$args ) {
 		if ( ! $this->redis_connected ) { throw new RuntimeException( 'Redis is unavailable.' ); }
-		$readonly = in_array( strtolower( $method ), array( 'get', 'mget', 'pttl' ), true );
-		if ( ! defined( 'WP_REDIS_CLUSTER' ) && ! $this->ch_config['servers'] && ! $this->ch_config['sentinels'] ) {
+		$readonly = isset( $this->ch_readonly[ $method ] );
+		if ( $this->ch_single ) {
 			if ( $readonly ) { ++$this->ch_routes['primary']; }
-			if ( ! $this->ch_config['save_commands'] && ! $this->ch_config['debug'] && ! $this->ch_config['retries'] && ( null === $this->ch_config['tracer'] || 'none' === $this->ch_config['tracer'] ) ) {
+			if ( ! $this->ch_observe ) {
 				$result = parent::redis_call( $method, ...$args );
 			} else {
 				$result = $this->observe_command( strtoupper( $method ), function () use ( $method, $args ) { return parent::redis_call( $method, ...$args ); }, $readonly );
@@ -152,7 +159,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	}
 
 	public function observe_command( $command, callable $call, $readonly = false, array $batch = array() ) {
-		if ( ! $this->ch_config['save_commands'] && ! $this->ch_config['debug'] && ! $this->ch_config['retries'] && ( null === $this->ch_config['tracer'] || 'none' === $this->ch_config['tracer'] ) ) { return $call(); }
+		if ( ! $this->ch_observe ) { return $call(); }
 		$start = microtime( true );
 		$run = function () use ( $call, $readonly ) {
 			$attempt = 0; $delay = $this->ch_config['retry_interval'];
@@ -193,7 +200,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 
 	public function ch_command( array $args ) {
 		if ( ! $this->redis_status() ) { throw new RuntimeException( 'Redis is unavailable.' ); }
-		if ( defined( 'WP_REDIS_CLUSTER' ) || $this->ch_config['servers'] || $this->ch_config['sentinels'] ) {
+		if ( ! $this->ch_single ) {
 			$command = strtoupper( $args[0] );
 			if ( in_array( $command, array( 'DEL', 'UNLINK' ), true ) ) { $this->mark_write( array_slice( $args, 1 ) ); }
 			elseif ( in_array( $command, array( 'SET', 'SETEX', 'HSET', 'HDEL' ), true ) ) { $this->mark_write( $args[1] ?? '' ); }
@@ -353,14 +360,21 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 
 	public function add_global_groups( $groups ) {
 		$this->ch_contexts = array();
+		$this->ch_ids = array(); $this->ch_ids_count = 0;
+		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
 		parent::add_global_groups( $groups );
+	}
+
+	public function add_non_persistent_groups( $groups ) {
+		parent::add_non_persistent_groups( $groups );
+		$this->ch_ids = array(); $this->ch_ids_count = 0;
 	}
 
 	public function fast_build_key( $key, $group = 'default' ) {
 		if ( ! $this->ch_ready ) { return parent::fast_build_key( $key, $group ); }
 		try {
 		if ( 'harborcache' === $group && 'metrics' === $key ) { return $this->ch_base . ( $this->ch_config['analytics']['persist'] ? '' : ':' . $this->ch_root ) . ':analytics:metrics'; }
-		$group = $group ?: 'default';
+		$group  = $group ?: 'default';
 		if (
 			null === $this->ch_layout_state ||
 			$this->ch_layout_state[0] !== $this->ch_config['serializer'] ||
@@ -371,12 +385,17 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			$this->ch_derived = array();
 			$this->ch_prefixes = array();
 			$this->ch_derived_count = 0;
+			$this->ch_ids = array();
+			$this->ch_ids_count = 0;
 			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] );
 		}
+		$bucket = $this->blog_prefix;
+		if ( isset( $this->ch_ids[ $bucket ][ $group ][ $key ] ) ) { return $this->ch_ids[ $bucket ][ $group ][ $key ]; }
+		if ( $this->is_ignored_group( $group ) ) { return $this->ch_id( $bucket, $group, $key, parent::fast_build_key( $key, $group ) ); }
 		$layout = $this->ch_config['split_alloptions'] && 'relay' === $this->ch_config['client'] ? ':relay-options-v1' : '';
 		$context = $this->ch_context( $group );
 		$cacheable = is_string( $key ) || is_int( $key );
-		if ( $cacheable && isset( $this->ch_derived[ $context ][ $key ] ) ) { return $this->ch_derived[ $context ][ $key ]; }
+		if ( $cacheable && isset( $this->ch_derived[ $context ][ $key ] ) ) { return $this->ch_id( $bucket, $group, $key, $this->ch_derived[ $context ][ $key ] ); }
 		if ( isset( $this->ch_prefixes[ $context ] ) ) { $prefix = $this->ch_prefixes[ $context ]; }
 		else {
 		$format = $this->ch_config['serializer'] . ':' . $this->ch_config['compression'] . ':' . (int) $this->ch_config['split_alloptions'] . $layout;
@@ -402,8 +421,17 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			if ( $this->ch_derived_count >= 1024 ) { $this->ch_derived = array(); $this->ch_derived_count = 0; }
 			$this->ch_derived[ $context ][ $key ] = $derived; ++$this->ch_derived_count;
 		}
-		return $derived;
+		return $this->ch_id( $bucket, $group, $key, $derived );
 		} catch ( Throwable $error ) { $this->handle_exception( $error ); return parent::fast_build_key( $key, $group ); }
+	}
+
+	/** Memoize one request-local cache id per blog, group and key. */
+	private function ch_id( $bucket, $group, $key, $id ) {
+		if ( ! is_string( $key ) && ! is_int( $key ) ) { return $id; }
+		if ( $this->ch_ids_count >= 4096 ) { $this->ch_ids = array(); $this->ch_ids_count = 0; }
+		$this->ch_ids[ $bucket ][ $group ][ $key ] = $id;
+		++$this->ch_ids_count;
+		return $id;
 	}
 
 	protected function maybe_serialize( $data ) { return $this->ch_codec->encode( $data ); }
@@ -420,7 +448,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			}
 		}
 		$group = (string) $group;
-		if ( isset( $this->ch_ignored_exact[ $group ] ) || parent::is_ignored_group( $group ) ) { return true; }
+		if ( isset( $this->ch_ignored_exact[ $group ] ) ) { return true; }
 		if ( isset( $this->ch_ignored_results[ $group ] ) ) { return $this->ch_ignored_results[ $group ]; }
 		$ignored = false;
 		foreach ( $this->ch_ignored_patterns as $pattern ) { if ( preg_match( $pattern, $group ) ) { $ignored = true; break; } }
@@ -449,6 +477,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		}
 		$this->ch_tokens[ $key ] = $value;
 		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
+		$this->ch_ids = array(); $this->ch_ids_count = 0;
 		return $value;
 	}
 
@@ -667,18 +696,17 @@ LUA;
 				$san_key = $this->sanitize_key_part( $key );
 				$san_group = $this->sanitize_key_part( $group ?: 'default' );
 			}
-			$context = $this->ch_context( $san_group );
-			$derived = $this->ch_derived[ $context ][ $san_key ] ?? null;
+			$id = $this->ch_ids[ $this->blog_prefix ][ $san_group ][ $san_key ] ?? null;
 			if (
-				null !== $derived &&
+				null !== $id &&
 				isset( $this->ch_layout_state[0] ) &&
 				$this->ch_layout_state[0] === $this->ch_config['serializer'] &&
 				$this->ch_layout_state[1] === $this->ch_config['compression'] &&
 				$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
 				$this->ch_layout_state[3] === $this->ch_config['client'] &&
-				array_key_exists( $derived, $this->cache )
+				array_key_exists( $id, $this->cache )
 			) {
-				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $derived ] ) ? clone $this->cache[ $derived ] : $this->cache[ $derived ];
+				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $id ] ) ? clone $this->cache[ $id ] : $this->cache[ $id ];
 			}
 		}
 		if ( $this->ch_config['split_alloptions'] && ! $this->is_ignored_group( $group ) && 'options' === $group && 'alloptions' === $key && $this->redis_status() ) {
