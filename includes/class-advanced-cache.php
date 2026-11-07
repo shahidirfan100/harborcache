@@ -607,6 +607,7 @@ LUA;
 
 	/** Relay reports invalidated wire keys (or an Event object); evict only those from request memory. */
 	public function relay_invalidated( $keys ) {
+		if ( getenv( 'HC_RELAY_DEBUG' ) ) { fwrite( STDERR, 'HC_RELAY_EVENT ' . json_encode( is_object( $keys ) ? get_object_vars( $keys ) : $keys ) . "\n" ); }
 		if ( is_object( $keys ) ) { $keys = array( $keys->key ?? null ); }
 		foreach ( (array) $keys as $key ) {
 			if ( is_object( $key ) ) { $key = $key->key ?? null; }

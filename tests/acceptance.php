@@ -74,8 +74,10 @@ if($config['client']==='relay'){
  gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));
  $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
  $c->set('invalidate','a','ci-invalidate',60);$c->set('untouched','b','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate','ci-invalidate',false,$found);$c->get('untouched','ci-invalidate',false,$found);
+ putenv('HC_RELAY_DEBUG=1');
  $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate','ci-invalidate'),60,'c');$other->close();
  usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
+ $debug_raw=$c->build_key('invalidate','ci-invalidate');echo 'DEBUG '.json_encode(array('has_runtime'=>array_key_exists($debug_raw,$c->cache),'redis_value'=>$c->get('invalidate','ci-invalidate',true),'raw'=>$debug_raw))."\n";
  gate('Relay invalidation refreshes the affected value','c'===$c->get('invalidate','ci-invalidate',false,$found));
  $runtime_calls=$c->cache_calls;$untouched=$c->get('untouched','ci-invalidate',false,$found);
  gate('Relay invalidation keeps unrelated runtime values',$found&&'b'===$untouched&&$c->cache_calls===$runtime_calls);
