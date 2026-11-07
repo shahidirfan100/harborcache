@@ -614,6 +614,7 @@ LUA;
 			if ( ! is_string( $key ) || 0 !== strpos( $key, $this->ch_base . ':' ) ) { continue; }
 			// A namespace token or layout marker invalidates every memoized id.
 			if ( false === strpos( $key, ':v:' ) ) { $this->ch_reset_layout(); $this->flush_runtime(); return; }
+			if ( getenv( 'HC_RELAY_DEBUG' ) ) { fwrite( STDERR, 'HC_RELAY_HAD ' . json_encode( array( 'had' => array_key_exists( $key, $this->cache ), 'count' => count( $this->cache ) ) ) . "\n" ); }
 			$this->ch_forget( $key );
 			unset( $this->ch_option_snapshots[ $key ] );
 		}

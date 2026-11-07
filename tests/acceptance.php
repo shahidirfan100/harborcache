@@ -70,6 +70,7 @@ if($config['client']==='relay'){
  $c->set('invalidate0','x','ci-invalidate',0);$c->flush_runtime();$c->get('invalidate0','ci-invalidate',false,$found);
  $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->set($c->build_key('invalidate0','ci-invalidate'),'y');$other->close();
  usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
+ $raw0=$c->build_key('invalidate0','ci-invalidate');echo 'DEBUG AFTER '.json_encode(array('in_runtime'=>array_key_exists($raw0,$c->cache),'forced'=>$c->get('invalidate0','ci-invalidate',true),'raw'=>$raw0))."\n";
  gate('Relay invalidation refreshes a key without TTL','y'===$c->get('invalidate0','ci-invalidate',false,$found));
  $c->delete('invalidate0','ci-invalidate');$c->flush_runtime();
  $c->set('invalidate','a','ci-invalidate',60);$c->set('untouched','b','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate','ci-invalidate',false,$found);$c->get('untouched','ci-invalidate',false,$found);
