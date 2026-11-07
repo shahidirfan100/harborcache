@@ -205,6 +205,11 @@ hc_status_gate( 'Relay invalidation drops only the affected value', 'a' === $rel
 $driver->commands = 0;
 $relay_kept = $write->get( 'relay-keep', 'audit-group', false, $relay_found );
 hc_status_gate( 'Relay invalidation keeps unrelated runtime values', 'b' === $relay_kept && $relay_found && 0 === $driver->commands, (string) $driver->commands );
+$write->relay_invalidated( (object) array( 'key' => $write->build_key( 'relay-keep', 'audit-group' ) ) );
+$driver->commands = 0;
+$relay_kept = $write->get( 'relay-keep', 'audit-group', false, $relay_found );
+hc_status_gate( 'Relay invalidation accepts an event object', 'b' === $relay_kept && $relay_found && $driver->commands > 0, (string) $driver->commands );
+$write->get( 'relay-keep', 'audit-group', false, $relay_found );
 $write->relay_invalidated( array( 'unrelated:key' ) );
 $driver->commands = 0;
 $write->get( 'relay-keep', 'audit-group', false, $relay_found );

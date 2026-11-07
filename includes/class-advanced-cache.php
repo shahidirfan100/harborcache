@@ -605,9 +605,11 @@ LUA;
 		}
 	}
 
-	/** Relay reports invalidated wire keys; evict only those from request memory. */
+	/** Relay reports invalidated wire keys (or an Event object); evict only those from request memory. */
 	public function relay_invalidated( $keys ) {
+		if ( is_object( $keys ) ) { $keys = array( $keys->key ?? null ); }
 		foreach ( (array) $keys as $key ) {
+			if ( is_object( $key ) ) { $key = $key->key ?? null; }
 			if ( ! is_string( $key ) || 0 !== strpos( $key, $this->ch_base . ':' ) ) { continue; }
 			// A namespace token or layout marker invalidates every memoized id.
 			if ( false === strpos( $key, ':v:' ) ) { $this->ch_reset_layout(); $this->flush_runtime(); return; }
