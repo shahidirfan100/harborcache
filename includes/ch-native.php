@@ -63,9 +63,8 @@ trait HarborCache_Native {
 			$this->native_option( 'OPT_ADAPTIVE_CACHE', array( 'enabled' => true, 'width' => $a['width'], 'depth' => $a['depth'], 'min_events' => $a['events'], 'min_ratio' => (float) $a['ratio'], 'formula' => $a['formula'] ) );
 		}
 		if ( $options['listeners'] ) {
-			$flushed = $this->redis->onFlushed( function () { $this->flush_runtime(); } );
-			$invalidated = $this->redis->onInvalidated( function ( $keys = array() ) { $this->relay_invalidated( $keys ); } );
-			if ( getenv( 'HC_RELAY_DEBUG' ) ) { fwrite( STDERR, 'HC_RELAY_LISTENERS ' . json_encode( array( 'flushed' => $flushed, 'invalidated' => $invalidated ) ) . "\n" ); }
+			$this->redis->onFlushed( function () { $this->flush_runtime(); } );
+			$this->redis->onInvalidated( function ( $keys = array() ) { $this->relay_invalidated( $keys ); } );
 		}
 		if ( null !== $this->ch_config['cluster_az'] ) { $this->native_option( 'OPT_AVAILABILITY_ZONE', $this->ch_config['cluster_az'] ); }
 	}

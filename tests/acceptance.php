@@ -10,6 +10,37 @@ if($mode==='transport'){fwrite(STDOUT,"BEGIN WordPress bootstrap\n");fflush(STDO
 require rtrim(getenv('WP_ROOT'),'/').'/wp-load.php';
 if($mode==='transport'){fwrite(STDOUT,"PASS WordPress bootstrap\n");fflush(STDOUT);}
 $c=$GLOBALS['wp_object_cache'];$checks=array();
+// Relay invalidation is exercised on the bootstrap cache (the production connection) before the strict test double replaces it.
+if($config['client']==='relay'){
+ $c->set('invalidate0','x','ci-invalidate',0);$c->flush_runtime();$c->get('invalidate0','ci-invalidate',false,$found);
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->set($c->build_key('invalidate0','ci-invalidate'),'y');$other->close();
+ usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
+ gate('Relay invalidation refreshes a key without TTL','y'===$c->get('invalidate0','ci-invalidate',false,$found));
+ $c->delete('invalidate0','ci-invalidate');$c->flush_runtime();
+ $c->set('invalidate','a','ci-invalidate',60);$c->set('untouched','b','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate','ci-invalidate',false,$found);$c->get('untouched','ci-invalidate',false,$found);
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate','ci-invalidate'),60,'c');$other->close();
+ usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
+ gate('Relay invalidation refreshes the affected value','c'===$c->get('invalidate','ci-invalidate',false,$found));
+ $runtime_calls=$c->cache_calls;$untouched=$c->get('untouched','ci-invalidate',false,$found);
+ gate('Relay invalidation keeps unrelated runtime values',$found&&'b'===$untouched&&$c->cache_calls===$runtime_calls);
+ $relay_diag=$c->relay_diagnostics('untouched','ci-invalidate');
+ gate('Relay diagnostics report memory and stats',!empty($relay_diag['available'])&&isset($relay_diag['stats'])&&array_key_exists('memory_bytes',$relay_diag));
+ if(isset($config['relay']['adaptive'])){gate('Relay adaptive diagnostics report detail',isset($relay_diag['status'],$relay_diag['width'],$relay_diag['depth'],$relay_diag['load_factor'],$relay_diag['key_stats']));}
+ $c->delete('invalidate','ci-invalidate');$c->delete('untouched','ci-invalidate');$c->flush_runtime();
+ $c->set('external',1,'ci-force',60);$c->get('external','ci-force',true);$rawkey=$c->build_key('external','ci-force');
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($rawkey,60,'N2');
+ if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
+ $cache_mode=$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE);
+ gate('Forced Relay read bypasses shared cache',2===$c->get('external','ci-force',true));
+ if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
+ gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));
+ $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
+ $c->set('invalidate2','d','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate2','ci-invalidate',false,$found);
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate2','ci-invalidate'),60,'e');$other->close();
+ usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
+ gate('Relay invalidation survives a forced read','e'===$c->get('invalidate2','ci-invalidate',false,$found));
+ $c->delete('external','ci-force');$c->delete('invalidate2','ci-invalidate');$c->flush_runtime();
+}
 // Disposable CI configuration only: fail at the first unexpected Relay fallback.
 if ( 'relay' === $config['client'] && ! in_array( $mode, array( 'down', 'recovery' ), true ) ) {
  set_error_handler( static function ( $severity, $message, $file, $line ) { throw new ErrorException( $message, 0, $severity, $file, $line ); }, E_WARNING );
@@ -18,7 +49,6 @@ if ( 'relay' === $config['client'] && ! in_array( $mode, array( 'down', 'recover
    throw new RuntimeException( 'Relay acceptance backend failure: ' . $error->getMessage(), 0, $error );
   }
  }
- putenv( 'HC_RELAY_DEBUG=1' );
  $c = new HC_Relay_Acceptance_Cache();
  $GLOBALS['wp_object_cache'] = $c;
 }
@@ -65,39 +95,6 @@ if($mode==='transport'){
 gate('Connected to configured Redis transport',$c->redis_status());
 if($mode==='recovery'){gate('New worker recovers after restart',$c->set('recovered',42,'ci-outage',60)&&42===$c->get('recovered','ci-outage',true));exit;}
 gate('Advanced implementation loaded',$c instanceof HarborCache_Advanced_Cache);
-if($config['client']==='relay'){
- $probe=new Relay\Relay();$probe->connect('127.0.0.1',6379);$probe->select((int)($config['database']??0));$probe->setOption(Relay\Relay::OPT_USE_CACHE,true);$probe->setOption(Relay\Relay::OPT_IGNORE_PATTERNS,array('*:analytics:*'));$probe->setOption(Relay\Relay::OPT_CLIENT_INVALIDATIONS,true);$probe_events=array();$probe->onInvalidated(function($e)use(&$probe_events){$probe_events[]=is_object($e)?get_object_vars($e):$e;});$probe->set('hc-probe2','one');$probe->get('hc-probe2');$probe_other=new Redis();$probe_other->connect('127.0.0.1',6379);$probe_other->select((int)($config['database']??0));$probe_other->set('hc-probe2','two');$probe_other->close();usleep(50000);for($i=0;$i<3;$i++){$probe->ping();$probe->dispatchEvents();usleep(20000);}echo 'DEBUG PROBE2 '.json_encode(array('events'=>$probe_events,'endpoint'=>$probe->endpointId(),'value'=>$probe->get('hc-probe2'),'ci'=>$probe->getOption(Relay\Relay::OPT_CLIENT_INVALIDATIONS),'uc'=>$probe->getOption(Relay\Relay::OPT_USE_CACHE)))."\n";
- $relay=$c->redis_instance();$dbg=array();try{$dbg['connected']=$relay->isConnected();$dbg['endpoint']=$relay->endpointId();}catch(Throwable $e){$dbg['connected']='err';}foreach(array('OPT_CLIENT_INVALIDATIONS','OPT_USE_CACHE','OPT_IGNORE_PATTERNS','OPT_ALLOW_PATTERNS') as $o){if(defined('Relay\\Relay::'.$o)){try{$dbg[$o]=$relay->getOption(constant('Relay\\Relay::'.$o));}catch(Throwable $e){$dbg[$o]='err:'.$e->getMessage();}}}try{$dbg['endpoints']=array_keys($relay->stats()['endpoints']??array());}catch(Throwable $e){$dbg['stats']='err';}echo 'DEBUG PLUGIN '.json_encode($dbg)."\n";
- $c->set('invalidate0','x','ci-invalidate',0);$c->flush_runtime();$c->get('invalidate0','ci-invalidate',false,$found);
- $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->set($c->build_key('invalidate0','ci-invalidate'),'y');$other->close();
- usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
- $raw0=$c->build_key('invalidate0','ci-invalidate');echo 'DEBUG AFTER '.json_encode(array('in_runtime'=>array_key_exists($raw0,$c->cache),'forced'=>$c->get('invalidate0','ci-invalidate',true),'raw'=>$raw0))."\n";
- gate('Relay invalidation refreshes a key without TTL','y'===$c->get('invalidate0','ci-invalidate',false,$found));
- $c->delete('invalidate0','ci-invalidate');$c->flush_runtime();
- $c->set('invalidate','a','ci-invalidate',60);$c->set('untouched','b','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate','ci-invalidate',false,$found);$c->get('untouched','ci-invalidate',false,$found);
- $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate','ci-invalidate'),60,'c');$other->close();
- usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
- gate('Relay invalidation refreshes the affected value','c'===$c->get('invalidate','ci-invalidate',false,$found));
- $runtime_calls=$c->cache_calls;$untouched=$c->get('untouched','ci-invalidate',false,$found);
- gate('Relay invalidation keeps unrelated runtime values',$found&&'b'===$untouched&&$c->cache_calls===$runtime_calls);
- $relay_diag=$c->relay_diagnostics('untouched','ci-invalidate');
- gate('Relay diagnostics report memory and stats',!empty($relay_diag['available'])&&isset($relay_diag['stats'])&&array_key_exists('memory_bytes',$relay_diag));
- if(isset($config['relay']['adaptive'])){gate('Relay adaptive diagnostics report detail',isset($relay_diag['status'],$relay_diag['width'],$relay_diag['depth'],$relay_diag['load_factor'],$relay_diag['key_stats']));}
- $c->delete('invalidate','ci-invalidate');$c->delete('untouched','ci-invalidate');$c->flush_runtime();
- $c->set('external',1,'ci-force',60);$c->get('external','ci-force',true);$rawkey=$c->build_key('external','ci-force');
- $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($rawkey,60,'N2');
- if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
- $cache_mode=$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE);
- gate('Forced Relay read bypasses shared cache',2===$c->get('external','ci-force',true));
- if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
- gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));
- $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
- $c->set('invalidate2','d','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate2','ci-invalidate',false,$found);
- $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate2','ci-invalidate'),60,'e');$other->close();
- usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
- gate('Relay invalidation survives a forced read','e'===$c->get('invalidate2','ci-invalidate',false,$found));
- $c->delete('external','ci-force');$c->delete('invalidate2','ci-invalidate');$c->flush_runtime();
-}
 $values=array(false,null,true,0,-1,PHP_INT_MAX,PHP_INT_MIN,1.25,'','001','1e3','b:0;',array('nested'=>array(false,null)),(object)array('v'=>1),str_repeat('large-value-',10000));
 foreach($values as $i=>$value){gate('Write type '.$i,$c->set('type-'.$i,$value,'ci-types',60));$c->flush_runtime();$actual=$c->get('type-'.$i,'ci-types',true,$found);gate('Roundtrip type '.$i,$found&&serialize($actual)===serialize($value));}
 $c->set('layout-probe','before','ci-layout',60);$c->get('layout-probe','ci-layout');$original_compression=$c->ch_config['compression'];$c->ch_config['compression']='none'===$original_compression?'lzf':'none';$layout_value=$c->get('layout-probe','ci-layout',false,$layout_found);$c->ch_config['compression']=$original_compression;gate('Layout changes bypass stale runtime values',false===$layout_value&&!$layout_found);
