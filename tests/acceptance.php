@@ -65,12 +65,9 @@ gate('Connected to configured Redis transport',$c->redis_status());
 if($mode==='recovery'){gate('New worker recovers after restart',$c->set('recovered',42,'ci-outage',60)&&42===$c->get('recovered','ci-outage',true));exit;}
 gate('Advanced implementation loaded',$c instanceof HarborCache_Advanced_Cache);
 if($config['client']==='relay'){
- $probe=new Relay\Relay();$probe_connect=$probe->connect('127.0.0.1',6379);$probe->select((int)($config['database']??0));$probe_ci=$probe->setOption(Relay\Relay::OPT_CLIENT_INVALIDATIONS,true);$probe_uc=$probe->setOption(Relay\Relay::OPT_USE_CACHE,true);$probe_events=array();$probe_reg=$probe->onInvalidated(function($event)use(&$probe_events){$probe_events[]=is_object($event)?get_object_vars($event):$event;});$probe->set('hc-probe-key','one');$probe->get('hc-probe-key');$probe_other=new Redis();$probe_other->connect('127.0.0.1',6379);$probe_other->select((int)($config['database']??0));$probe_other->set('hc-probe-key','two');$probe_other->close();usleep(50000);$probe->ping();$probe_dispatch=$probe->dispatchEvents();echo 'DEBUG PROBE '.json_encode(array('connect'=>$probe_connect,'client_invalidations'=>$probe_ci,'use_cache'=>$probe_uc,'registered'=>$probe_reg,'events'=>$probe_events,'dispatch'=>$probe_dispatch,'stats'=>$probe->stats(),'value'=>$probe->get('hc-probe-key'),'dispatch_exists'=>method_exists($probe,'dispatchEvents')))."\n";$probe->del('hc-probe-key');$probe->close();
  $c->set('invalidate','a','ci-invalidate',60);$c->set('untouched','b','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate','ci-invalidate',false,$found);$c->get('untouched','ci-invalidate',false,$found);
- putenv('HC_RELAY_DEBUG=1');
- $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$raw_before=$c->build_key('invalidate','ci-invalidate');$write_ok=$other->setex($raw_before,60,'c');$raw_now=$other->get($raw_before);$other->close();
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate','ci-invalidate'),60,'c');$other->close();
  usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
- $debug_raw=$c->build_key('invalidate','ci-invalidate');echo 'DEBUG '.json_encode(array('has_runtime'=>array_key_exists($debug_raw,$c->cache),'redis_value'=>$c->get('invalidate','ci-invalidate',true),'raw'=>$debug_raw,'write_ok'=>$write_ok,'raw_now'=>$raw_now,'same_key'=>$raw_before===$debug_raw,'client_invalidations'=>$relay->getOption(Relay\Relay::OPT_CLIENT_INVALIDATIONS),'use_cache'=>$relay->getOption(Relay\Relay::OPT_USE_CACHE)))."\n";
  gate('Relay invalidation refreshes the affected value','c'===$c->get('invalidate','ci-invalidate',false,$found));
  $runtime_calls=$c->cache_calls;$untouched=$c->get('untouched','ci-invalidate',false,$found);
  gate('Relay invalidation keeps unrelated runtime values',$found&&'b'===$untouched&&$c->cache_calls===$runtime_calls);
@@ -86,6 +83,11 @@ if($config['client']==='relay'){
  if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
  gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));
  $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
+ $c->set('invalidate2','d','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate2','ci-invalidate',false,$found);
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate2','ci-invalidate'),60,'e');$other->close();
+ usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
+ gate('Relay invalidation survives a forced read','e'===$c->get('invalidate2','ci-invalidate',false,$found));
+ $c->delete('external','ci-force');$c->delete('invalidate2','ci-invalidate');$c->flush_runtime();
 }
 $values=array(false,null,true,0,-1,PHP_INT_MAX,PHP_INT_MIN,1.25,'','001','1e3','b:0;',array('nested'=>array(false,null)),(object)array('v'=>1),str_repeat('large-value-',10000));
 foreach($values as $i=>$value){gate('Write type '.$i,$c->set('type-'.$i,$value,'ci-types',60));$c->flush_runtime();$actual=$c->get('type-'.$i,'ci-types',true,$found);gate('Roundtrip type '.$i,$found&&serialize($actual)===serialize($value));}

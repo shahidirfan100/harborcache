@@ -25,6 +25,14 @@ trait HarborCache_Native {
 			if ( null !== $option && $this->redis_status() && ( ! method_exists( $active, 'isConnected' ) || $active->isConnected() ) ) {
 				try { if ( false === $active->setOption( $option, $previous ) ) { throw new RuntimeException( 'Relay cannot restore its local cache mode.' ); } }
 				catch ( Throwable $error ) { $this->handle_exception( $error ); }
+				// Restoring cache mode can move Relay to an endpoint without client tracking.
+				try {
+					if ( $this->ch_config['relay']['invalidations'] ) { $active->setOption( $this->native_constant( 'OPT_CLIENT_INVALIDATIONS' ), true ); }
+					if ( $this->ch_config['relay']['listeners'] ) {
+						$active->onFlushed( function () { $this->flush_runtime(); } );
+						$active->onInvalidated( function ( $keys = array() ) { $this->relay_invalidated( $keys ); } );
+					}
+				} catch ( Throwable $error ) { $this->handle_exception( $error ); }
 			}
 		}
 	}
