@@ -323,7 +323,7 @@ jobs:
               case "$engine" in
                 free) source="$WP_ROOT/wp-content/plugins/redis-cache" ;;
                 baseline) source=/tmp/hc-baseline/harborcache-object-cache-with-redis ;;
-                old141) source=/tmp/hc-141/harborcache ;;
+                old141) source=/tmp/hc-141/harborcache-object-cache-with-redis ;;
                 harbor) source="$GITHUB_WORKSPACE" ;;
               esac
               php tests/install-dropin.php "$source"
