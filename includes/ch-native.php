@@ -25,14 +25,6 @@ trait HarborCache_Native {
 			if ( null !== $option && $this->redis_status() && ( ! method_exists( $active, 'isConnected' ) || $active->isConnected() ) ) {
 				try { if ( false === $active->setOption( $option, $previous ) ) { throw new RuntimeException( 'Relay cannot restore its local cache mode.' ); } }
 				catch ( Throwable $error ) { $this->handle_exception( $error ); }
-				// Restoring cache mode can move Relay to an endpoint without client tracking.
-				try {
-					if ( $this->ch_config['relay']['invalidations'] ) { $active->setOption( $this->native_constant( 'OPT_CLIENT_INVALIDATIONS' ), true ); }
-					if ( $this->ch_config['relay']['listeners'] ) {
-						$active->onFlushed( function () { $this->flush_runtime(); } );
-						$active->onInvalidated( function ( $keys = array() ) { $this->relay_invalidated( $keys ); } );
-					}
-				} catch ( Throwable $error ) { $this->handle_exception( $error ); }
 			}
 		}
 	}
@@ -54,10 +46,9 @@ trait HarborCache_Native {
 		$this->native_option( 'OPT_MAX_RETRIES', 0, false );
 		$options = $this->ch_config['relay'];
 		$this->native_option( 'OPT_USE_CACHE', $this->ch_relay_bypass ? false : $options['cache'] );
-		$this->native_option( 'OPT_IGNORE_PATTERNS', $options['ignored'] );
-		if ( null !== $options['allowed'] ) { $this->native_option( 'OPT_ALLOW_PATTERNS', $options['allowed'] ); }
-		// Tracking must be enabled after the cache filters; Relay resets it on some option changes.
 		$this->native_option( 'OPT_CLIENT_INVALIDATIONS', $options['invalidations'] );
+		$this->native_option( 'OPT_IGNORE_PATTERNS', $options['ignored'] );
+		$this->native_option( 'OPT_ALLOW_PATTERNS', $options['allowed'] );
 		if ( $options['adaptive'] ) {
 			$a = $options['adaptive'];
 			$this->native_option( 'OPT_ADAPTIVE_CACHE', array( 'enabled' => true, 'width' => $a['width'], 'depth' => $a['depth'], 'min_events' => $a['events'], 'min_ratio' => (float) $a['ratio'], 'formula' => $a['formula'] ) );
