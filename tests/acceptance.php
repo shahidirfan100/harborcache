@@ -73,6 +73,16 @@ if($config['client']==='relay'){
  if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
  gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));
  $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
+ $c->set('invalidate','a','ci-invalidate',60);$c->set('untouched','b','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate','ci-invalidate',false,$found);$c->get('untouched','ci-invalidate',false,$found);
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate','ci-invalidate'),60,'c');$other->close();
+ usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
+ gate('Relay invalidation refreshes the affected value','c'===$c->get('invalidate','ci-invalidate',false,$found));
+ $runtime_calls=$c->cache_calls;$untouched=$c->get('untouched','ci-invalidate',false,$found);
+ gate('Relay invalidation keeps unrelated runtime values',$found&&'b'===$untouched&&$c->cache_calls===$runtime_calls);
+ $relay_diag=$c->relay_diagnostics('untouched','ci-invalidate');
+ gate('Relay diagnostics report memory and stats',!empty($relay_diag['available'])&&isset($relay_diag['stats'])&&array_key_exists('memory_bytes',$relay_diag));
+ if(isset($config['relay']['adaptive'])){gate('Relay adaptive diagnostics report detail',isset($relay_diag['status'],$relay_diag['width'],$relay_diag['depth'],$relay_diag['load_factor'],$relay_diag['key_stats']));}
+ $c->delete('invalidate','ci-invalidate');$c->delete('untouched','ci-invalidate');$c->flush_runtime();
 }
 $values=array(false,null,true,0,-1,PHP_INT_MAX,PHP_INT_MIN,1.25,'','001','1e3','b:0;',array('nested'=>array(false,null)),(object)array('v'=>1),str_repeat('large-value-',10000));
 foreach($values as $i=>$value){gate('Write type '.$i,$c->set('type-'.$i,$value,'ci-types',60));$c->flush_runtime();$actual=$c->get('type-'.$i,'ci-types',true,$found);gate('Roundtrip type '.$i,$found&&serialize($actual)===serialize($value));}
@@ -137,6 +147,7 @@ if(getenv('HC_CONCURRENCY')==='1'){
  $deadline=microtime(true)+20;while(!file_exists($barrier.'/a')||!file_exists($barrier.'/b')){if(microtime(true)>$deadline){throw new RuntimeException('Options readiness');}usleep(1000);}touch($barrier.'/release');foreach($children as $child){gate('Concurrent option worker',proc_close($child)===0);}$actual=$c->get('alloptions','options',true);if(($actual['a']??null)!=='changed'||($actual['b']??null)!=='changed'){echo json_encode(array('a'=>$actual['a']??null,'b'=>$actual['b']??null))."\n";}gate('Cross-worker option patches',($actual['a']??null)==='changed'&&($actual['b']??null)==='changed');foreach(glob($barrier.'/*') as $file){unlink($file);}rmdir($barrier);
 }
 $option='harborcache_ci_option';update_option($option,array('v'=>1),true);wp_cache_flush_runtime();gate('WordPress option roundtrip',array('v'=>1)===get_option($option));delete_option($option);
+$health=\HarborCache\Console::health_result();gate('Site Health returns a supported status',in_array($health['status'],array('good','recommended','critical'),true));
 $post=wp_insert_post(array('post_title'=>'HarborCache CI','post_status'=>'publish','post_content'=>'Original'));gate('WordPress publishing',$post>0&&'Original'===get_post($post)->post_content);wp_update_post(array('ID'=>$post,'post_content'=>'Updated'));gate('Post invalidation','Updated'===get_post($post)->post_content);wp_delete_post($post,true);
 add_action('harborcache_ci_event',static function(){update_option('harborcache_ci_cron','ran');});wp_schedule_single_event(time()-1,'harborcache_ci_event');require_once ABSPATH.'wp-admin/includes/file.php';do_action('harborcache_ci_event');gate('Cron callback with cache','ran'===get_option('harborcache_ci_cron'));wp_clear_scheduled_hook('harborcache_ci_event');delete_option('harborcache_ci_cron');
 echo json_encode(array('php'=>PHP_VERSION,'wordpress'=>get_bloginfo('version'),'client'=>$config['client'],'serializer'=>$config['serializer']??'php','compression'=>$config['compression']??'none','checks'=>count($checks),'failed'=>0))."\n";

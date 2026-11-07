@@ -55,7 +55,7 @@ trait HarborCache_Native {
 		}
 		if ( $options['listeners'] ) {
 			$this->redis->onFlushed( function () { $this->flush_runtime(); } );
-			$this->redis->onInvalidated( function () { $this->flush_runtime(); } );
+			$this->redis->onInvalidated( function ( $keys = array() ) { $this->relay_invalidated( $keys ); } );
 		}
 		if ( null !== $this->ch_config['cluster_az'] ) { $this->native_option( 'OPT_AVAILABILITY_ZONE', $this->ch_config['cluster_az'] ); }
 	}

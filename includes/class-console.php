@@ -652,22 +652,34 @@ final class Console {
 		$status = self::status();
 		$cache  = self::cache();
 		$issues = array();
-		if ( 'connected' !== ( $status['state'] ?? '' ) ) {
+		$critical = 'connected' !== ( $status['state'] ?? '' );
+		if ( $critical ) {
 			$issues[] = self::state_label( $status ) . ': ' . self::state_explanation( $status );
 		}
 		if ( $cache && ! empty( $status['ready'] ) ) {
 			try {
 				$health = $cache->operational_health();
-				if ( 'noeviction' === ( $health['maxmemory_policy'] ?? '' ) ) { $issues[] = __( 'Redis uses noeviction; exhausted memory can reject cache writes. Review the server policy.', 'harborcache-object-cache-with-redis' ); }
+				if ( 'noeviction' === ( $health['maxmemory_policy'] ?? '' ) && (int) ( $health['maxmemory'] ?? 0 ) > 0 ) { $issues[] = __( 'Redis uses noeviction; exhausted memory can reject cache writes. Review the server policy.', 'harborcache-object-cache-with-redis' ); $critical = true; }
 			} catch ( \Throwable $ignored ) {
 				// Optional server information must not fail the Site Health check.
+			}
+			if ( 'relay' === ( $cache->ch_config['client'] ?? '' ) ) {
+				try {
+					$relay = $cache->relay_diagnostics();
+					if ( empty( $relay['available'] ) ) { $issues[] = __( 'Relay diagnostics are unavailable; check the Relay extension version.', 'harborcache-object-cache-with-redis' ); }
+					// shortcut: Relay stats memory keys differ by release; check only when used/max are present, revisit if Relay stabilizes the schema.
+					$memory = $relay['stats']['memory'] ?? null;
+					if ( is_array( $memory ) && isset( $memory['used'], $memory['max'] ) && (int) $memory['max'] > 0 && (int) $memory['used'] >= (int) $memory['max'] * 0.9 ) { $issues[] = __( 'Relay memory is nearly full; its local cache is evicting entries. Raise the Relay cache memory limit.', 'harborcache-object-cache-with-redis' ); }
+				} catch ( \Throwable $ignored ) {
+					// Relay diagnostics are optional for the Site Health check.
+				}
 			}
 			if ( Config::load()['async_flush'] && ! wp_next_scheduled( 'harborcache_cleanup' ) ) { $issues[] = __( 'The cache cleanup schedule is missing.', 'harborcache-object-cache-with-redis' ); }
 			if ( Config::load()['query_maintenance'] && ! wp_next_scheduled( 'harborcache_queries' ) ) { $issues[] = __( 'The query maintenance schedule is missing.', 'harborcache-object-cache-with-redis' ); }
 		}
 		return array(
 			'label'       => $issues ? __( 'HarborCache needs attention', 'harborcache-object-cache-with-redis' ) : __( 'HarborCache is connected and current', 'harborcache-object-cache-with-redis' ),
-			'status'      => $issues ? ( 'connected' === ( $status['state'] ?? '' ) ? 'recommended' : 'critical' ) : 'good',
+			'status'      => $issues ? ( $critical ? 'critical' : 'recommended' ) : 'good',
 			'badge'       => array( 'label' => __( 'Performance', 'harborcache-object-cache-with-redis' ), 'color' => 'blue' ),
 			'description' => '<p>' . esc_html( $issues ? implode( ' ', $issues ) : __( 'The transport, namespace, codec and drop-in checks passed.', 'harborcache-object-cache-with-redis' ) ) . '</p>',
 			'actions'     => '<p><a href="' . esc_url( self::url( 'overview' ) ) . '">' . esc_html__( 'Open HarborCache readiness', 'harborcache-object-cache-with-redis' ) . '</a></p>',

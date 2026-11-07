@@ -53,10 +53,18 @@ trait HarborCache_Operations {
 
 	public function relay_diagnostics( $key = '', $group = 'default' ) {
 		$client = $this->redis_instance();
-		if ( 'relay' !== $this->ch_config['client'] || ! isset( $client->adaptiveCache ) ) { return array( 'available' => false ); }
-		$adaptive = $client->adaptiveCache;
-		$result = array( 'available' => true, 'status' => $adaptive->status, 'width' => $adaptive->width, 'depth' => $adaptive->depth, 'load_factor' => $adaptive->loadFactor() );
-		if ( '' !== $key ) { $result['key_stats'] = $adaptive->stats( $this->build_key( $key, $group ) ); }
+		if ( 'relay' !== $this->ch_config['client'] || ! is_object( $client ) || ! method_exists( $client, 'stats' ) ) { return array( 'available' => false ); }
+		$result = array( 'available' => true );
+		try { $result['stats'] = $client->stats(); } catch ( Throwable $error ) { $result['stats_available'] = false; }
+		try { if ( method_exists( $client, 'maxMemory' ) ) { $result['memory_bytes'] = $client->maxMemory(); } } catch ( Throwable $error ) { $result['memory_available'] = false; }
+		if ( isset( $client->adaptiveCache ) ) {
+			$adaptive = $client->adaptiveCache;
+			$result['status'] = $adaptive->status;
+			$result['width'] = $adaptive->width;
+			$result['depth'] = $adaptive->depth;
+			$result['load_factor'] = $adaptive->loadFactor();
+			if ( '' !== $key ) { $result['key_stats'] = $adaptive->stats( $this->build_key( $key, $group ) ); }
+		}
 		return $result;
 	}
 
