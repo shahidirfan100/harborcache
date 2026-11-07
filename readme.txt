@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,11 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.5.1 =
+* Keep the WordPress-version integrity check on the key-build path instead of every request-memory hit, restoring 1.4.x runtime-hit cost with no behavior change.
+* Same-run benchmark against 1.4.1: CPU, bootstrap, runtime hits, Redis reads, bulk reads, writes, misses and cold reads are within +/-1.3%.
+* No key-format, storage, or configuration change beyond the 1.5.0 upgrade.
 
 = 1.5.0 =
 * Relay invalidation now removes only the affected key from request memory; namespace token changes still flush the request runtime and memoized ids.
