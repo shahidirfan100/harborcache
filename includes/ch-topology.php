@@ -27,9 +27,10 @@ trait HarborCache_Topology {
 		if ( ! $sentinel && ! $client->select( $config['database'] ) ) { throw new RuntimeException( 'Native Redis database unavailable.' ); }
 		if ( defined( $class . '::OPT_MAX_RETRIES' ) ) { $client->setOption( constant( $class . '::OPT_MAX_RETRIES' ), 0 ); }
 		if ( 'relay' === $config['client'] ) {
-			foreach ( array( 'OPT_USE_CACHE' => ! $sentinel && $config['relay']['cache'], 'OPT_CLIENT_INVALIDATIONS' => $config['relay']['invalidations'], 'OPT_IGNORE_PATTERNS' => $config['relay']['ignored'], 'OPT_ALLOW_PATTERNS' => $config['relay']['allowed'] ) as $option => $setting ) {
+			foreach ( array( 'OPT_USE_CACHE' => ! $sentinel && $config['relay']['cache'], 'OPT_CLIENT_INVALIDATIONS' => $config['relay']['invalidations'], 'OPT_IGNORE_PATTERNS' => $config['relay']['ignored'] ) as $option => $setting ) {
 				if ( defined( $class . '::' . $option ) && false === $client->setOption( constant( $class . '::' . $option ), $setting ) ) { throw new RuntimeException( 'Native Relay option rejected.' ); }
 			}
+			if ( null !== $config['relay']['allowed'] && defined( $class . '::OPT_ALLOW_PATTERNS' ) && false === $client->setOption( constant( $class . '::OPT_ALLOW_PATTERNS' ), $config['relay']['allowed'] ) ) { throw new RuntimeException( 'Native Relay option rejected.' ); }
 		}
 		if ( 'relay' === $config['client'] && ! $sentinel ) {
 			if ( $config['relay']['adaptive'] ) {

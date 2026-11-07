@@ -56,7 +56,7 @@ trait HarborCache_Native {
 		$this->native_option( 'OPT_USE_CACHE', $this->ch_relay_bypass ? false : $options['cache'] );
 		$this->native_option( 'OPT_CLIENT_INVALIDATIONS', $options['invalidations'] );
 		$this->native_option( 'OPT_IGNORE_PATTERNS', $options['ignored'] );
-		$this->native_option( 'OPT_ALLOW_PATTERNS', $options['allowed'] );
+		if ( null !== $options['allowed'] ) { $this->native_option( 'OPT_ALLOW_PATTERNS', $options['allowed'] ); }
 		if ( $options['adaptive'] ) {
 			$a = $options['adaptive'];
 			$this->native_option( 'OPT_ADAPTIVE_CACHE', array( 'enabled' => true, 'width' => $a['width'], 'depth' => $a['depth'], 'min_events' => $a['events'], 'min_ratio' => (float) $a['ratio'], 'formula' => $a['formula'] ) );

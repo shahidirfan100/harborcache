@@ -69,13 +69,13 @@ if($config['client']==='relay'){
  $relay=$c->redis_instance();$dbg=array();try{$dbg['connected']=$relay->isConnected();}catch(Throwable $e){$dbg['connected']='err';}foreach(array('OPT_CLIENT_INVALIDATIONS','OPT_USE_CACHE','OPT_IGNORE_PATTERNS','OPT_ALLOW_PATTERNS') as $o){if(defined('Relay\\Relay::'.$o)){try{$dbg[$o]=$relay->getOption(constant('Relay\\Relay::'.$o));}catch(Throwable $e){$dbg[$o]='err:'.$e->getMessage();}}}try{$dbg['endpoints']=array_keys($relay->stats()['endpoints']??array());}catch(Throwable $e){$dbg['stats']='err';}echo 'DEBUG PLUGIN '.json_encode($dbg)."\n";
  $c->set('invalidate0','x','ci-invalidate',0);$c->flush_runtime();$c->get('invalidate0','ci-invalidate',false,$found);
  $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->set($c->build_key('invalidate0','ci-invalidate'),'y');$other->close();
- usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
+ usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
  $raw0=$c->build_key('invalidate0','ci-invalidate');echo 'DEBUG AFTER '.json_encode(array('in_runtime'=>array_key_exists($raw0,$c->cache),'forced'=>$c->get('invalidate0','ci-invalidate',true),'raw'=>$raw0))."\n";
  gate('Relay invalidation refreshes a key without TTL','y'===$c->get('invalidate0','ci-invalidate',false,$found));
  $c->delete('invalidate0','ci-invalidate');$c->flush_runtime();
  $c->set('invalidate','a','ci-invalidate',60);$c->set('untouched','b','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate','ci-invalidate',false,$found);$c->get('untouched','ci-invalidate',false,$found);
  $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate','ci-invalidate'),60,'c');$other->close();
- usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
+ usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
  gate('Relay invalidation refreshes the affected value','c'===$c->get('invalidate','ci-invalidate',false,$found));
  $runtime_calls=$c->cache_calls;$untouched=$c->get('untouched','ci-invalidate',false,$found);
  gate('Relay invalidation keeps unrelated runtime values',$found&&'b'===$untouched&&$c->cache_calls===$runtime_calls);
@@ -93,7 +93,7 @@ if($config['client']==='relay'){
  $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
  $c->set('invalidate2','d','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate2','ci-invalidate',false,$found);
  $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate2','ci-invalidate'),60,'e');$other->close();
- usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
+ usleep(50000);$relay=$c->redis_instance();for($i=0;$i<3;++$i){if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}usleep(20000);}
  gate('Relay invalidation survives a forced read','e'===$c->get('invalidate2','ci-invalidate',false,$found));
  $c->delete('external','ci-force');$c->delete('invalidate2','ci-invalidate');$c->flush_runtime();
 }
