@@ -54,9 +54,10 @@ trait HarborCache_Native {
 		$this->native_option( 'OPT_MAX_RETRIES', 0, false );
 		$options = $this->ch_config['relay'];
 		$this->native_option( 'OPT_USE_CACHE', $this->ch_relay_bypass ? false : $options['cache'] );
-		$this->native_option( 'OPT_CLIENT_INVALIDATIONS', $options['invalidations'] );
 		$this->native_option( 'OPT_IGNORE_PATTERNS', $options['ignored'] );
 		if ( null !== $options['allowed'] ) { $this->native_option( 'OPT_ALLOW_PATTERNS', $options['allowed'] ); }
+		// Tracking must be enabled after the cache filters; Relay resets it on some option changes.
+		$this->native_option( 'OPT_CLIENT_INVALIDATIONS', $options['invalidations'] );
 		if ( $options['adaptive'] ) {
 			$a = $options['adaptive'];
 			$this->native_option( 'OPT_ADAPTIVE_CACHE', array( 'enabled' => true, 'width' => $a['width'], 'depth' => $a['depth'], 'min_events' => $a['events'], 'min_ratio' => (float) $a['ratio'], 'formula' => $a['formula'] ) );
