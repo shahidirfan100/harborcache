@@ -22,15 +22,6 @@ if($config['client']==='relay'){
  gate('Relay diagnostics report memory and stats',!empty($relay_diag['available'])&&isset($relay_diag['stats'])&&array_key_exists('memory_bytes',$relay_diag));
  if(isset($config['relay']['adaptive'])){gate('Relay adaptive diagnostics report detail',isset($relay_diag['status'],$relay_diag['width'],$relay_diag['depth'],$relay_diag['load_factor'],$relay_diag['key_stats']));}
  $c->delete('local-victim','ci-invalidate');$c->delete('local-keep','ci-invalidate');$c->flush_runtime();
- $c->set('external',1,'ci-force',60);$c->get('external','ci-force',true);$rawkey=$c->build_key('external','ci-force');
- $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($rawkey,60,'N2');
- if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
- $cache_mode=$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE);
- gate('Forced Relay read bypasses shared cache',2===$c->get('external','ci-force',true));
- if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
- gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));
- $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
- $c->delete('external','ci-force');$c->flush_runtime();
 }
 // Disposable CI configuration only: fail at the first unexpected Relay fallback.
 if ( 'relay' === $config['client'] && ! in_array( $mode, array( 'down', 'recovery' ), true ) ) {
@@ -86,6 +77,17 @@ if($mode==='transport'){
 gate('Connected to configured Redis transport',$c->redis_status());
 if($mode==='recovery'){gate('New worker recovers after restart',$c->set('recovered',42,'ci-outage',60)&&42===$c->get('recovered','ci-outage',true));exit;}
 gate('Advanced implementation loaded',$c instanceof HarborCache_Advanced_Cache);
+if($config['client']==='relay'){
+ $c->set('external',1,'ci-force',60);$c->get('external','ci-force',true);$rawkey=$c->build_key('external','ci-force');
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($rawkey,60,'N2');
+ if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
+ $cache_mode=$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE);
+ gate('Forced Relay read bypasses shared cache',2===$c->get('external','ci-force',true));
+ if(!$c->redis_instance()->isConnected()){$c->redis_instance()->ping();}
+ gate('Relay cache mode restored',$cache_mode===$c->redis_instance()->getOption(Relay\Relay::OPT_USE_CACHE));
+ $other->setex($rawkey,60,'N3');gate('Forced Relay bulk read bypasses shared cache',array('external'=>3)===$c->get_multiple(array('external'),'ci-force',true));$other->close();
+ $c->delete('external','ci-force');$c->flush_runtime();
+}
 $values=array(false,null,true,0,-1,PHP_INT_MAX,PHP_INT_MIN,1.25,'','001','1e3','b:0;',array('nested'=>array(false,null)),(object)array('v'=>1),str_repeat('large-value-',10000));
 foreach($values as $i=>$value){gate('Write type '.$i,$c->set('type-'.$i,$value,'ci-types',60));$c->flush_runtime();$actual=$c->get('type-'.$i,'ci-types',true,$found);gate('Roundtrip type '.$i,$found&&serialize($actual)===serialize($value));}
 $c->set('layout-probe','before','ci-layout',60);$c->get('layout-probe','ci-layout');$original_compression=$c->ch_config['compression'];$c->ch_config['compression']='none'===$original_compression?'lzf':'none';$layout_value=$c->get('layout-probe','ci-layout',false,$layout_found);$c->ch_config['compression']=$original_compression;gate('Layout changes bypass stale runtime values',false===$layout_value&&!$layout_found);
