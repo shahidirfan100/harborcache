@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.1
+Stable tag: 1.5.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,6 +66,13 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.5.0 =
+* Relay invalidation now removes only the affected key from request memory; namespace token changes still flush the request runtime and memoized ids.
+* Relay diagnostics report statistics and memory for Relay and Relay Cluster without requiring the adaptive cache option.
+* Include the WordPress version in the derived-key layout, so a core upgrade rotates new keys without deleting old values.
+* Report Redis `noeviction` and Relay memory pressure as Site Health issues.
+* No configuration change.
 
 = 1.4.1 =
 * Store prefetch manifests only for GET and HEAD requests, excluding WP-CLI, REST and XML-RPC.

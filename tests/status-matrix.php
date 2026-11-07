@@ -181,6 +181,70 @@ $driver->commands = 0;
 $write->prefetch( array( 'audit-group' => array( 'probe' ) ) );
 hc_status_gate( 'Prefetch skips a single-key group', 0 === $driver->commands, (string) $driver->commands );
 
+$GLOBALS['wp_version'] = '6.8.2';
+$write->set( 'version-probe', 'v', 'audit-group' );
+$write->get( 'version-probe', 'audit-group', false, $version_found );
+$version_before = $write->build_key( 'version-probe', 'audit-group' );
+$GLOBALS['wp_version'] = '6.9';
+$version_after = $write->build_key( 'version-probe', 'audit-group' );
+hc_status_gate( 'Core version changes the derived key', $version_before !== $version_after );
+$driver->commands = 0;
+$version_value = $write->get( 'version-probe', 'audit-group', false, $version_found );
+hc_status_gate( 'Core version bypasses the runtime hit', false === $version_value && ! $version_found && $driver->commands > 0 );
+$GLOBALS['wp_version'] = '';
+
+$write->flush_runtime();
+$write->set( 'relay-probe', 'a', 'audit-group' );
+$write->set( 'relay-keep', 'b', 'audit-group' );
+$write->get( 'relay-probe', 'audit-group', false, $relay_found );
+$write->get( 'relay-keep', 'audit-group', false, $relay_found );
+$write->relay_invalidated( array( $write->build_key( 'relay-probe', 'audit-group' ) ) );
+$driver->commands = 0;
+$relay_value = $write->get( 'relay-probe', 'audit-group', false, $relay_found );
+hc_status_gate( 'Relay invalidation drops only the affected value', 'a' === $relay_value && $relay_found && $driver->commands > 0, (string) $driver->commands );
+$driver->commands = 0;
+$relay_kept = $write->get( 'relay-keep', 'audit-group', false, $relay_found );
+hc_status_gate( 'Relay invalidation keeps unrelated runtime values', 'b' === $relay_kept && $relay_found && 0 === $driver->commands, (string) $driver->commands );
+$write->relay_invalidated( (object) array( 'key' => $write->build_key( 'relay-keep', 'audit-group' ) ) );
+$driver->commands = 0;
+$relay_kept = $write->get( 'relay-keep', 'audit-group', false, $relay_found );
+hc_status_gate( 'Relay invalidation accepts an event object', 'b' === $relay_kept && $relay_found && $driver->commands > 0, (string) $driver->commands );
+$write->get( 'relay-keep', 'audit-group', false, $relay_found );
+$write->relay_invalidated( array( 'unrelated:key' ) );
+$driver->commands = 0;
+$write->get( 'relay-keep', 'audit-group', false, $relay_found );
+hc_status_gate( 'Relay ignores keys outside the namespace', $relay_found && 0 === $driver->commands, (string) $driver->commands );
+$write->relay_invalidated( array( WP_REDIS_PREFIX . 'meta:root' ) );
+$driver->commands = 0;
+$write->get( 'relay-keep', 'audit-group', false, $relay_found );
+hc_status_gate( 'Relay namespace rotation flushes the runtime', $driver->commands > 0, (string) $driver->commands );
+
+class HC_Relay_Diag_Stub {
+	public $adaptiveCache;
+	public function stats() { return array( 'memory' => array( 'used' => 96, 'max' => 100 ) ); }
+	public function maxMemory() { return 4096; }
+}
+class HC_Relay_Adaptive_Stub {
+	public $status = 'active';
+	public $width = 512;
+	public $depth = 1;
+	public function loadFactor() { return 0.75; }
+	public function stats( $key ) { return array( 'hits' => 2 ); }
+}
+$relay_stub = new HC_Relay_Diag_Stub();
+$relay_stub->adaptiveCache = new HC_Relay_Adaptive_Stub();
+$redis_prop = new ReflectionProperty( 'WP_Object_Cache', 'redis' );
+if ( PHP_VERSION_ID < 80100 ) { $redis_prop->setAccessible( true ); }
+$redis_prop->setValue( $write, $relay_stub );
+$original_client = $write->ch_config['client'];
+$write->ch_config['client'] = 'relay';
+$relay_diag = $write->relay_diagnostics( 'relay-keep', 'audit-group' );
+hc_status_gate( 'Relay diagnostics work without the adaptive cache option', true === $relay_diag['available'] && isset( $relay_diag['stats'], $relay_diag['memory_bytes'] ) && 4096 === $relay_diag['memory_bytes'] );
+hc_status_gate( 'Relay diagnostics keep adaptive detail', 'active' === ( $relay_diag['status'] ?? '' ) && isset( $relay_diag['key_stats'] ) );
+$write->ch_config['client'] = 'phpredis';
+hc_status_gate( 'Relay diagnostics stay unavailable for other clients', false === $write->relay_diagnostics()['available'] );
+$write->ch_config['client'] = $original_client;
+
 $GLOBALS['wp_object_cache'] = new class extends HarborCache_Advanced_Cache {
 	public $ch_config = array( 'scheme' => 'tcp', 'host' => '127.0.0.1', 'port' => 6379, 'database' => 2, 'serializer' => 'igbinary', 'compression' => 'lzf', 'maxttl' => 3600 );
 	public function __construct() {}

@@ -381,14 +381,15 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			$this->ch_layout_state[0] !== $this->ch_config['serializer'] ||
 			$this->ch_layout_state[1] !== $this->ch_config['compression'] ||
 			$this->ch_layout_state[2] !== $this->ch_config['split_alloptions'] ||
-			$this->ch_layout_state[3] !== $this->ch_config['client']
+			$this->ch_layout_state[3] !== $this->ch_config['client'] ||
+			$this->ch_layout_state[4] !== $this->ch_wp_version()
 		) {
 			$this->ch_derived = array();
 			$this->ch_prefixes = array();
 			$this->ch_derived_count = 0;
 			$this->ch_ids = array();
 			$this->ch_ids_count = 0;
-			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'] );
+			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'], $this->ch_wp_version() );
 		}
 		$bucket = $this->blog_prefix;
 		if ( isset( $this->ch_ids[ $bucket ][ $group ][ $key ] ) ) { return $this->ch_ids[ $bucket ][ $group ][ $key ]; }
@@ -399,7 +400,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		if ( $cacheable && isset( $this->ch_derived[ $context ][ $key ] ) ) { return $this->ch_id( $bucket, $group, $key, $this->ch_derived[ $context ][ $key ] ); }
 		if ( isset( $this->ch_prefixes[ $context ] ) ) { $prefix = $this->ch_prefixes[ $context ]; }
 		else {
-		$format = $this->ch_config['serializer'] . ':' . $this->ch_config['compression'] . ':' . (int) $this->ch_config['split_alloptions'] . $layout;
+		$format = $this->ch_config['serializer'] . ':' . $this->ch_config['compression'] . ':' . (int) $this->ch_config['split_alloptions'] . $layout . ':wp-' . $this->ch_wp_version();
 		$scope = $this->ch_base . ':' . $this->ch_root . ':' . $this->ch_scope( $group );
 		$epoch = $this->ch_token( $scope . ':epoch' );
 		if ( ! $this->ch_ready ) { return parent::fast_build_key( $key, $group ); }
@@ -578,7 +579,7 @@ LUA;
 			foreach ( (array) $this->get_multiple( $keys, $group ) as $key => $value ) {
 				if ( $this->ch_prefetch_incomplete( $value ) ) {
 					$this->ch_prefetch_skip[ $group ][ (string) $key ] = true;
-					$this->ch_forget( $key, $group );
+					$this->ch_forget( $this->build_key( $key, $group ) );
 				}
 			}
 		}
@@ -591,12 +592,40 @@ LUA;
 		return ( 'GET' === $method || 'HEAD' === $method ) && ! empty( $_SERVER['REQUEST_URI'] );
 	}
 
-	/** Drop one replayed value from request memory without touching Redis. */
-	private function ch_forget( $key, $group ) {
-		$id = $this->build_key( $key, $group );
+	/** Let a core upgrade rotate the derived-key signature without deleting old values. */
+	private function ch_wp_version() {
+		return isset( $GLOBALS['wp_version'] ) && is_string( $GLOBALS['wp_version'] ) ? $GLOBALS['wp_version'] : '';
+	}
+
+	/** Drop one derived key from request memory without touching Redis. */
+	private function ch_forget( $id ) {
 		if ( array_key_exists( $id, $this->cache ) ) {
 			$this->runtime_bytes -= $this->estimate_bytes( $this->cache[ $id ] );
 			unset( $this->cache[ $id ] );
+		}
+	}
+
+	/** Relay reports invalidated wire keys (or an Event object); evict only those from request memory. */
+	public function relay_invalidated( $keys ) {
+		if ( is_object( $keys ) ) { $keys = array( $keys->key ?? null ); }
+		foreach ( (array) $keys as $key ) {
+			if ( is_object( $key ) ) { $key = $key->key ?? null; }
+			if ( ! is_string( $key ) || 0 !== strpos( $key, $this->ch_base . ':' ) ) { continue; }
+			// A namespace token or layout marker invalidates every memoized id.
+			if ( false === strpos( $key, ':v:' ) ) { $this->ch_reset_layout(); $this->flush_runtime(); return; }
+			$this->ch_forget( $key );
+			unset( $this->ch_option_snapshots[ $key ] );
+		}
+	}
+
+	/** Drop memoized ids after an external namespace change. */
+	private function ch_reset_layout() {
+		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
+		$this->ch_ids = array(); $this->ch_ids_count = 0;
+		$this->ch_tokens = array(); $this->ch_epochs = null; $this->ch_epochs_key = null; $this->ch_registry = null; $this->ch_touched = array();
+		if ( $this->ch_ready ) {
+			try { $this->ch_root = $this->ch_token( $this->ch_base . ':root' ); }
+			catch ( Throwable $error ) { $this->handle_exception( $error ); }
 		}
 	}
 
@@ -745,6 +774,7 @@ LUA;
 				$this->ch_layout_state[1] === $this->ch_config['compression'] &&
 				$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
 				$this->ch_layout_state[3] === $this->ch_config['client'] &&
+				$this->ch_layout_state[4] === $this->ch_wp_version() &&
 				array_key_exists( $id, $this->cache )
 			) {
 				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $id ] ) ? clone $this->cache[ $id ] : $this->cache[ $id ];

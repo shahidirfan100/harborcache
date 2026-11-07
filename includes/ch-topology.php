@@ -36,7 +36,7 @@ trait HarborCache_Topology {
 				$a = $config['relay']['adaptive'];
 				if ( ! defined( $class . '::OPT_ADAPTIVE_CACHE' ) || false === $client->setOption( constant( $class . '::OPT_ADAPTIVE_CACHE' ), array( 'enabled' => true, 'width' => $a['width'], 'depth' => $a['depth'], 'min_events' => $a['events'], 'min_ratio' => (float) $a['ratio'], 'formula' => $a['formula'] ) ) ) { throw new RuntimeException( 'Native Relay adaptive policy unavailable.' ); }
 			}
-			if ( $config['relay']['listeners'] ) { $client->onFlushed( function () { $this->flush_runtime(); } ); $client->onInvalidated( function () { $this->flush_runtime(); } ); }
+			if ( $config['relay']['listeners'] ) { $client->onFlushed( function () { $this->flush_runtime(); } ); $client->onInvalidated( function ( $keys = array() ) { $this->relay_invalidated( $keys ); } ); }
 		}
 		return $client;
 	}
