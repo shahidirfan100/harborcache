@@ -307,23 +307,17 @@ jobs:
           git show 6d235793ec8ad5bcbd9885b35c8043d6915fcea9:dist/harborcache-1.2.6.zip > /tmp/hc-baseline.zip
           echo '44c4483c357cfb0260c23e3e3005385c2c4a50daecbcf395128082a7984fe2e9  /tmp/hc-baseline.zip' | sha256sum -c -
           unzip -q /tmp/hc-baseline.zip -d /tmp/hc-baseline
-          # Temporary audit engine: the previous release measured in the same run.
-          git fetch --depth=1 origin refs/tags/v1.4.1:refs/tags/v1.4.1
-          git show v1.4.1:dist/harborcache-1.4.1.zip > /tmp/hc-141.zip
-          echo '233e51764cd5882f0b90c705ae62b06ebb83daf3dfde90d7ac49e2ff5ac5c4e5  /tmp/hc-141.zip' | sha256sum -c -
-          unzip -q /tmp/hc-141.zip -d /tmp/hc-141
           mkdir -p "$WP_ROOT/wp-content/mu-plugins" evidence/profiles
           cp tests/benchmark-loader.php "$WP_ROOT/wp-content/mu-plugins/hc-benchmark.php"
           php -r '$keys=["opcache.enable_cli","opcache.jit","opcache.validate_timestamps","memory_limit","xdebug.mode","redis.pconnect.echo_check_liveness","redis.pconnect.pool_detect_dirty"]; $ini=[];foreach($keys as $key){$ini[$key]=ini_get($key);}echo json_encode(["php"=>PHP_VERSION,"extensions"=>get_loaded_extensions(),"ini"=>$ini]);' > evidence/php-configuration.json
           for lane in engine full; do
           for round in $(seq 0 29); do
-            for offset in 0 1 2 3; do
-              engines=(free baseline old141 harbor)
-              engine=${engines[$(((round+offset)%4))]}
+            for offset in 0 1 2; do
+              engines=(free baseline harbor)
+              engine=${engines[$(((round+offset)%3))]}
               case "$engine" in
                 free) source="$WP_ROOT/wp-content/plugins/redis-cache" ;;
                 baseline) source=/tmp/hc-baseline/harborcache-object-cache-with-redis ;;
-                old141) source=/tmp/hc-141/harborcache-object-cache-with-redis ;;
                 harbor) source="$GITHUB_WORKSPACE" ;;
               esac
               php tests/install-dropin.php "$source"
