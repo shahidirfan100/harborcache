@@ -769,7 +769,6 @@ LUA;
 				$this->ch_layout_state[1] === $this->ch_config['compression'] &&
 				$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
 				$this->ch_layout_state[3] === $this->ch_config['client'] &&
-				$this->ch_layout_state[4] === ( $GLOBALS['wp_version'] ?? '' ) &&
 				array_key_exists( $id, $this->cache )
 			) {
 				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $id ] ) ? clone $this->cache[ $id ] : $this->cache[ $id ];

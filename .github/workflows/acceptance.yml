@@ -317,7 +317,7 @@ jobs:
           php -r '$keys=["opcache.enable_cli","opcache.jit","opcache.validate_timestamps","memory_limit","xdebug.mode","redis.pconnect.echo_check_liveness","redis.pconnect.pool_detect_dirty"]; $ini=[];foreach($keys as $key){$ini[$key]=ini_get($key);}echo json_encode(["php"=>PHP_VERSION,"extensions"=>get_loaded_extensions(),"ini"=>$ini]);' > evidence/php-configuration.json
           for lane in engine full; do
           for round in $(seq 0 29); do
-            for offset in 0 1 2; do
+            for offset in 0 1 2 3; do
               engines=(free baseline old141 harbor)
               engine=${engines[$(((round+offset)%4))]}
               case "$engine" in
