@@ -18,6 +18,7 @@ if ( 'relay' === $config['client'] && ! in_array( $mode, array( 'down', 'recover
    throw new RuntimeException( 'Relay acceptance backend failure: ' . $error->getMessage(), 0, $error );
   }
  }
+ putenv( 'HC_RELAY_DEBUG=1' );
  $c = new HC_Relay_Acceptance_Cache();
  $GLOBALS['wp_object_cache'] = $c;
 }
@@ -65,6 +66,12 @@ gate('Connected to configured Redis transport',$c->redis_status());
 if($mode==='recovery'){gate('New worker recovers after restart',$c->set('recovered',42,'ci-outage',60)&&42===$c->get('recovered','ci-outage',true));exit;}
 gate('Advanced implementation loaded',$c instanceof HarborCache_Advanced_Cache);
 if($config['client']==='relay'){
+ $relay=$c->redis_instance();$dbg=array();try{$dbg['connected']=$relay->isConnected();}catch(Throwable $e){$dbg['connected']='err';}foreach(array('OPT_CLIENT_INVALIDATIONS','OPT_USE_CACHE','OPT_IGNORE_PATTERNS','OPT_ALLOW_PATTERNS') as $o){if(defined('Relay\\Relay::'.$o)){try{$dbg[$o]=$relay->getOption(constant('Relay\\Relay::'.$o));}catch(Throwable $e){$dbg[$o]='err:'.$e->getMessage();}}}try{$dbg['endpoints']=array_keys($relay->stats()['endpoints']??array());}catch(Throwable $e){$dbg['stats']='err';}echo 'DEBUG PLUGIN '.json_encode($dbg)."\n";
+ $c->set('invalidate0','x','ci-invalidate',0);$c->flush_runtime();$c->get('invalidate0','ci-invalidate',false,$found);
+ $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->set($c->build_key('invalidate0','ci-invalidate'),'y');$other->close();
+ usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
+ gate('Relay invalidation refreshes a key without TTL','y'===$c->get('invalidate0','ci-invalidate',false,$found));
+ $c->delete('invalidate0','ci-invalidate');$c->flush_runtime();
  $c->set('invalidate','a','ci-invalidate',60);$c->set('untouched','b','ci-invalidate',60);$c->flush_runtime();$c->get('invalidate','ci-invalidate',false,$found);$c->get('untouched','ci-invalidate',false,$found);
  $other=new Redis();$other->connect('127.0.0.1',6379);$other->select((int)($config['database']??0));$other->setex($c->build_key('invalidate','ci-invalidate'),60,'c');$other->close();
  usleep(50000);$relay=$c->redis_instance();if(method_exists($relay,'ping')){$relay->ping();}if(method_exists($relay,'dispatchEvents')){$relay->dispatchEvents();}
