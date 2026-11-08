@@ -18,6 +18,11 @@ trait HarborCache_Operations {
 		return $groups;
 	}
 
+	/** Resolve a group to its site or global scope using the same sanitizer as the write path. */
+	public function group_scope( $group ) {
+		return $this->ch_scope( $this->sanitize_key_part( $group ) );
+	}
+
 	public function group_diagnostics( $scope, $group, $memory = false ) {
 		if ( ! preg_match( '/^(global|site-[1-9][0-9]*)$/D', $scope ) || ! is_string( $group ) || strlen( $group ) > 200 ) { throw new InvalidArgumentException( 'Invalid cache group scope.' ); }
 		$base = $this->ch_base . ':' . $this->ch_root . ':' . $scope;

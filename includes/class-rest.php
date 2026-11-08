@@ -227,6 +227,9 @@ final class Rest {
 				if ( strlen( $group ) > 200 ) {
 					return new \WP_Error( 'harborcache_invalid_group', __( 'The cache group is too long.', 'harborcache-object-cache-with-redis' ), array( 'status' => 400 ) );
 				}
+				if ( ! self::network() && 'global' === $cache->group_scope( $group ) ) {
+					return new \WP_Error( 'harborcache_flush_forbidden', __( 'Only a network administrator can flush a global group.', 'harborcache-object-cache-with-redis' ), array( 'status' => 403 ) );
+				}
 				$strategy = 'full' === ( $cache->ch_config['group_flush'] ?? 'atomic' ) ? 'atomic' : null;
 				if ( ! $cache->flush_group( $group, $strategy ) ) {
 					return new \WP_Error( 'harborcache_flush_failed', __( 'The cache did not confirm the flush.', 'harborcache-object-cache-with-redis' ), array( 'status' => $cache->redis_status() ? 500 : 503 ) );
