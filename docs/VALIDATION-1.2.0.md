@@ -18,7 +18,7 @@ Focused transport probes passed for Predis and PhpRedis ACL authentication, trus
 
 The integration job passed the real WooCommerce and multisite flows. PHP-FPM served 160 successful requests at concurrency eight, and the counter survived an FPM restart. Relay 0.50.2 passed **75 checks under its default policy and 75 under its adaptive policy**, including fresh-client namespace agreement, forced read/bulk-read bypass, concurrent option patches, four-process counters, bounded reclamation and WordPress lifecycle checks. These are short functional checks, not prolonged production traffic or Relay topology-promotion certification.
 
-The same run produced the seven-round performance comparison and group-flush probe in [the comparison report](COMPARISON-1.2.0.md). Raw benchmark and transport logs are attached to the Actions run.
+The same run produced seven-round performance measurements and a group-flush probe; raw benchmark and transport logs are attached to the Actions run.
 
 ## Installable package and WordPress checks
 

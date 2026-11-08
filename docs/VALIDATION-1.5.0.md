@@ -48,4 +48,4 @@ Relay jobs passed:
 - The live Relay assertion covers the invalidation event the connection actually delivers in CI. Cross-process Relay invalidation depends on the Relay endpoint's tracking mode; the CI connection reported `tracking=0` even with client invalidations enabled, so cross-process delivery is not asserted here.
 - Live Relay/Cluster/Sentinel failover remains an external verification gate.
 - The derived-key signature changes once because the WordPress version is now included. Old values are not deleted; they expire by TTL.
-- No Object Cache Pro code, runtime, or benchmark was used.
+- No third-party proprietary code, runtime or benchmark was used.

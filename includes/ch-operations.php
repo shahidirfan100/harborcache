@@ -4,7 +4,8 @@ defined( 'ABSPATH' ) || exit;
 
 trait HarborCache_Operations {
 	/** Registered group names for diagnostics; reads the bounded registry, never scans keys. */
-	public function group_list() {
+	public function group_list( &$truncated = null ) {
+		$truncated = false;
 		if ( ! $this->ch_ready ) { return array(); }
 		$rows = $this->ch_command( array( 'SMEMBERS', $this->ch_base . ':' . $this->ch_root . ':groups' ) );
 		$groups = array();
@@ -12,15 +13,20 @@ trait HarborCache_Operations {
 			$parts = explode( '|', (string) $row, 2 );
 			if ( 2 !== count( $parts ) || ! preg_match( '/^(global|site-[1-9][0-9]*)$/D', $parts[0] ) ) { continue; }
 			$groups[] = array( 'scope' => $parts[0], 'group' => rawurldecode( $parts[1] ) );
-			if ( count( $groups ) >= 1000 ) { break; }
+			if ( count( $groups ) >= 1000 ) { $truncated = true; break; }
 		}
 		return $groups;
+	}
+
+	/** Resolve a group to its site or global scope using the same sanitizer as the write path. */
+	public function group_scope( $group ) {
+		return $this->ch_scope( $this->sanitize_key_part( $group ) );
 	}
 
 	public function group_diagnostics( $scope, $group, $memory = false ) {
 		if ( ! preg_match( '/^(global|site-[1-9][0-9]*)$/D', $scope ) || ! is_string( $group ) || strlen( $group ) > 200 ) { throw new InvalidArgumentException( 'Invalid cache group scope.' ); }
 		$base = $this->ch_base . ':' . $this->ch_root . ':' . $scope;
-		$base .= ':' . $this->ch_token( $base . ':epoch' ) . ':g:' . rawurlencode( $group );
+		$base .= ':' . $this->ch_token( $base . ':epoch' ) . ':g:' . rawurlencode( $this->sanitize_key_part( $group ) );
 		$base .= ':' . $this->ch_token( $base . ':epoch' );
 		$result = array( 'scope' => $scope, 'group' => $group, 'keys' => 0, 'memory_bytes' => $memory ? 0 : null, 'complete' => true, 'memory_available' => true );
 		$start = microtime( true ); $seen = array(); $pages = 0;

@@ -6,6 +6,6 @@ Real Relay testing exposed two correctness problems missed by the adapter fixtur
 
 The repository includes repeatable Linux/MySQL acceptance, extension/transport checks, rotating performance comparisons and application tests. Development tests and their disposable endpoints are excluded from the installable ZIP. No REST or optional public helper APIs were added.
 
-See ACCEPTANCE.md and the published validation report for exact tested versions, measurements and remaining deployment gates. A passing Plugin Check/readme validator is not WordPress.org approval. This release does not claim complete Object Cache Pro parity or lower CPU than every free Redis plugin.
+See ACCEPTANCE.md and the published validation report for exact tested versions, measurements and remaining deployment gates. A passing Plugin Check/readme validator is not WordPress.org approval. This release does not claim equivalence with commercial caching products or lower CPU than every Redis caching plugin.
 
 Install the release ZIP, keep the existing connection settings and refresh the owned drop-in. Confirm version 1.1.3 and Connected in Diagnostics. Before changing an existing production site, retain its previous package and configuration and check its frontend, login, publishing, checkout and scheduled work after the update. HarborCache does not install or restart the Redis server.

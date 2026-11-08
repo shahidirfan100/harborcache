@@ -16,13 +16,16 @@
 /docs/NAME-REVIEW.md
 /docs/ACCEPTANCE.md
 /docs/PUBLICATION.md
-/docs/INDEPENDENT-ENGINE-PLAN.md
 /docs/RELEASE-*.md
 /docs/VALIDATION-*.md
 /docs/COMPARISON-*.md
+/docs/DESIGN-REVIEW-*.md
 /docs/PERFORMANCE-*.md
 /docs/*.json
 /docs/*.jsonl
 /vendor/**/README*
 /vendor/**/CHANGELOG*
 **/*.markdown
+/design.md
+/ROADMAP.md
+/concepts_brief.md

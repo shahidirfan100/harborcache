@@ -32,7 +32,7 @@
 
 ## Client selection
 
-- New installs and configurations without a saved client use PhpRedis when `\Redis` exists, matching the free plugin.
+- New installs and configurations without a saved client use PhpRedis when `\Redis` exists, matching the baseline build.
 - Saved Predis installations keep Predis.
 - A notice on the Settings screen offers the switch. The next request uses the new client.
 - A string fast path was implemented, measured and reverted: the benchmark lane showed no improvement outside run noise.
@@ -48,6 +48,6 @@ Local checks used while preparing the release:
 - `tests/connection-check.php` against a refused endpoint and against a local RESP fixture.
 - A WordPress-free render harness for Status, Settings, Cache and Diagnostics that reported no notices, warnings or em dashes.
 
-Measured in the same acceptance run: operation CPU was 10.7% above Redis Object Cache 3.0.0 and 5.6% below 1.2.6. The 5% target was not met. See `VALIDATION-1.2.8.md` for the table and limits.
+Measured in the same acceptance run: operation CPU was 10.7% above baseline build and 5.6% below 1.2.6. The 5% target was not met. See `VALIDATION-1.2.8.md` for the table and limits.
 
 A string fast path was implemented, measured in run 40677015431 and reverted. It did not improve the measured workload, so the value format is unchanged.

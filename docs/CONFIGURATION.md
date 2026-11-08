@@ -74,4 +74,4 @@ The included cache features have local runtime evidence. Before production deplo
 
 On PHP 7.4, PhpRedis TLS connections default to `STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT` when no explicit `tls_options.crypto_method` is configured. This avoids the documented PHP 7.4/PhpRedis TLS 1.3 stream hang while keeping certificate and peer-name verification enabled. PHP 8+ and Predis retain their configured TLS policy. An explicit crypto_method is respected; use a current PHP runtime for reliable TLS 1.3. The same normalization applies to legacy WP_REDIS_SSL_CONTEXT inputs.
 
-Upstream diagnosis: https://github.com/phpredis/phpredis/issues/1726.
+Driver diagnosis: https://github.com/phpredis/phpredis/issues/1726.

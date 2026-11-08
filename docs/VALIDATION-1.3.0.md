@@ -18,7 +18,7 @@ Run [41847351398](https://github.com/shahidirfan100/harborcache/actions/runs/418
 
 ## Equal-workload comparison
 
-Artifact `linux-performance-applications` from run [41831513936](https://github.com/shahidirfan100/harborcache/actions/runs/41831513936), 30 rotating blocks per engine, full-plugin and engine lanes, native PhpRedis, PHP 8.3.36, WordPress 7.1.4. Median paired changes against Redis Object Cache 3.0.0:
+Artifact `linux-performance-applications` from run [41831513936](https://github.com/shahidirfan100/harborcache/actions/runs/41831513936), 30 rotating blocks per engine, full-plugin and engine lanes, native PhpRedis, PHP 8.3.36, WordPress 7.1.4. Median paired changes against baseline build:
 
 | Measurement | Full plugin | Engine only |
 | --- | ---: | ---: |
@@ -32,7 +32,7 @@ Artifact `linux-performance-applications` from run [41831513936](https://github.
 | 20 misses, p50 | +1.9% | +3.4% |
 | Peak PHP allocation | 0% | +5.9% |
 
-The previous 1.2.9 full-plugin operation CPU result was +12.8% against the same free plugin. This run is one shared-runner sample, so the paired direction and the large memory-read improvement are the reliable signals; the 5% engine-only target is not claimed as passed. The benchmark is CLI, so it does not measure the anonymous front-end lazy-loading change; the full-plugin lane still loads the management layer.
+The previous 1.2.9 full-plugin operation CPU result was +12.8% against the same baseline build. This run is one shared-runner sample, so the paired direction and the large memory-read improvement are the reliable signals; the 5% engine-only target is not claimed as passed. The benchmark is CLI, so it does not measure the anonymous front-end lazy-loading change; the full-plugin lane still loads the management layer.
 
 ## Local checks (Windows, PHP 8.5.10)
 

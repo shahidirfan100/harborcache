@@ -4,7 +4,7 @@ Validated runtime commit: `3450de255135d936c41067e426ab32f5d74b368d`.
 
 Release archive: `dist/harborcache-1.2.7.zip`, 599 files, SHA256 `f9e2442d64ddb53f1aa79b784c53005d50b72af2b99e5af6038998a6479fd9e4`. The build verifier passed exact source/package parity. The main header, runtime constant, drop-in template, deployment loader and readme stable tag agree on 1.2.7. Later evidence-only edits are excluded from the archive.
 
-Baseline: 1.2.6, commit `6d235793ec8ad5bcbd9885b35c8043d6915fcea9`, ZIP SHA256 `44c4483c357cfb0260c23e3e3005385c2c4a50daecbcf395128082a7984fe2e9`. Free baseline: Redis Object Cache 3.0.0. Old benchmark totals cannot be compared directly to revised checked operations and corrected bootstrap lanes.
+Baseline: 1.2.6, commit `6d235793ec8ad5bcbd9885b35c8043d6915fcea9`, ZIP SHA256 `44c4483c357cfb0260c23e3e3005385c2c4a50daecbcf395128082a7984fe2e9`. Baseline: 1.2.6. Old benchmark totals cannot be compared directly to revised checked operations and corrected bootstrap lanes.
 
 ## Correctness and lifecycle
 
@@ -22,7 +22,7 @@ Full workflow logs contain expected OpenSSL/connection warnings from the deliber
 
 The benchmark rotates three engines through 30 blocks in each of two lanes per run: engine-only and complete plugin loaded during WordPress bootstrap. Three independent workflow runs produced 540 rows in total. The table reports the range of the three **within-run median paired percentage changes** in the full-plugin lane. Negative means less time/CPU. Timed operations check payloads and return values; random cold keys are prepared before timing. Both references use the same PhpRedis/default PHP-serialization/no-compression workload, with metrics disabled for the primary comparison.
 
-| Measurement | 1.2.7 versus 1.2.6 | 1.2.7 versus Redis Object Cache 3.0.0 |
+| Measurement | 1.2.7 versus 1.2.6 | 1.2.7 versus baseline build |
 |---|---:|---:|
 | Measured operation PHP CPU | -6.1% to -4.7% | +13.6% to +18.5% |
 | 1,000 request-memory reads, p50 | -26.6% to -15.1% | -8.9% to +2.8% |
@@ -37,9 +37,9 @@ The benchmark rotates three engines through 30 blocks in each of two lanes per r
 
 Full-lane peak PHP allocator usage was 36 MiB for all three engines in every run. That is allocator peak, not total server RAM or proof of lower memory use. Runner speed varied considerably, so absolute timings are not pooled across machines. `tools/compare-benchmarks.py` reproduces medians, paired changes and operation p50/p95/p99 from the workflow artifacts.
 
-The operation-CPU improvement over 1.2.6 repeated in all three runs. The goal of staying within 5% of the free plugin's operation CPU **was not met**. Forced-read p50 regressed by 4.8% in one run and improved modestly in the other two; this release does not establish a forced-read improvement. Bulk reads and large-value work still need profiling. There is no evidence for a universal speed lead over Redis Object Cache, and the release must not be marketed that way.
+The operation-CPU improvement over 1.2.6 repeated in all three runs. The goal of staying within 5% of the baseline build's operation CPU **was not met**. Forced-read p50 regressed by 4.8% in one run and improved modestly in the other two; this release does not establish a forced-read improvement. Bulk reads and large-value work still need profiling. There is no evidence for a universal speed lead over Redis Object Cache, and the release must not be marketed that way.
 
-The existing atomic group-invalidation design remains a separate measured strength: at 5,000 seeded keys, HarborCache p50 was 0.321-0.392 ms versus 10.911-14.895 ms for the free plugin's default group flush, using five samples per engine/run. HarborCache used two Redis commands per invalidation. Compare the `group-flush.jsonl` artifact for each run. This measures invalidation latency after seeding, not reclaiming all old entries or concurrent production behavior; it was already present in 1.2.6, not a new 1.2.7 gain.
+The existing atomic group-invalidation design remains a separate measured strength: at 5,000 seeded keys, HarborCache p50 was 0.321-0.392 ms versus 10.911-14.895 ms for the baseline build's default group flush, using five samples per engine/run. HarborCache used two Redis commands per invalidation. Compare the `group-flush.jsonl` artifact for each run. This measures invalidation latency after seeding, not reclaiming all old entries or concurrent production behavior; it was already present in 1.2.6, not a new 1.2.7 gain.
 
 Sampling at 10% and 100% is recorded separately in each run. The primary comparison does not include that optional work; sampling rows are diagnostic observations, not 30-block comparisons. Metrics writes deliberately remain sequential: testing rejected a pipeline that could leave an uncertain native socket after a denied command. The safe error-isolation fix was retained.
 

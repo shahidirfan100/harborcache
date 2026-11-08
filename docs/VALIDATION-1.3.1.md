@@ -32,7 +32,7 @@ Run [41863077701](https://github.com/shahidirfan100/harborcache/actions/runs/418
 
 ## Performance
 
-The cache engine is unchanged from 1.3.0, so the 1.3.0 benchmark applies: full-plugin operation PHP CPU **+2.6%** against Redis Object Cache 3.0.0, request-memory reads **−15.4%**, engine-only CPU **+5.0%**, bootstrap CPU **+4.0%**. See `VALIDATION-1.3.0.md` and the `linux-performance-applications` artifact for the measured table and limits.
+The cache engine is unchanged from 1.3.0, so the 1.3.0 benchmark applies: full-plugin operation PHP CPU **+2.6%** against baseline build, request-memory reads **−15.4%**, engine-only CPU **+5.0%**, bootstrap CPU **+4.0%**. See `VALIDATION-1.3.0.md` and the `linux-performance-applications` artifact for the measured table and limits.
 
 ## Limits
 

@@ -24,11 +24,11 @@ Validated runtime commit: `014545a`. Release archive: `dist/harborcache-1.2.9.zi
 
 The count is deterministic and comes from the cache's own command counter. It does not depend on network latency.
 
-## Engine benchmark
+## comparison benchmark
 
 One acceptance run, 30 rotating blocks per engine, full-plugin lane, native PhpRedis, PHP 8.3.36, WordPress 7.1.3. Values are within-run median paired changes.
 
-| Measurement | 1.2.9 versus Redis Object Cache 3.0.0 | 1.2.9 versus 1.2.6 |
+| Measurement | 1.2.9 versus baseline build | 1.2.9 versus 1.2.6 |
 |---|---:|---:|
 | Operation PHP CPU | +12.8% | -5.3% |
 | 1,000 request-memory reads, p50 | -12.9% | -26.4% |
@@ -42,15 +42,15 @@ One acceptance run, 30 rotating blocks per engine, full-plugin lane, native PhpR
 | Redis commands | +0.2% | +0.1% |
 | Peak PHP allocation | 0% | 0% |
 
-The engine benchmark uses one cache group, so it does not exercise the metadata change. The 5% CPU target against the free plugin remains open.
+The comparison benchmark uses one cache group, so it does not exercise the metadata change. The 5% CPU target against the baseline build remains open.
 
 Group invalidation after seeding, from the same run:
 
-| Keys | HarborCache p50 | Free plugin p50 | HarborCache commands | Free plugin commands |
+| Keys | HarborCache p50 | Baseline build p50 | HarborCache commands | Baseline build commands |
 |---|---:|---:|---:|---:|
 | 5,000 | 0.521 ms | 11.939 ms | 3 | 6,921 |
 
-The hash field adds one command to the previous two-command group invalidation. The result is still about 23 times faster than the free plugin for the measured invalidation call.
+The hash field adds one command to the previous two-command group invalidation. The result is still about 23 times faster than the baseline build for the measured invalidation call.
 
 ## Listing media
 
