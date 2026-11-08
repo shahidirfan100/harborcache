@@ -1,6 +1,6 @@
 # HarborCache 1.6.1 validation (draft)
 
-Source commit: `df54f44`. Draft PR: #14. **Not merged.** Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `dcb9f1062ca85bd121a59e77befb36290783448eff684956612bca6c6ae0e299`. The build verifier passed source and ZIP parity.
+Source commit: `13e6a49`. Draft PR: #14. **Not merged.** Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `3ba03cb00446fc50f8b8105f227b9e95c801f939568ff971469606abba999d80`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -22,7 +22,7 @@ Source commit: `df54f44`. Draft PR: #14. **Not merged.** Release archive: `dist/
 
 ## CI
 
-Run [42458455309](https://github.com/shahidirfan100/harborcache/actions/runs/42458455309) is the validation run for `df54f44`. Status is recorded in the PR. The earlier run on `f4b95ce` was superseded by the final audit and scope changes.
+Run [42458888727](https://github.com/shahidirfan100/harborcache/actions/runs/42458888727) is the validation run for `13e6a49`. Status is recorded in the PR. Earlier runs were superseded by the final audit, scope and encoding changes.
 
 ## Local checks (Windows, PHP 8.5.10)
 

@@ -75,4 +75,4 @@ The fixes are local and small: one REST class rewrite, one group-registry signat
 
 ## Status
 
-Local changes are on branch `codex/1.6.1-rest-hardening`; not merged. Offline suites and PHP lint pass. The live REST assertions are written but require the GitHub Actions matrix.
+Local changes are on branch `codex/1.6.1-rest-hardening`; draft PR #14; not merged. Offline suites and PHP lint pass. The live REST assertions are written; CI is running on `13e6a49`.
