@@ -16,7 +16,7 @@ Source commit: `95ca050`. Release archive: `dist/harborcache-1.6.0.zip`, 603 fil
 - `POST harborcache/v1/flush` flushes a group or a `site`, `global`, `all` scope.
 - The capability is the same one that opens Settings (`manage_options`, or `manage_network_options` on multisite), filterable through `harborcache_manager_capability`.
 
-A bounded `group_list()` reader was added so diagnostics never issue `KEYS` or `SCAN`.
+A bounded `group_list()` reader was added so the group list never issues `KEYS`; group diagnostics still uses bounded `SCAN` and optional `MEMORY USAGE`.
 
 The Pro artifact was inspected only for behavior and architecture. No Pro source, names, comments or assets were copied.
 

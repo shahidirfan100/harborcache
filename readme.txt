@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -26,11 +26,11 @@ The dashboard includes Status, Analytics, Settings, Cache and Diagnostics. Confi
 
 HarborCache exposes an authenticated REST API under `harborcache/v1`. Use cookie authentication with a REST nonce, or an application password. The same capability that opens Settings is required: `manage_options`, or `manage_network_options` on multisite. The `harborcache_manager_capability` filter can change it.
 
-Read routes: `/status`, `/health`, `/analytics?window=7200&interval=300`, `/groups`, `/groups/{scope}/{group}`, `/slowlog` and `/relay`.
+Read routes: `/status`, `/health`, `/analytics?window=7200&interval=300`, `/groups`, `/groups/{scope}/{group}`, `/slowlog` and `/relay`. `/groups` returns at most 1,000 registry entries and a `truncated` flag. `/analytics` returns at most 1,000 samples; when analytics are disabled it returns `enabled: false` and `summary: null`. `/slowlog` returns the latest 25 command names, timestamps and durations; it is disabled with HTTP 403 when the connection is marked as a shared Redis server.
 
-Maintenance route: `POST /flush` with `scope=site|global|all`, or `group=group-name` to flush one group.
+The group route scope is `global` or `site-<id>`. The flush route accepts exactly one of `group=<name>` or `scope=site|site-<id>|global|all`. `scope=site` means the current site. `all` is accepted only when `network_flush` allows it and the caller is a network administrator on multisite; other cross-site scopes require the same. Sending both `group` and `scope` returns HTTP 400.
 
-Responses omit credentials and connection endpoints. `/slowlog` returns command names, timestamps and durations, not arguments. All routes require the management capability; unauthenticated requests are rejected by WordPress REST authentication.
+Responses omit credentials and connection endpoints. Status codes are 400 for invalid or ambiguous input, 401/403 for authentication or scope refusal, 404 for an unknown registered group, 503 when Redis is unavailable, and 500 when a flush is not confirmed. All routes require the management capability; unauthenticated requests are rejected by WordPress REST authentication.
 
 HarborCache connects to the Redis endpoint you configure. It does not contact the original plugin vendor. Optional tracing must be explicitly configured and uses your host application's New Relic or OpenTelemetry integration and destination. Plugin-provided spans contain command names, timings and bounded datastore metadata; they omit cached keys, values, credentials and endpoint details. Configure retention and privacy in your provider or collector. No tracing SDK, remote account or external destination is enabled by default.
 
@@ -76,6 +76,14 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.6.1 =
+* Harden the REST API: reject empty or ambiguous flush input, honor `network_flush`, never let a group flush escalate to a full install, and return 500/503 when Redis does not confirm.
+* Return 503 instead of a PHP fatal when a REST read loses Redis; validate group names, encode them consistently and return 404 for an unknown registered group.
+* Report `/analytics` as disabled or empty instead of a false 100% hit ratio; disable `/slowlog` on a shared Redis server; remove the Relay key oracle.
+* Load the REST class only on `rest_api_init`, unify the management-capability filters, and warn when the free plugin is active in the reverse activation order.
+* Add the drop-in `Plugin URI` header so the free plugin treats it as foreign instead of outdated.
+* Extend live coverage for group diagnostics, unknown groups, invalid/ambiguous flush input, unauthenticated flush, shared slow log, analytics-disabled and Relay redaction.
 
 = 1.6.0 =
 * Add an authenticated REST API under `harborcache/v1` for status, health, analytics, groups, slow log, Relay diagnostics and scoped flushes.
@@ -252,7 +260,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Published same-workload Redis Cache 3.0.0 comparisons and explicit remaining deployment gates.
 
 = 1.1.0 =
-* Removed plugin REST routes; management and exports use protected WordPress admin actions.
+* Removed plugin REST routes; management and exports use protected WordPress admin actions. The authenticated `harborcache/v1` API returned in 1.6.0.
 * Fixed the obsolete drop-in update notice/action and added safe owned-drop-in refresh.
 * Added time-window analytics, percentiles, interval summaries and CSV export.
 * Added on-demand group memory/counts, node latency, operational health and Relay adaptive diagnostics.
@@ -323,7 +331,7 @@ Correctness, update recovery and dashboard readability fixes. Refresh the owned 
 Performance and native-client fixes. Update the owned object-cache drop-in after installing. No server settings or key namespace format changes are required.
 
 = 1.1.0 =
-Consolidated operational update. Plugin REST routes are removed. The owned drop-in refreshes automatically for authorized administrators, or use Update drop-in.
+Consolidated operational update. The legacy plugin REST routes were removed at that time; the authenticated `harborcache/v1` API returned in 1.6.0. The owned drop-in refreshes automatically for authorized administrators, or use Update drop-in.
 
 = 1.0.2 =
 Larger widget text and Connect/Disconnect controls. Update the HarborCache drop-in after upgrading.

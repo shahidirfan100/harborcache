@@ -162,13 +162,7 @@ class Plugin {
 	}
 
 	public function manage_redis_capability() {
-		if ( defined( 'WP_REDIS_MANAGER_CAPABILITY' ) && WP_REDIS_MANAGER_CAPABILITY ) {
-			return WP_REDIS_MANAGER_CAPABILITY;
-		}
-
-		$capability = is_multisite() ? 'manage_network_options' : 'manage_options';
-
-		return apply_filters( 'redis_cache_manager_capability', $capability );
+		return \HarborCache\Console::capability();
 	}
 
 	public function current_user_can_manage_redis() {

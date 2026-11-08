@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HarborCache – Object Cache with Redis
  * Description: Fast Redis object caching for WordPress with clear insights, analytics and safe cache controls.
- * Version: 1.6.0
+ * Version: 1.6.1
  * Text Domain: harborcache-object-cache-with-redis
  * Domain Path: /languages
  * Network: true
@@ -38,7 +38,18 @@ catch ( \Throwable $harborcache_error ) { error_log( 'HarborCache configuration 
 define( 'HARBORCACHE_BASENAME', plugin_basename( HARBORCACHE_FILE ) );
 define( 'HARBORCACHE_PLUGIN_DIR', plugin_dir_url( HARBORCACHE_FILE ) );
 
-define( 'HARBORCACHE_VERSION', '1.6.0' );
+// Catch the reverse activation order: the free plugin loads after HarborCache.
+add_action( 'plugins_loaded', static function () {
+	if ( ! defined( 'WP_REDIS_PLUGIN_PATH' ) || realpath( WP_REDIS_PLUGIN_PATH ) === realpath( __DIR__ ) ) { return; }
+	add_action( 'admin_notices', static function () {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || ! in_array( $screen->id, array( 'plugins', 'plugins-network' ), true ) ) { return; }
+		if ( ! current_user_can( 'activate_plugins' ) && ! current_user_can( 'manage_network_plugins' ) ) { return; }
+		echo '<div class="notice notice-error"><p>' . esc_html__( 'Redis Object Cache is also active. Deactivate it before using HarborCache; two object-cache managers cannot share the same drop-in.', 'harborcache-object-cache-with-redis' ) . '</p></div>';
+	} );
+}, 1 );
+
+define( 'HARBORCACHE_VERSION', '1.6.1' );
 
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-autoloader.php';
 
@@ -67,9 +78,11 @@ spl_autoload_register( static function ( $class ) {
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-metrics.php';
 HarborCache\Core\Metrics::init();
 
-// Authenticated REST surface for monitoring and scoped cache maintenance.
-require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-rest.php';
-add_action( 'rest_api_init', array( '\HarborCache\Rest', 'register' ) );
+// Authenticated REST surface: load only when WordPress initializes REST.
+add_action( 'rest_api_init', static function () {
+    require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-rest.php';
+    \HarborCache\Rest::register();
+} );
 
 $harborcache_needs_management = is_admin()
     || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() )

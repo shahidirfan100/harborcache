@@ -1,7 +1,7 @@
 <?php
 /**
  * Loads a HarborCache installation from wp-content/mu-plugins.
- * Version: 1.6.0
+ * Version: 1.6.1
  * License: GPL-3.0-only
  */
 defined( 'ABSPATH' ) || exit;

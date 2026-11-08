@@ -20,7 +20,8 @@ final class Console {
 	public static function capability() {
 		if ( defined( 'WP_REDIS_MANAGER_CAPABILITY' ) && WP_REDIS_MANAGER_CAPABILITY ) { return WP_REDIS_MANAGER_CAPABILITY; }
 		$default = is_multisite() ? 'manage_network_options' : 'manage_options';
-		return apply_filters( 'harborcache_manager_capability', $default );
+		$capability = apply_filters( 'redis_cache_manager_capability', $default );
+		return apply_filters( 'harborcache_manager_capability', $capability );
 	}
 	public static function allowed() { return current_user_can( self::capability() ); }
 	public static function cache() { return isset( $GLOBALS['wp_object_cache'] ) && $GLOBALS['wp_object_cache'] instanceof \HarborCache_Advanced_Cache ? $GLOBALS['wp_object_cache'] : null; }
@@ -59,7 +60,6 @@ final class Console {
 		}
 		add_action( 'wp_dashboard_setup', array( __CLASS__, 'widget' ) );
 		add_action( 'wp_network_dashboard_setup', array( __CLASS__, 'widget' ) );
-		add_filter( 'redis_cache_manager_capability', static function () { return self::capability(); } );
 		if ( class_exists( '\Debug_Bar_Panel' ) ) {
 			require_once __DIR__ . '/class-debug-panel.php';
 			add_filter( 'debug_bar_panels', static function ( $panels ) { $panels[] = new \HarborCache_Debug_Panel(); return $panels; } );
