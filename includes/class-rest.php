@@ -141,6 +141,12 @@ final class Rest {
 		return self::safely( static function () use ( $cache ) {
 			$truncated = false;
 			$groups    = $cache->group_list( $truncated );
+			if ( ! self::network() ) {
+				$current = 'site-' . get_current_blog_id();
+				$groups  = array_values( array_filter( $groups, static function ( $item ) use ( $current ) {
+					return 'global' === $item['scope'] || $current === $item['scope'];
+				} ) );
+			}
 			return rest_ensure_response( array( 'groups' => $groups, 'truncated' => (bool) $truncated ) );
 		} );
 	}
@@ -151,6 +157,9 @@ final class Rest {
 		return self::safely( static function () use ( $request, $cache ) {
 			$scope = (string) $request->get_param( 'scope' );
 			$group = rawurldecode( (string) $request->get_param( 'group' ) );
+			if ( preg_match( '/^site-([1-9][0-9]*)$/D', $scope, $match ) && (int) $match[1] !== get_current_blog_id() && ! self::network() ) {
+				return new \WP_Error( 'harborcache_group_forbidden', __( 'Only a network administrator can inspect another site.', 'harborcache-object-cache-with-redis' ), array( 'status' => 403 ) );
+			}
 			if ( strlen( $group ) > 200 ) {
 				return new \WP_Error( 'harborcache_invalid_group', __( 'The cache group is too long.', 'harborcache-object-cache-with-redis' ), array( 'status' => 400 ) );
 			}
