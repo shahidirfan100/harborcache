@@ -1,6 +1,6 @@
 # HarborCache 1.6.1 validation (draft)
 
-Source commit: `13e6a49`. Draft PR: #14. **Not merged.** Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `3ba03cb00446fc50f8b8105f227b9e95c801f939568ff971469606abba999d80`. The build verifier passed source and ZIP parity.
+Source code commit: `13e6a49`; test commit: `f8188d7`. Draft PR: #14. **Not merged.** Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `3ba03cb00446fc50f8b8105f227b9e95c801f939568ff971469606abba999d80`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -22,7 +22,7 @@ Source commit: `13e6a49`. Draft PR: #14. **Not merged.** Release archive: `dist/
 
 ## CI
 
-Run [42458888727](https://github.com/shahidirfan100/harborcache/actions/runs/42458888727) is the validation run for `13e6a49`. Status is recorded in the PR. Earlier runs were superseded by the final audit, scope and encoding changes.
+Run [42459185555](https://github.com/shahidirfan100/harborcache/actions/runs/42459185555) passed **all 14 jobs** on `f8188d7`. Plugin Check 2.2.0 on the exact ZIP reported `Success: Checks complete. No errors found.` and the report gate reported no errors or warnings. All new REST assertions passed: status, endpoint redaction, health, truthful analytics, groups, group diagnostics, colon-encoded group, unknown-group 404, Relay redaction, shared slow-log 403, scoped flush, invalid scope 400, ambiguous flush 400, site flush, unauthenticated read and unauthenticated flush.
 
 ## Local checks (Windows, PHP 8.5.10)
 
@@ -35,6 +35,19 @@ Run [42458888727](https://github.com/shahidirfan100/harborcache/actions/runs/424
 ## Live assertions added
 
 Group diagnostics hit, unknown-group 404, invalid scope 400, ambiguous flush 400, unauthenticated flush 401/403, shared slow-log 403, analytics-disabled, Relay redaction.
+
+## WordPress.org readiness
+
+- `Stable tag: 1.6.1` matches the plugin header and ZIP.
+- Text domain `harborcache-object-cache-with-redis` matches the plugin slug.
+- The ZIP has one top-level folder, `harborcache-object-cache-with-redis/`.
+- The ZIP contains no `tests/`, `tools/`, `docs/`, `media/`, `dist/`, `.github/` or Pro-product strings.
+- `readme.txt` has Description, Installation, FAQ, Changelog, Requires at least, Tested up to and Requires PHP sections.
+- License is GPL-3.0-only; bundled Predis and Credis licenses are present.
+- Plugin Check 2.2.0 on the exact ZIP is clean.
+- Banners, icons, screenshots and the social preview remain in `media/` for the WordPress.org SVN assets step; they are correctly excluded from the installable ZIP.
+
+This is release-ready for submission. WordPress.org review and SVN publication are external steps and were not performed.
 
 ## Limits
 

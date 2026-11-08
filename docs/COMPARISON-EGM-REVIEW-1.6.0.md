@@ -75,4 +75,4 @@ The fixes are local and small: one REST class rewrite, one group-registry signat
 
 ## Status
 
-Local changes are on branch `codex/1.6.1-rest-hardening`; draft PR #14; not merged. Offline suites and PHP lint pass. The live REST assertions are written; CI is running on `13e6a49`.
+Local changes are on branch `codex/1.6.1-rest-hardening`; draft PR #14; not merged. Offline suites and PHP lint pass. CI run `42459185555` passed all 14 jobs and Plugin Check is clean.
