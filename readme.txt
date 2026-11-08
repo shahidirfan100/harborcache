@@ -4,7 +4,7 @@ Tags: redis, object cache, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.1
+Stable tag: 1.6.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -16,11 +16,21 @@ HarborCache provides persistent Redis object caching with a dashboard, local ana
 
 It requires a separately operated Redis server. No account, subscription or license key is required. Request analytics stay in your configured Redis namespace. External tracing is disabled by default. See docs/FEATURES.md for implemented behavior, verified configurations and deployment acceptance gates.
 
-Features include persistent caching through Predis, PhpRedis, Relay or Credis; multisite group scopes; bounded TTLs; atomic namespace invalidation; bulk cache operations; typed values; optional serialization and compression; optional split-alloptions storage; request key prefetching; local sampled analytics; WP-CLI; protected administration forms; Site Health; Query Monitor; and Debug Bar support.
+Features include persistent caching through Predis, PhpRedis, Relay or Credis; multisite group scopes; bounded TTLs; atomic namespace invalidation; bulk cache operations; typed values; optional serialization and compression; optional split-alloptions storage; request key prefetching; local sampled analytics; an authenticated REST API; WP-CLI; protected administration forms; Site Health; Query Monitor; and Debug Bar support.
 
 Advanced additions include bounded background reclamation, exact integer counters, safe-read retries/backoff, replica/Sentinel/cluster read routing, logging/tracing adapters, custom cache/connector factories, analytics retention/count/flush-persistence controls and shared-server capacity reporting. See docs/ADVANCED.md and the feature ledger for native-extension acceptance gates and API differences.
 
 The dashboard includes Status, Analytics, Settings, Cache and Diagnostics. Configuration is saved to a guarded PHP file in wp-content. Configuration constants take precedence. Passwords and cached values are excluded from diagnostic exports.
+
+== REST API ==
+
+HarborCache exposes an authenticated REST API under `harborcache/v1`. Use cookie authentication with a REST nonce, or an application password. The same capability that opens Settings is required: `manage_options`, or `manage_network_options` on multisite. The `harborcache_manager_capability` filter can change it.
+
+Read routes: `/status`, `/health`, `/analytics?window=7200&interval=300`, `/groups`, `/groups/{scope}/{group}`, `/slowlog` and `/relay`.
+
+Maintenance route: `POST /flush` with `scope=site|global|all`, or `group=group-name` to flush one group.
+
+Responses omit credentials and connection endpoints. `/slowlog` returns command names, timestamps and durations, not arguments. All routes require the management capability; unauthenticated requests are rejected by WordPress REST authentication.
 
 HarborCache connects to the Redis endpoint you configure. It does not contact the original plugin vendor. Optional tracing must be explicitly configured and uses your host application's New Relic or OpenTelemetry integration and destination. Plugin-provided spans contain command names, timings and bounded datastore metadata; they omit cached keys, values, credentials and endpoint details. Configure retention and privacy in your provider or collector. No tracing SDK, remote account or external destination is enabled by default.
 
@@ -66,6 +76,11 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.6.0 =
+* Add an authenticated REST API under `harborcache/v1` for status, health, analytics, groups, slow log, Relay diagnostics and scoped flushes.
+* Add a bounded group-registry reader for diagnostics without scanning keys.
+* No cache key format or configuration change.
 
 = 1.5.1 =
 * Keep the WordPress-version integrity check on the key-build path instead of every request-memory hit, restoring 1.4.x runtime-hit cost with no behavior change.
