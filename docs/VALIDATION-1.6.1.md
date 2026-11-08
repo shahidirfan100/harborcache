@@ -2,6 +2,8 @@
 
 Code commit: `49f9bda`; documentation and package refreshed in PR #14. Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `d871bfd102bba7c90da85611f406e8c65f0b667e700c110eb961eca122fcdff3`. The build verifier passed source and ZIP parity.
 
+Screenshots: `media/` recaptured from this ZIP in run 42463174789 (version 1.6.1).
+
 ## What changed
 
 1.6.1 hardens the REST API introduced in 1.6.0.
@@ -41,7 +43,7 @@ Group diagnostics hit, unknown-group 404, invalid scope 400, ambiguous flush 400
 - `Stable tag: 1.6.1` matches the plugin header and ZIP.
 - Text domain `harborcache-object-cache-with-redis` matches the plugin slug.
 - The ZIP has one top-level folder, `harborcache-object-cache-with-redis/`.
-- The ZIP contains no `tests/`, `tools/`, `docs/`, `media/`, `dist/`, `.github/` or Pro-product strings.
+- The ZIP contains no `tests/`, `tools/`, `docs/`, `media/`, `dist/`, `.github/` or third-party product strings.
 - `readme.txt` has Description, Installation, FAQ, Changelog, Requires at least, Tested up to and Requires PHP sections.
 - License is GPL-3.0-only; bundled Predis and Credis licenses are present.
 - Plugin Check 2.2.0 on the exact ZIP is clean.
