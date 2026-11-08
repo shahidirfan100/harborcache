@@ -10,6 +10,6 @@ The installable package contains 610 files. ZIP CRC and extracted bytes passed; 
 
 SHA256: `7c7ce2dc187c2dc1f7175a8de4b0ea21ba68a077bb9908ccc0a2ba31ecf79803`
 
-See COMPARISON-1.1.3.md for all seven operation timings, including regressions, CPU/memory/command counts, and remaining gates. Native Relay shared-FPM/topology/failover, sustained traffic and production tracing still need acceptance. WordPress.org approval and complete Pro parity are not claimed.
+See the archived validation evidence for all seven operation timings, including regressions, CPU/memory/command counts and remaining gates. Native Relay shared-FPM/topology/failover, sustained traffic and production tracing still need acceptance. WordPress.org approval and complete Pro parity are not claimed.
 
 Antislop remains active during development: the existing teal/system-font design is retained, controls are functional, copy reflects real evidence, and no decorative redesign or fabricated speed claim was added.

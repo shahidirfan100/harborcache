@@ -1,3 +1,14 @@
+HarborCache source attribution
+================================
+
+HarborCache is a modified version of Redis Object Cache 3.0.0
+(https://github.com/rhubarbgroup/redis-cache), by Till Krüss and contributors,
+licensed under GPLv3. HarborCache changes are Copyright (C) 2026 Shahid Irfan
+and are released under the same license. This file is the legal attribution
+record; the full GPLv3 text follows.
+
+---
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 

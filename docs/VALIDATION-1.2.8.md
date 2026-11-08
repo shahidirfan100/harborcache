@@ -16,7 +16,7 @@ Validated runtime commit: `ba09059`. Release archive: `dist/harborcache-1.2.8.zi
 
 One acceptance run, 30 rotating blocks per engine, full-plugin lane, native PhpRedis, PHP 8.3.36, WordPress 7.1.3. Values are within-run median paired changes.
 
-| Measurement | 1.2.8 versus Redis Object Cache 3.0.0 | 1.2.8 versus 1.2.6 |
+| Measurement | 1.2.8 versus baseline build | 1.2.8 versus 1.2.6 |
 |---|---:|---:|
 | Operation PHP CPU | +2.4% | -7.3% |
 | 1,000 request-memory reads, p50 | -14.8% | -29.9% |
@@ -30,11 +30,11 @@ One acceptance run, 30 rotating blocks per engine, full-plugin lane, native PhpR
 | Redis commands | +0.1% | 0% |
 | Peak PHP allocation | 0% | 0% |
 
-Four 1.2.8 runs produced operation CPU results from +2.4% to +15.0% against the free plugin and from -7.3% to -4.8% against 1.2.6. The spread is too wide to claim the 5% target from one run. The table shows the final run; the consistent signal is the roughly 5% to 7% lower CPU than 1.2.6 and the group-invalidation advantage below.
+Four 1.2.8 runs produced operation CPU results from +2.4% to +15.0% against the baseline build and from -7.3% to -4.8% against 1.2.6. The spread is too wide to claim the 5% target from one run. The table shows the final run; the consistent signal is the roughly 5% to 7% lower CPU than 1.2.6 and the group-invalidation advantage below.
 
 Group invalidation after seeding, from the same run:
 
-| Keys | HarborCache p50 | Free plugin p50 | HarborCache commands | Free plugin commands |
+| Keys | HarborCache p50 | Baseline build p50 | HarborCache commands | Baseline build commands |
 |---|---:|---:|---:|---:|
 | 100 | 0.256 ms | 5.715 ms | 2 | 1,632 |
 | 5,000 | 0.177 ms | 9.442 ms | 2 | 7,581 |

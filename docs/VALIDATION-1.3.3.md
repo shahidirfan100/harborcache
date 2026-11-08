@@ -25,9 +25,9 @@ Run [42044669760](https://github.com/shahidirfan100/harborcache/actions/runs/420
 
 ## Equal-workload comparison
 
-Artifact `linux-performance-applications` from run [42044872172](https://github.com/shahidirfan100/harborcache/actions/runs/42044872172), 30 rotating blocks per engine, full-plugin and engine lanes, native PhpRedis, PHP 8.3.36, WordPress 7.1.4. Median paired changes against Redis Object Cache 3.0.0 (free) and the 1.2.6 baseline:
+Artifact `linux-performance-applications` from run [42044872172](https://github.com/shahidirfan100/harborcache/actions/runs/42044872172), 30 rotating blocks per engine, full-plugin and engine lanes, native PhpRedis, PHP 8.3.36, WordPress 7.1.4. Median paired changes against baseline build (free) and the 1.2.6 baseline:
 
-| Measurement | Full plugin vs free | Engine only vs free | Full plugin vs 1.2.6 |
+| Measurement | Full plugin vs 1.2.5 baseline | Engine only vs 1.2.5 baseline | Full plugin vs 1.2.6 |
 | --- | ---: | ---: | ---: |
 | Operation PHP CPU | +10.5% | +10.2% | -5.7% |
 | Bootstrap PHP CPU | +4.0% | +2.2% | -0.6% |

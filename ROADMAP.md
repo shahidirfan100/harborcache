@@ -1,13 +1,13 @@
 # HarborCache roadmap
 
-Current release: 1.6.1 (REST hardening and documentation). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/COMPARISON-EGM-REVIEW-1.6.0.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.6.1 (REST hardening and documentation). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
 1. Fix safety and correctness before adding surface area.
 2. Every performance claim uses the existing measured protocol, not one runner sample.
 3. Key-format work is a migration with a measured premise, a rollback and a mixed-version test.
-4. The WordPress.org package excludes development docs, tests, media and competitor references.
+4. The WordPress.org package excludes development docs, tests, media and third-party product references.
 5. One release, one reason.
 
 ## 1.6.x — close the current line
@@ -15,7 +15,7 @@ Current release: 1.6.1 (REST hardening and documentation). Source of truth for b
 1.6.1 is the controlled REST-hardening release. It keeps the reverse-order co-installation notice.
 
 1.6.2 is the security follow-up:
-- Arbitration guard: the drop-in or manager marker prevents the second object-cache manager from registering admin UI or writing the drop-in. Add a both-order CI test (HarborCache then the free plugin, and the reverse) asserting one admin surface, one drop-in writer, no fatal. Update `tests/conflict-notice.php` to the new contract.
+- Arbitration guard: the drop-in or manager marker prevents the second object-cache manager from registering admin UI or writing the drop-in. Add a both-order CI test (HarborCache then the other object-cache plugin, and the reverse) asserting one admin surface, one drop-in writer, no fatal. Update `tests/conflict-notice.php` to the new contract.
 - Mirror the REST network check in `Console::execute()` for `flush-global` and cross-site `flush-site`.
 - Add the missing HTTP application-password and multisite REST scope tests.
 - Add a destructive-route limiter stored outside the rotated root (user meta or the persistent owner namespace): 1/minute and 10/hour per user, `429` with `Retry-After`; test that a successful flush does not reset it.
@@ -88,4 +88,4 @@ Acceptance: key-family inventory; mixed-version test; bounded cold-start hit-rat
 
 ## Release gates
 
-Every release: 12 offline suites, PHP lint, 14-job matrix, Plugin Check on the exact ZIP, source/ZIP parity, updated validation record, and a clean readme with no competitor comparison. WordPress.org submission follows those gates. Performance claims follow `docs/PERFORMANCE-PLAN.md`.
+Every release: 12 offline suites, PHP lint, 14-job matrix, Plugin Check on the exact ZIP, source/ZIP parity, updated validation record, and a clean readme with no third-party product comparison. WordPress.org submission follows those gates. Performance claims follow `docs/PERFORMANCE-PLAN.md`.

@@ -1,6 +1,6 @@
-# HarborCache 1.6.1 validation (draft)
+# HarborCache 1.6.1 validation
 
-Source commit: `49f9bda`. Draft PR: #14. **Not merged.** Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `17f5616bf140540e448a6baf263e806605ede087f5140f94d3a87a3a77194cd2`. The build verifier passed source and ZIP parity.
+Code commit: `49f9bda`; documentation and package refreshed in PR #14. Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `e4582f9ae2f149af7cf46251171d9b1992fced60947d33ef42fa279acffe1f2b`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -51,7 +51,7 @@ This is release-ready for submission. WordPress.org review and SVN publication a
 
 ## Limits
 
-- The free-plugin reverse activation order still boots both plugins; the patch adds a notice, not full arbitration.
+- The reverse activation order with another object-cache plugin still boots both plugins; the patch adds a notice, not full arbitration.
 - No HTTP application-password test and no multisite REST scope test yet.
 - `/health` is not a set of granular Site Health tests.
 - The legacy `keys` flush strategy remains selectable and can block Redis.

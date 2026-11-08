@@ -58,7 +58,7 @@ Targets: `design.md`, `ROADMAP.md`, `concepts_brief.md`. Two fresh reviewers ran
 
 - The actual key share of Redis memory. The 2.0 premise depends on a 10k-key sample; the roadmap gates it.
 - Live Relay failover behavior; the gate is defined but not run.
-- The free-plugin reverse-order behavior under a real WordPress activation sequence; the 1.6.2 test is specified, not executed.
+- The reverse-order behavior with another object-cache plugin under a real WordPress activation sequence; the 1.6.2 test is specified, not executed.
 - The dashboard's rendered appearance at the listed widths; no build was requested, so no screenshots were taken.
 
 ## Ponytail note

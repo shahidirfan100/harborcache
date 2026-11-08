@@ -70,7 +70,7 @@ No unresolved critical or high findings from the supplied review remain. The mis
 
 ## Remaining boundaries
 
-No known findings from the supplied T2 review remain unaddressed. WordPress.org's manual approval remains its reviewers' decision. No production files on autoscareer.com were modified, and deployment on that specific host is not certified by these isolated fixtures. Existing feature-ledger acceptance boundaries remain in force; this maintenance release does not add proprietary Object Cache Pro implementation or claim universal performance leadership.
+No known findings from the supplied T2 review remain unaddressed. WordPress.org's manual approval remains its reviewers' decision. No production files on autoscareer.com were modified, and deployment on that specific host is not certified by these isolated fixtures. Existing feature-ledger acceptance boundaries remain in force; this maintenance release does not add proprietary proprietary baseline implementation or claim universal performance leadership.
 
 ## Referenced WordPress documentation
 

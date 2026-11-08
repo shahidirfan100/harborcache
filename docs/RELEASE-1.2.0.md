@@ -18,4 +18,4 @@ Install first on an isolated staging copy. Run the site's normal login, publishi
 
 ## Validation
 
-See [1.2.0 validation](VALIDATION-1.2.0.md), [same-workload comparison](COMPARISON-1.2.0.md) and [acceptance plan](ACCEPTANCE.md). These checks support a WordPress.org submission but do not imply directory approval or complete parity with commercial caching products.
+See [1.2.0 validation](VALIDATION-1.2.0.md) and [acceptance plan](ACCEPTANCE.md). These checks support a WordPress.org submission but do not imply directory approval or equivalence with commercial caching products.

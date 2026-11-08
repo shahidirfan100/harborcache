@@ -1,10 +1,10 @@
 # HarborCache performance implementation plan
 
-Prepared 21 October 2026 after reviewing HarborCache 1.2.6, Redis Object Cache 3.0.0 source, upstream commits and public support reports. This plan supersedes feature expansion as the immediate priority. It does not claim that the proposed gains have been achieved or that every target fits one release.
+Prepared 21 October 2026 after reviewing HarborCache 1.2.6, the 1.2.5 baseline, source commits and public support reports. This plan supersedes feature expansion as the immediate priority. It does not claim that the proposed gains have been achieved or that every target fits one release.
 
 ## Success means less work with the same supported behavior
 
-First remove the measured regression against 1.2.5. Then aim to put common single-node PhpRedis workloads within 5% of Redis Object Cache on PHP CPU and ordinary-operation latency, while retaining namespace safety, typed values and scoped invalidation. Surpass it only on workloads where repeatable evidence supports the claim. Do not average away a material regression in checkout, writes or failure recovery.
+First remove the measured regression against 1.2.5. Then aim to keep common single-node PhpRedis workloads within 5% of the 1.2.5 baseline on PHP CPU and ordinary-operation latency, while retaining namespace safety, typed values and scoped invalidation. Improve on that baseline only where repeatable evidence supports the claim. Do not average away a material regression in checkout, writes or failure recovery.
 
 Keep separate results for:
 
@@ -13,13 +13,13 @@ Keep separate results for:
 - each plugin's documented defaults, including analytics and selected client;
 - HarborCache's additional operational features and their incremental cost.
 
-Choosing PhpRedis for HarborCache can improve a Predis installation, but it cannot explain away the existing gap: the previous three-engine benchmark already used PhpRedis throughout. Disabling all measurements only for HarborCache is not a fair default comparison.
+Choosing PhpRedis for HarborCache can improve a Predis installation, but it cannot explain away the existing gap: the previous three-build benchmark already used PhpRedis throughout. Disabling all measurements only for HarborCache is not a fair default comparison.
 
 ## 1.2.7: measurement and the ordinary request path
 
 Deliver work in small reversible patches, with one hypothesis and before/after evidence per patch.
 
-1. Correct benchmark symmetry. Activate the free main plugin in the full-plugin lane. Add a true engine-only lane for both. Report process startup, WordPress/plugin bootstrap, cache operations and shutdown separately. Pin the WordPress database snapshot, theme/plugins, Redis version, PHP/OPcache settings, extensions, engine commits and configuration hashes.
+1. Correct benchmark symmetry. Use matched full-plugin and engine-only lanes. Report process startup, WordPress/plugin bootstrap, cache operations and shutdown separately. Pin the WordPress database snapshot, theme/plugins, Redis version, PHP/OPcache settings, extensions, engine commits and configuration hashes.
 2. Add short profiling runs using Xdebug/XHProf or an available sampling profiler on disposable Linux CI. Disable profiling for acceptance timings. Attribute inclusive/exclusive CPU, allocations and calls to key building, codec work, error checks, hooks and optional diagnostics. Do not infer these shares from file size or class count.
 3. Test normal objects and scalar values, memory hits, repeated misses, forced reads, bulk reads/writes, many groups, and working sets above both derived-cache caps. Pre-generate random keys outside the timed region. Verify every timed result and found flag, not just the final return value.
 4. Optimize the dominant measured path first. Candidate patches are a precomputed layout signature, one normalization path, bound driver capabilities and a simpler memory-hit path. Preserve key bytes, site/global-group semantics, runtime objects/nulls and late filter registration. Do not remove native error checks, prefix ownership or primary routing.
@@ -38,7 +38,7 @@ Start this work only after the profiler and benchmark lanes are trustworthy.
 5. Correct metrics failure handling to catch Throwable and use concise redacted logging. An observability failure must not terminate a normal request. Test large request caches, corrupt samples, concurrent metric writers and denied metrics commands.
 6. Measure and simplify codec dispatch without changing the stored format. Only pursue a new scalar envelope or compression-size threshold if profiling demonstrates enough benefit to justify a format namespace and mixed-worker upgrade tests. Preserve PHP types, object cloning, corrupt-value handling and integer precision.
 
-Acceptance target: common-operation CPU and latency within 5% of the pinned free plugin in the matched PhpRedis lane, with the default and full-plugin lanes also reported. Targets require confirmation, not a declaration of parity. Retain two-command logical group invalidation in the standard no-reclamation path. Verify that batching reduces measured round trips at latency without hiding extra cleanup CPU or weakening isolation.
+Acceptance target: common-operation CPU and latency within 5% of the pinned 1.2.5 baseline in the matched PhpRedis lane, with the default and full-plugin lanes also reported. Targets require confirmation, not a declaration of equivalence. Retain two-command logical group invalidation in the standard no-reclamation path. Verify that batching reduces measured round trips at latency without hiding extra cleanup CPU or weakening isolation.
 
 ## 1.3.0: setup that answers real operating questions
 
@@ -54,7 +54,7 @@ Acceptance: configuration promotion has a recoverable rollback, no foreign drop-
 
 ## Recovery and topology work: gate by tests, not a feature list
 
-Schedule this as a later reliability release after the ordinary path is competitive. Do not market it as already certified in 1.2.6.
+Schedule this as a later reliability release after the ordinary path is stable. Do not market it as already certified in 1.2.6.
 
 - Test native PhpRedis and Relay persistent connections under FPM worker reuse, Redis restart, memory rejection, timeout, unread replies and nonzero databases. Include credential and endpoint changes. Use the driver's available liveness/dirty-pool safeguards appropriately; do not add a PING to every get/set.
 - Test authenticated three-primary Cluster configurations with replicas, failover and TLS, plus real Sentinel promotion. Preserve credentials, database rules and certificate policy on all recreated connections. Verify ordinary reads/writes and every supported invalidation path after recovery.

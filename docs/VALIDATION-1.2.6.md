@@ -30,9 +30,9 @@ Earlier incomplete runs exposed actual Relay socket/option handling problems, a 
 
 ## Reproducible comparison
 
-Source: the final run's `linux-performance-applications` artifact. The workflow pins the 1.2.5 commit and verifies its archive checksum, installs free Redis Object Cache 3.0.0, and rotates the three engines through seven rounds on the same runner. Values below are medians of the seven per-round measurements; operation values are medians of per-round p50s, in milliseconds.
+Source: the final run's `linux-performance-applications` artifact. The workflow pins the 1.2.5 commit and verifies its archive checksum, installs baseline build, and rotates the three engines through seven rounds on the same runner. Values below are medians of the seven per-round measurements; operation values are medians of per-round p50s, in milliseconds.
 
-| Measurement | Redis Object Cache 3.0.0 | HarborCache 1.2.5 | HarborCache 1.2.6 |
+| Measurement | baseline build | HarborCache 1.2.5 | HarborCache 1.2.6 |
 |---|---:|---:|---:|
 | 1,000 request-memory reads | 0.415 | 0.532 | 0.551 |
 | 20 forced Redis reads | 2.297 | 2.380 | 2.395 |
@@ -47,11 +47,11 @@ Source: the final run's `linux-performance-applications` artifact. The workflow 
 | PHP peak allocation, MiB | 34 | 36 | 36 |
 | Bootstrap wall time | 165.675 | 175.288 | 174.064 |
 
-1.2.6 uses about 3.2% more PHP CPU than 1.2.5 in this workload, with ordinary-operation p50 changes below 4%, unchanged command counts and unchanged peak PHP allocation. The extra error checks prioritize detecting unusable replies; these measurements do not establish a general speed improvement. Free Redis Object Cache is faster and uses less PHP memory on these ordinary operations. Its bootstrap excludes its admin plugin, so bootstrap values cannot establish full-plugin startup superiority.
+1.2.6 uses about 3.2% more PHP CPU than 1.2.5 in this workload, with ordinary-operation p50 changes below 4%, unchanged command counts and unchanged peak PHP allocation. The extra error checks prioritize detecting unusable replies; these measurements do not establish a general speed improvement. The baseline build is faster and uses less PHP memory on these ordinary operations, although its bootstrap excludes an admin plugin, so bootstrap values cannot establish full-plugin startup superiority.
 
-Scoped group invalidation uses five samples at each size. For 5,000 seeded entries, free Redis Object Cache takes 8.022 ms p50 and about 5,723 commands per invalidation, versus 0.335 ms and two commands for 1.2.6. HarborCache invalidates a generation immediately and reclaims old entries separately; this does not measure total reclamation work or immediate memory release. 1.2.5 takes 0.315 ms/two commands in the same check, so 1.2.6's principal advantage here is retained bounded invalidation, not a new speed gain over its predecessor.
+Scoped group invalidation uses five samples at each size. For 5,000 seeded entries, the earlier engine build takes 8.022 ms p50 and about 5,723 commands per invalidation, versus 0.335 ms and two commands for 1.2.6. HarborCache invalidates a generation immediately and reclaims old entries separately; this does not measure total reclamation work or immediate memory release. 1.2.5 takes 0.315 ms/two commands in the same check, so 1.2.6's principal advantage here is retained bounded invalidation, not a new speed gain over its predecessor.
 
-The HTTP smoke reports p50 307.623 ms, p95 380.285 ms and p99 389.387 ms. It is a short isolated WordPress test, not a sustained-load SLA or a free-plugin HTTP comparison. The one-off metrics-record calls measure 0.846 ms at 10% sampling and 1.838 ms at 100%; these individual observations are not percentile or per-request CPU guarantees.
+The HTTP smoke reports p50 307.623 ms, p95 380.285 ms and p99 389.387 ms. It is a short isolated WordPress test, not a sustained-load SLA or a cross-build HTTP comparison. The one-off metrics-record calls measure 0.846 ms at 10% sampling and 1.838 ms at 100%; these individual observations are not percentile or per-request CPU guarantees.
 
 The benchmark scripts and pinned versions are committed for reruns. CPU/RSS include shared Redis daemon activity; operation tests exclude bootstrap and are sequential. Runner variance and the small invalidation sample count limit significance. No arbitrary throughput or "fastest plugin" claim follows from this report.
 

@@ -16,7 +16,7 @@ HarborCache is a GPL Redis object-cache plugin for WordPress. 1.6.1 has a green 
 
 **UX and developer ergonomics.** The dashboard has the right facts but inconsistent components: three status presentations, unsafe-looking destructive buttons, missing pending/disabled states and no shared token layer for the widget. The design review corrected `design.md`; implementation waits for 1.9.
 
-**Migration and compatibility.** The reverse activation order with the free plugin is the top risk. The current notice is not arbitration. A 1.6.2 guard must stop the second manager from registering admin UI or writing the drop-in, and a both-order CI test must prove it. The 2.0 key format is a layout-signature bump with a measured cold start, not a dual-read project.
+**Migration and compatibility.** The reverse activation order with another object-cache plugin is the top risk. The current notice is not arbitration. A 1.6.2 guard must stop the second manager from registering admin UI or writing the drop-in, and a both-order CI test must prove it. The 2.0 key format is a layout-signature bump with a measured cold start, not a dual-read project.
 
 **Observability and SRE.** Site Health is one combined result shared by three surfaces. Refactor to one `Status::health_facts()` provider, then split four tests. The destructive-route limiter must live outside the rotated root; otherwise a successful flush erases its own limiter.
 
@@ -39,7 +39,7 @@ HarborCache is a GPL Redis object-cache plugin for WordPress. 1.6.1 has a green 
 - A new cache client abstraction.
 - A key-format change in 1.6.x or 1.7.x.
 - Re-adding already-shipped CLI or REST features.
-- Universal performance or Relay parity claims without evidence.
+- Universal performance or Relay equivalence claims without evidence.
 - Removing GPL source attribution from the license/source record.
 
 ## Alternatives weighed

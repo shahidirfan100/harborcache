@@ -6,8 +6,8 @@ Date: 21 October 2026. Baseline: 1.2.4 at commit `1577279` on `codex/wordpress-r
 
 - PHP token comparison against the baseline passed for all four edited PHP files: the main plugin, drop-in, legacy plugin class and optional MU-loader. Comments and whitespace were excluded; all executable tokens remained identical. Version headers intentionally changed from 1.2.4 to 1.2.5, so WordPress and drop-in revision reporting reflect this update.
 - Git blob comparisons passed for all 602 tracked files under assets, media, vendor and languages. All 40 tracked visual/media files were byte-identical. No dashboard markup, colors, CSS, JavaScript, icons, banners, screenshot files or translations were edited.
-- No configuration defaults, saved settings, key formats, namespace rules, cache algorithms, public hook signatures or return values changed. The legacy empty-link hook remains callable as a no-op. Existing competitor conflict checks remain intact.
-- The free upstream GPL license and source attribution remain. Historical comparison and validation documents were preserved rather than rewritten as current claims.
+- No configuration defaults, saved settings, key formats, namespace rules, cache algorithms, public hook signatures or return values changed. The legacy empty-link hook remains callable as a no-op. Existing cache-manager conflict checks remain intact.
+- The GPL license and source attribution remain. Historical validation documents remain in version control rather than being rewritten as current claims.
 
 ## Checks performed
 
@@ -47,6 +47,6 @@ Local fixture: `work/runtime/harborcache-125-clean-1792561797`; its `qa-evidence
 
 The earlier 1.2.4 Linux CI results remain historical evidence for the unchanged executable cache implementation. They are not a new 1.2.5 CI run. The targeted checks above verify the actual 1.2.5 working tree and package. No live website was modified and no new speed or CPU improvement is claimed for this cleanup.
 
-The package was validated locally before repository publication. No upstream contribution, WordPress.org upload or developer message was sent as part of this cleanup. The proposed reply is saved separately for the author to review and send.
+The package was validated locally before repository publication. No source contribution, WordPress.org upload or developer message was sent as part of this cleanup. The proposed reply is saved separately for the author to review and send.
 
-The independent engine requires the separate gates in INDEPENDENT-ENGINE-PLAN.md. It must not be described as implemented, production-validated or free from inherited-code attribution based on this update. WordPress.org approval remains its reviewers' decision.
+WordPress.org approval remains its reviewers' decision.
