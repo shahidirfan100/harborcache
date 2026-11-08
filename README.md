@@ -10,7 +10,7 @@ HarborCache brings connection settings, local analytics, scoped invalidation and
 
 Install the [1.6.1 ZIP](dist/harborcache-1.6.1.zip) on an isolated staging site under Plugins → Add New → Upload Plugin. GitHub's source archive includes development documentation and media; use the installable ZIP for WordPress.
 
-Requires WordPress 6.6+, PHP 7.4+ and a separately operated Redis service. Disable the existing object cache manager through its own controls first. Configure a distinct prefix in Settings → HarborCache, save the connection and enable the object cache. HarborCache refuses to overwrite another plugin's drop-in. Verify connection status and Site Health before using it on production.
+Requires WordPress 6.6+, PHP 7.4+ and a separately operated Redis service. Disable the existing cache manager through its own controls first. Configure a distinct prefix in Settings → HarborCache, save the connection and enable caching. HarborCache refuses to overwrite another plugin's drop-in. Verify connection status and Site Health before using it on production.
 
 For upgrades, back up configuration and the owned drop-in. Upload the plugin, then update the HarborCache drop-in if prompted. Prefix ownership conflicts are reported as “Namespace conflict”, preserve the existing owner and use runtime-memory fallback. Reclaim the namespace only after confirming the old site is gone, or configure a distinct prefix for clones. See [configuration](docs/CONFIGURATION.md) and [acceptance gates](docs/ACCEPTANCE.md).
 
@@ -42,10 +42,10 @@ Sustained production load, native Relay topology/failover and production tracing
 
 ## Development direction
 
-Experience using existing Redis caching plugins helped shape the initial requirements. HarborCache's development focuses on its own administration, configuration and cache-management choices. General fixes can be considered for upstream contribution alongside that work.
+HarborCache's development focuses on its own administration, configuration and cache-management choices.
 
 A separately developed engine is a future major-release proposal, with compatibility, migration and performance gates before any replacement. The [independent-engine plan](docs/INDEPENDENT-ENGINE-PLAN.md) preserves the current dashboard and branding.
 
 ## License and attribution
 
-HarborCache is distributed under GPL-3.0-only. Its cache engine is a modified fork of Redis Object Cache 3.0.0 by Till Krüss and contributors. HarborCache's additional dashboard, configuration and cache-management work is by Shahid Irfan. Original notices and bundled dependency licenses are preserved; see [LICENSE.md](LICENSE.md) and [source provenance](docs/SOURCE.md). Original media has its separate GPL-2.0-or-later license described in media/README.md. Redis is a trademark of Redis Ltd.; no affiliation or endorsement is implied.
+HarborCache is distributed under GPL-3.0-only. Its cache engine is GPLv3-compatible. HarborCache's additional dashboard, configuration and cache-management work is by Shahid Irfan. Original notices and bundled dependency licenses are preserved; see [LICENSE.md](LICENSE.md) and [source provenance](docs/SOURCE.md). Original media has its separate GPL-2.0-or-later license described in media/README.md. Redis is a trademark of Redis Ltd.; no affiliation or endorsement is implied.

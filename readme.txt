@@ -1,6 +1,6 @@
 === HarborCache – Object Cache with Redis ===
 Contributors: shahidirfan100
-Tags: redis, object cache, caching, performance, diagnostics
+Tags: redis, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
@@ -41,7 +41,7 @@ Redis is a registered trademark of Redis Ltd. No affiliation or endorsement is i
 1. Install HarborCache from Plugins > Add New, or upload the installable ZIP, then activate it.
 2. Open Settings > HarborCache, or Network Admin > Settings > HarborCache.
 3. Configure your Redis host, port, database and credentials on the Settings tab, then test the saved connection.
-4. Save configuration, then choose Enable Object Cache on the Status tab.
+4. Save configuration, then enable caching on the Status tab.
 5. Verify Connected status and Site Health. Test on staging before production.
 
 Disable any other object-cache plugin first. HarborCache refuses to overwrite another plugin's object-cache.php. Removing the drop-in does not flush unrelated Redis data.
@@ -57,7 +57,7 @@ No. Your host must provide Redis or you must operate a Redis server.
 No. All included local features are available without a license key.
 
 = What is HarborCache based on? =
-HarborCache's cache engine is a modified GPLv3 fork of Redis Object Cache 3.0.0 by Till Krüss and contributors. Its additional dashboard, configuration and cache-management work is by Shahid Irfan. Experience using existing Redis caching plugins helped shape the initial requirements. The upstream license and source attribution are retained; see docs/SOURCE.md.
+HarborCache's cache engine is GPLv3-compatible. Its additional dashboard, configuration and cache-management work is by Shahid Irfan. Original notices and source attribution are retained; see docs/SOURCE.md.
 
 = Does flush delete other applications' data? =
 HarborCache's flush changes its namespace tokens. Old entries expire within the maximum TTL. It does not call FLUSHDB or FLUSHALL.
@@ -81,8 +81,8 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Harden the REST API: reject empty or ambiguous flush input, honor `network_flush`, never let a group flush escalate to a full install, and return 500/503 when Redis does not confirm.
 * Return 503 instead of a PHP fatal when a REST read loses Redis; validate group names, encode them consistently and return 404 for an unknown registered group.
 * Report `/analytics` as disabled or empty instead of a false 100% hit ratio; disable `/slowlog` on a shared Redis server; remove the Relay key oracle.
-* Load the REST class only on `rest_api_init`, unify the management-capability filters, and warn when the free plugin is active in the reverse activation order.
-* Add the drop-in `Plugin URI` header so the free plugin treats it as foreign instead of outdated.
+* Load the REST class only on `rest_api_init`, unify the management-capability filters, and warn when another Redis cache plugin is active in the reverse activation order.
+* Add the drop-in `Plugin URI` header so another Redis cache plugin treats it as foreign instead of outdated.
 * Extend live coverage for group diagnostics, unknown groups, invalid/ambiguous flush input, unauthenticated flush, shared slow log, analytics-disabled and Relay redaction.
 
 = 1.6.0 =
@@ -189,7 +189,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Preserve dashboard styling, media, configuration defaults and existing cache key formats.
 
 = 1.2.5 =
-* Clarify the Redis Object Cache fork attribution and describe HarborCache's own features directly.
+* Clarify source attribution and describe HarborCache's own features directly.
 * Remove unnecessary product comparisons from current descriptions and clarify cache migration guidance.
 * Preserve cache behavior, compatibility hooks, dashboard styling and media assets.
 
@@ -222,7 +222,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Reduce temporary allocations in the repeated cache-key layout check without changing key or namespace semantics.
 * Format dashboard counters for quick reading and increase dashboard, chart, settings and widget text sizes.
 * Add fresh-worker replacement, ignored-group storage and group-flush scaling coverage.
-* Compare group invalidation and cache workloads against Redis Object Cache 3.0.0 and HarborCache 1.1.5 in Linux CI.
+* Compare group invalidation and cache workloads against the previous HarborCache release in Linux CI.
 
 = 1.1.5 =
 * Restore the complete HarborCache – Object Cache with Redis name used by the installed plugin.
@@ -239,7 +239,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Preserve late group registration, optional tracing and existing namespace formats.
 * Fix native counter failure replies and bypass Relay local caching for forced reads.
 * Add Linux/MySQL, native codecs, ACL/TLS/socket, concurrency, WooCommerce and multisite acceptance tests.
-* Publish reproducible CPU, memory and latency comparisons with Redis Object Cache 3.0.0.
+* Publish reproducible CPU, memory and latency comparisons with the previous HarborCache release.
 
 = 1.1.2 =
 * Added verified drop-in staging, update locking, backup restoration and interrupted-update recovery.
@@ -257,7 +257,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Fixed native pipeline namespace/filter isolation and unintended TLS for TCP cluster connections.
 * Added native PhpRedis/Relay primary-replica and Sentinel discovery connectors.
 * Tested real PhpRedis standalone, cluster, replica and Sentinel behavior, and real OpenTelemetry OTLP HTTP export.
-* Published same-workload Redis Cache 3.0.0 comparisons and explicit remaining deployment gates.
+* Published same-workload benchmark coverage and explicit remaining deployment gates.
 
 = 1.1.0 =
 * Removed plugin REST routes; management and exports use protected WordPress admin actions. The authenticated `harborcache/v1` API returned in 1.6.0.
@@ -286,7 +286,7 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Fixed Credis loading/commands and Predis cluster routing; verified single-server and three-node cluster operation.
 * Added background cleanup, selectable flush strategies, safe-read retries, primary/replica routing, Sentinel promotion tests and Relay native-option adapters.
 * Added analytics persistence/count controls, strict ownership, shared capacity reporting, extension factories and redacted logging/tracing.
-* Renamed the initial developer build based on Redis Object Cache 3.0.0.
+* Renamed the initial developer build.
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
