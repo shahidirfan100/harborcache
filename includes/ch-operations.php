@@ -3,6 +3,20 @@
 defined( 'ABSPATH' ) || exit;
 
 trait HarborCache_Operations {
+	/** Registered group names for diagnostics; reads the bounded registry, never scans keys. */
+	public function group_list() {
+		if ( ! $this->ch_ready ) { return array(); }
+		$rows = $this->ch_command( array( 'SMEMBERS', $this->ch_base . ':' . $this->ch_root . ':groups' ) );
+		$groups = array();
+		foreach ( (array) $rows as $row ) {
+			$parts = explode( '|', (string) $row, 2 );
+			if ( 2 !== count( $parts ) || ! preg_match( '/^(global|site-[1-9][0-9]*)$/D', $parts[0] ) ) { continue; }
+			$groups[] = array( 'scope' => $parts[0], 'group' => rawurldecode( $parts[1] ) );
+			if ( count( $groups ) >= 1000 ) { break; }
+		}
+		return $groups;
+	}
+
 	public function group_diagnostics( $scope, $group, $memory = false ) {
 		if ( ! preg_match( '/^(global|site-[1-9][0-9]*)$/D', $scope ) || ! is_string( $group ) || strlen( $group ) > 200 ) { throw new InvalidArgumentException( 'Invalid cache group scope.' ); }
 		$base = $this->ch_base . ':' . $this->ch_root . ':' . $scope;

@@ -145,6 +145,8 @@ $root  = (string) ( $driver->values[ $base . ':root' ] ?? '' );
 hc_status_gate( 'A first group write succeeds', $set );
 hc_status_gate( 'A first group write registers discovery', isset( $driver->sets[ $base . ':' . $root . ':groups' ]['site-1|audit-group'] ) );
 hc_status_gate( 'A first group write stores its epoch', isset( $driver->hashes[ $base . ':' . $root . ':epochs' ]['site-1|audit-group'] ) );
+$groups = $write->group_list();
+hc_status_gate( 'Group list exposes the registered group', in_array( array( 'scope' => 'site-1', 'group' => 'audit-group' ), $groups, true ), json_encode( $groups ) );
 
 $driver->commands = 0;
 $value = $write->get( 'probe', 'audit-group', false, $found );
