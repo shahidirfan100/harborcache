@@ -1,0 +1,44 @@
+# HarborCache 1.6.1 validation (draft)
+
+Source commit: `df54f44`. Draft PR: #14. **Not merged.** Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `dcb9f1062ca85bd121a59e77befb36290783448eff684956612bca6c6ae0e299`. The build verifier passed source and ZIP parity.
+
+## What changed
+
+1.6.1 hardens the REST API introduced in 1.6.0.
+
+- `POST /flush` requires exactly one of `group` or `scope`; an empty or ambiguous request is 400.
+- REST forces `atomic` when `group_flush=full`, so a group flush cannot rotate the whole installation.
+- A flush that Redis does not confirm returns 500/503, not HTTP 200.
+- `/groups`, `/groups/{scope}/{group}` and `/relay` catch backend failures and return 503 instead of a PHP fatal.
+- `/analytics` checks the cache first, reports `enabled:false` when analytics are off, and uses `ratio:null` for zero samples.
+- `/slowlog` is 403 on a shared Redis server and returns `{ entries: [...] }` with command names only.
+- `/relay` no longer accepts a key/group oracle.
+- `/status` uses an explicit allowlist; `/health` decodes text and includes operational facts.
+- Group diagnostics use the same key encoding as writes, URL-decode the route parameter, return 404 for an unregistered group, and report `truncated`.
+- `network_flush` and network-admin scope checks are enforced; `/groups` is filtered for non-network callers.
+- The REST class loads only on `rest_api_init`.
+- `Console::capability()` applies `redis_cache_manager_capability` then `harborcache_manager_capability`; the bridge is removed and `Plugin` delegates to it.
+- A reverse activation order now shows a conflict notice; the drop-in header has a `Plugin URI`.
+
+## CI
+
+Run [42458455309](https://github.com/shahidirfan100/harborcache/actions/runs/42458455309) is the validation run for `df54f44`. Status is recorded in the PR. The earlier run on `f4b95ce` was superseded by the final audit and scope changes.
+
+## Local checks (Windows, PHP 8.5.10)
+
+| Suite | Result |
+| --- | --- |
+| 12 offline suites | 0 failures |
+| PHP lint, all changed files | 0 failures |
+| `python tools/build-release.py --verify` | 603 files, parity passed |
+
+## Live assertions added
+
+Group diagnostics hit, unknown-group 404, invalid scope 400, ambiguous flush 400, unauthenticated flush 401/403, shared slow-log 403, analytics-disabled, Relay redaction.
+
+## Limits
+
+- The free-plugin reverse activation order still boots both plugins; the patch adds a notice, not full arbitration.
+- No HTTP application-password test and no multisite REST scope test yet.
+- `/health` is not a set of granular Site Health tests.
+- The legacy `keys` flush strategy remains selectable and can block Redis.

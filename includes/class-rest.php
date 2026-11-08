@@ -156,7 +156,7 @@ final class Rest {
 		if ( is_wp_error( $cache ) ) { return $cache; }
 		return self::safely( static function () use ( $request, $cache ) {
 			$scope = (string) $request->get_param( 'scope' );
-			$group = rawurldecode( (string) $request->get_param( 'group' ) );
+			$group = str_replace( ':', '-', rawurldecode( (string) $request->get_param( 'group' ) ) );
 			if ( preg_match( '/^site-([1-9][0-9]*)$/D', $scope, $match ) && (int) $match[1] !== get_current_blog_id() && ! self::network() ) {
 				return new \WP_Error( 'harborcache_group_forbidden', __( 'Only a network administrator can inspect another site.', 'harborcache-object-cache-with-redis' ), array( 'status' => 403 ) );
 			}
