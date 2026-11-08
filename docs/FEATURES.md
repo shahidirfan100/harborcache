@@ -46,7 +46,7 @@ The status model separates not installed, installed but not loaded, loaded but u
 
 New installs select PhpRedis when the extension is loaded. Existing installations that saved Predis keep it, and the Settings screen offers a one-click switch. No cache key format changed.
 
-In the 1.2.8 acceptance run, the operation PHP CPU baseline was recorded. The 5% target remains open; `VALIDATION-1.2.8.md` holds the table and limits.
+In the 1.2.8 acceptance run, the operation PHP CPU baseline was recorded. The 5% target remains open; the archived validation record holds the table and limits.
 
 The dashboard widget keeps the request table, sampled summary, chart and links, with separate request-memory and Redis counters. The Status page builds one snapshot per request and shows the runtime entry count; it no longer serializes the whole request cache for a byte figure, which stays in Diagnostics. A single-node first-use group registration is one Lua command instead of SADD plus three EXPIRE commands. Configuration defaults are cached per request, and the connection probe class loads only when an admin action needs it.
 
@@ -62,7 +62,7 @@ Normal fallback writes at most one concise redacted error per PHP request across
 
 ## 1.2.0 release additions
 
-The 1.2.0 release adds fresh-worker coverage for `wp_cache_replace()`, confirms wildcard non-persistent groups never reach Redis, and checks that runtime cache entries are discarded when the serialization/layout settings change. The hot key-layout path avoids allocating a temporary array on every lookup while preserving the same key format. Dashboard figures are locale-formatted and the console, chart, settings and widget typography is larger; connection actions retain equal 44px control dimensions. See [the validation report](VALIDATION-1.2.0.md) for the actual test results and benchmark limits.
+The 1.2.0 release adds fresh-worker coverage for `wp_cache_replace()`, confirms wildcard non-persistent groups never reach Redis, and checks that runtime cache entries are discarded when the serialization/layout settings change. The hot key-layout path avoids allocating a temporary array on every lookup while preserving the same key format. Dashboard figures are locale-formatted and the console, chart, settings and widget typography is larger; connection actions retain equal 44px control dimensions. See the current validation record for the latest test results and benchmark limits.
 
 ## 1.2.2 Runtime identity isolation
 

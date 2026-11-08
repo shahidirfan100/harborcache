@@ -1,6 +1,6 @@
 # HarborCache 1.6.1 validation
 
-Code commit: `49f9bda`; documentation and package refreshed in PR #14. Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `e4582f9ae2f149af7cf46251171d9b1992fced60947d33ef42fa279acffe1f2b`. The build verifier passed source and ZIP parity.
+Code commit: `49f9bda`; documentation and package refreshed in PR #14. Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `d871bfd102bba7c90da85611f406e8c65f0b667e700c110eb961eca122fcdff3`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
