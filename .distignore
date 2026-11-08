@@ -26,3 +26,6 @@
 /vendor/**/README*
 /vendor/**/CHANGELOG*
 **/*.markdown
+/design.md
+/ROADMAP.md
+/concepts_brief.md

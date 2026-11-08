@@ -1,6 +1,6 @@
 # HarborCache 1.6.1 validation (draft)
 
-Source code commit: `13e6a49`; test commit: `f8188d7`. Draft PR: #14. **Not merged.** Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `3ba03cb00446fc50f8b8105f227b9e95c801f939568ff971469606abba999d80`. The build verifier passed source and ZIP parity.
+Source commit: `49f9bda`. Draft PR: #14. **Not merged.** Release archive: `dist/harborcache-1.6.1.zip`, 603 files, SHA256 `17f5616bf140540e448a6baf263e806605ede087f5140f94d3a87a3a77194cd2`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -22,7 +22,7 @@ Source code commit: `13e6a49`; test commit: `f8188d7`. Draft PR: #14. **Not merg
 
 ## CI
 
-Run [42459185555](https://github.com/shahidirfan100/harborcache/actions/runs/42459185555) passed **all 14 jobs** on `f8188d7`. Plugin Check 2.2.0 on the exact ZIP reported `Success: Checks complete. No errors found.` and the report gate reported no errors or warnings. All new REST assertions passed: status, endpoint redaction, health, truthful analytics, groups, group diagnostics, colon-encoded group, unknown-group 404, Relay redaction, shared slow-log 403, scoped flush, invalid scope 400, ambiguous flush 400, site flush, unauthenticated read and unauthenticated flush.
+Run [42460290829](https://github.com/shahidirfan100/harborcache/actions/runs/42460290829) passed **all 14 jobs** on `49f9bda`. Plugin Check 2.2.0 on the exact ZIP reported `Success: Checks complete. No errors found.` and the report gate reported no errors or warnings. All new REST assertions passed: status, endpoint redaction, health, truthful analytics, groups, group diagnostics, colon-encoded group, unknown-group 404, Relay redaction, shared slow-log 403, scoped flush, invalid scope 400, ambiguous flush 400, site flush, unauthenticated read and unauthenticated flush.
 
 ## Local checks (Windows, PHP 8.5.10)
 
