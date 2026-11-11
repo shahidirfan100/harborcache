@@ -379,11 +379,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq php8.3-fpm nginx
           cp tests/http.php "$WP_ROOT/wp-content/hc-http.php"
+          wp config set WP_ENVIRONMENT_TYPE local --path="$WP_ROOT"
+          APP_PASS=$(wp user application-password create ci "HarborCache CI" --porcelain --path="$WP_ROOT")
           sudo chown -R www-data:www-data "$WP_ROOT"
           printf '%s\n' 'server { listen 8080; server_name localhost; root /tmp/harborcache-wordpress; location ~ \.php$ { include fastcgi_params; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; fastcgi_pass unix:/run/php/php8.3-fpm.sock; } }' | sudo tee /etc/nginx/sites-enabled/harborcache-ci
           sudo systemctl restart php8.3-fpm nginx
-          wp config set WP_ENVIRONMENT_TYPE local --path="$WP_ROOT"
-          APP_PASS=$(wp user application-password create ci "HarborCache CI" --porcelain --path="$WP_ROOT")
           APP_JSON=$(curl -fsS -u "ci:$APP_PASS" -H 'Host: localhost' 'http://127.0.0.1:8080/?rest_route=/harborcache/v1/status')
           APP_JSON="$APP_JSON" php -r '$s=json_decode(getenv("APP_JSON"),true);if(!is_array($s)||!isset($s["state"])){fwrite(STDERR,"Application-password REST response was invalid\n");exit(1);}echo "PASS Application-password REST access\n";'
           test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: localhost' 'http://127.0.0.1:8080/?rest_route=/harborcache/v1/status')" = "401"
