@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.6.1 (REST hardening and documentation). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.6.2 (safety follow-up). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -12,16 +12,15 @@ Current release: 1.6.1 (REST hardening and documentation). Source of truth for b
 
 ## 1.6.x — close the current line
 
-1.6.1 is the controlled REST-hardening release. It keeps the reverse-order co-installation notice.
+1.6.1 shipped the REST hardening. 1.6.2 ships the safety follow-up:
 
-1.6.2 is the security follow-up:
-- Arbitration guard: the drop-in or manager marker prevents the second object-cache manager from registering admin UI or writing the drop-in. Add a both-order CI test (HarborCache then the other object-cache plugin, and the reverse) asserting one admin surface, one drop-in writer, no fatal. Update `tests/conflict-notice.php` to the new contract.
-- Mirror the REST network check in `Console::execute()` for `flush-global` and cross-site `flush-site`.
-- Add the missing HTTP application-password and multisite REST scope tests.
-- Add a destructive-route limiter stored outside the rotated root (user meta or the persistent owner namespace): 1/minute and 10/hour per user, `429` with `Retry-After`; test that a successful flush does not reset it.
-- Add a startup warning when the Redis endpoint is non-loopback, unauthenticated or non-TLS, because `ch-codec.php` still uses `@unserialize` for object values.
+- Arbitration guard: another manager's constants or drop-in stop HarborCache before it registers admin UI, REST routes or drop-in writes, in either activation order.
+- The REST network check now covers admin-post `flush-global` and cross-site `flush-site`.
+- HTTP application-password and multisite REST scope tests run in CI.
+- A per-user destructive-route limiter lives outside the rotated namespace: 1/minute, 10/hour, `429` with `Retry-After`; a successful flush does not reset it.
+- A startup warning appears when a remote Redis endpoint is unencrypted or has no password, because object values are unserialized.
 
-Acceptance: both-order CI test passes; one admin surface; limiter test passes; app-password and multisite tests pass; no PHP fatal; Plugin Check clean.
+Acceptance: both-order test passes; one admin surface; limiter test passes; app-password and multisite tests pass; no PHP fatal; Plugin Check clean.
 
 ## 1.7.0 — operator visibility and measured hygiene
 
@@ -74,15 +73,15 @@ Acceptance: key-family inventory; mixed-version test; bounded cold-start hit-rat
 
 | Item | Severity | Plan |
 | --- | --- | --- |
-| Reverse order boots two managers | High | 1.6.2 arbitration guard |
+| Reverse order boots two managers | High | Shipped in 1.6.2 |
 | Key length/memory | High, measured | 1.8 sample, 2.0 migration |
 | Cold/write CPU | Medium | 1.8 profile |
 | Relay cross-process/failover | High for Relay users | 1.8 gate or unsupported |
 | Granular Site Health | Medium | 1.7 one provider |
-| REST app-password/multisite tests | Medium | 1.6.2 |
-| Destructive-route rate limit | Medium | 1.6.2, outside rotated root |
+| REST app-password/multisite tests | Medium | Shipped in 1.6.2 |
+| Destructive-route rate limit | Medium | Shipped in 1.6.2 |
 | Legacy `keys` strategy | Medium | Document and deprecate |
-| `unserialize` trust boundary | Medium | 1.6.2 warning + docs |
+| `unserialize` trust boundary | Medium | Shipped warning in 1.6.2; docs remain |
 | Logged-in console cost | Medium | 1.7 measured deferral |
 | Unit-test breadth | Medium | 1.8 before 2.0 |
 

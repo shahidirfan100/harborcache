@@ -37,6 +37,7 @@ $console = HarborCache\Console::capability();
 $menu    = HarborCache\Core\Plugin::instance()->manage_redis_capability();
 hc_capability_gate( 'The dashboard gate honors WP_REDIS_MANAGER_CAPABILITY', 'manage_shop' === $console, $console );
 hc_capability_gate( 'The menu and the dashboard gate agree', $console === $menu, $menu );
+hc_capability_gate( 'A single-site installation can manage every scope', true === HarborCache\Console::can_manage_network() );
 
 echo 'RESULT ' . ( $failures ? 'FAILED' : 'PASSED' ) . ' with ' . $failures . " failure(s)\n";
 exit( $failures ? 1 : 0 );

@@ -4,7 +4,7 @@ Tags: redis, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -76,6 +76,13 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.6.2 =
+* Stand down before registering admin UI, REST routes or drop-in writes when another object-cache manager is active, in either activation order.
+* Enforce the REST network policy for admin-post global and cross-site flushes.
+* Rate-limit REST cache flushes per user: one per minute, ten per hour, with Retry-After; the limit survives the flush.
+* Warn when a remote Redis endpoint is unencrypted or has no password.
+* Add application-password HTTP coverage and multisite REST scope tests.
 
 = 1.6.1 =
 * Harden the REST API: reject empty or ambiguous flush input, honor `network_flush`, never let a group flush escalate to a full install, and return 500/503 when Redis does not confirm.

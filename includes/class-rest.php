@@ -98,7 +98,44 @@ final class Rest {
 	}
 
 	private static function network() {
-		return ! is_multisite() || is_super_admin() || current_user_can( 'manage_network_options' );
+		return Console::can_manage_network();
+	}
+
+	/** Per-user destructive-route budget: one per minute, ten per hour. */
+	private static function flush_limit() {
+		$user = get_current_user_id();
+		if ( ! $user ) { return null; }
+		$now    = time();
+		$stamps = array_values( array_filter( array_map( 'intval', (array) get_user_meta( $user, '_harborcache_flush_limit', true ) ), static function ( $stamp ) use ( $now ) {
+			return $stamp > $now - HOUR_IN_SECONDS;
+		} ) );
+		if ( ! $stamps ) { return null; }
+		$recent = array_filter( $stamps, static function ( $stamp ) use ( $now ) {
+			return $stamp > $now - MINUTE_IN_SECONDS;
+		} );
+		if ( $recent ) { return self::flush_limited( MINUTE_IN_SECONDS - ( $now - max( $recent ) ) ); }
+		if ( count( $stamps ) >= 10 ) { return self::flush_limited( HOUR_IN_SECONDS - ( $now - min( $stamps ) ) ); }
+		return null;
+	}
+
+	private static function flush_limited( $retry ) {
+		$retry = max( 1, (int) $retry );
+		return new \WP_REST_Response( array(
+			'code'    => 'harborcache_flush_limited',
+			'message' => __( 'Too many cache flushes. Try again shortly.', 'harborcache-object-cache-with-redis' ),
+			'data'    => array( 'status' => 429, 'retry_after' => $retry ),
+		), 429, array( 'Retry-After' => (string) $retry ) );
+	}
+
+	private static function record_flush() {
+		$user = get_current_user_id();
+		if ( ! $user ) { return; }
+		$now    = time();
+		$stamps = array_values( array_filter( array_map( 'intval', (array) get_user_meta( $user, '_harborcache_flush_limit', true ) ), static function ( $stamp ) use ( $now ) {
+			return $stamp > $now - HOUR_IN_SECONDS;
+		} ) );
+		$stamps[] = $now;
+		update_user_meta( $user, '_harborcache_flush_limit', array_slice( $stamps, -10 ) );
 	}
 
 	public static function status( \WP_REST_Request $request ) {
@@ -231,6 +268,9 @@ final class Rest {
 					return new \WP_Error( 'harborcache_flush_forbidden', __( 'Only a network administrator can flush a global group.', 'harborcache-object-cache-with-redis' ), array( 'status' => 403 ) );
 				}
 				$strategy = 'full' === ( $cache->ch_config['group_flush'] ?? 'atomic' ) ? 'atomic' : null;
+				$limited  = self::flush_limit();
+				if ( $limited ) { return $limited; }
+				self::record_flush();
 				if ( ! $cache->flush_group( $group, $strategy ) ) {
 					return new \WP_Error( 'harborcache_flush_failed', __( 'The cache did not confirm the flush.', 'harborcache-object-cache-with-redis' ), array( 'status' => $cache->redis_status() ? 500 : 503 ) );
 				}
@@ -254,6 +294,9 @@ final class Rest {
 			} else {
 				return new \WP_Error( 'harborcache_invalid_scope', __( 'The flush scope must be site, global, all or a site id.', 'harborcache-object-cache-with-redis' ), array( 'status' => 400 ) );
 			}
+			$limited = self::flush_limit();
+			if ( $limited ) { return $limited; }
+			self::record_flush();
 			if ( ! $cache->flush_scope( $scope ) ) {
 				return new \WP_Error( 'harborcache_flush_failed', __( 'The cache did not confirm the flush.', 'harborcache-object-cache-with-redis' ), array( 'status' => $cache->redis_status() ? 500 : 503 ) );
 			}
