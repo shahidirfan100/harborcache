@@ -1,6 +1,6 @@
 # HarborCache 1.6.2 validation
 
-Code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.6.2.zip`, 604 files, SHA256 `238d4895037ec8414775b89af03efbd7f2288fe2a3a7be1bf514adffa762e660`. The build verifier passed source and ZIP parity.
+Validated code commit: `be277c8`. PR: #15. Release archive: `dist/harborcache-1.6.2.zip`, 604 files, SHA256 `238d4895037ec8414775b89af03efbd7f2288fe2a3a7be1bf514adffa762e660`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -23,7 +23,7 @@ Code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.6.2
 
 ## CI
 
-Pending on this PR head. The matrix runs the 14 jobs, including application-password HTTP access, multisite REST scope, the flush limiter and the package checks.
+Run [43011066274](https://github.com/shahidirfan100/harborcache/actions/runs/43011066274) passed all 14 jobs on `be277c8`, including application-password HTTP access, multisite REST scope, the flush limiter and the package checks. This validation record is documentation-only and is not part of the installable ZIP.
 
 ## Limits
 
