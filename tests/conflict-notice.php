@@ -44,10 +44,10 @@ if ( '' !== $render( 'dashboard', array( 'activate_plugins' => true ) ) ) {
 if ( '' !== $render( 'plugins', array() ) ) {
 	throw new RuntimeException( 'The cache conflict notice appeared without plugin-management capability.' );
 }
-if ( false === strpos( $render( 'plugins', array( 'activate_plugins' => true ) ), 'Deactivate the other Redis object cache plugin' ) ) {
+if ( false === strpos( $render( 'plugins', array( 'activate_plugins' => true ) ), 'Another object-cache manager is active' ) ) {
 	throw new RuntimeException( 'The cache conflict notice is missing from the Plugins screen.' );
 }
-if ( false === strpos( $render( 'plugins-network', array( 'manage_network_plugins' => true ) ), 'Deactivate the other Redis object cache plugin' ) ) {
+if ( false === strpos( $render( 'plugins-network', array( 'manage_network_plugins' => true ) ), 'Another object-cache manager is active' ) ) {
 	throw new RuntimeException( 'The cache conflict notice is missing from Network Plugins.' );
 }
 

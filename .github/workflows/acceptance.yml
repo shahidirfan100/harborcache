@@ -143,6 +143,7 @@ jobs:
           php tests/metrics-failure.php
           python3 tools/build-release.py --check
           php tests/conflict-notice.php
+          php tests/conflict-arbitration.php
           wp core download --version="${{ matrix.wp || 'latest' }}" --path="$WP_ROOT"
           wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
           wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"
@@ -368,6 +369,7 @@ jobs:
         run: |
           set -euo pipefail
           wp core multisite-convert --title='HarborCache network' --path="$WP_ROOT"
+          wp super-admin add ci --path="$WP_ROOT"
           wp plugin activate harborcache --network --path="$WP_ROOT"
           php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
           php tests/applications.php multisite | tee evidence/multisite.txt
@@ -378,9 +380,20 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq php8.3-fpm nginx
           cp tests/http.php "$WP_ROOT/wp-content/hc-http.php"
+          mkdir -p "$WP_ROOT/wp-content/mu-plugins"
+          cp tests/ci-application-passwords.php "$WP_ROOT/wp-content/mu-plugins/hc-ci-application-passwords.php"
+          wp config set WP_ENVIRONMENT_TYPE local --path="$WP_ROOT"
+          APP_PASS=$(wp user application-password create ci "HarborCache CI" --porcelain --path="$WP_ROOT")
+          wp super-admin add ci --path="$WP_ROOT" 2>/dev/null || true
           sudo chown -R www-data:www-data "$WP_ROOT"
           printf '%s\n' 'server { listen 8080; server_name localhost; root /tmp/harborcache-wordpress; location ~ \.php$ { include fastcgi_params; fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; fastcgi_pass unix:/run/php/php8.3-fpm.sock; } }' | sudo tee /etc/nginx/sites-enabled/harborcache-ci
           sudo systemctl restart php8.3-fpm nginx
+          APP_CODE=$(curl -sS -o /tmp/hc-app.json -w '%{http_code}' -u "ci:$APP_PASS" -H 'Host: localhost' 'http://127.0.0.1:8080/index.php?rest_route=/harborcache/v1/status')
+          APP_JSON=$(cat /tmp/hc-app.json)
+          echo "Application-password status: $APP_CODE"; cat /tmp/hc-app.json
+          test "$APP_CODE" = "200"
+          APP_JSON="$APP_JSON" php -r '$s=json_decode(getenv("APP_JSON"),true);if(!is_array($s)||!isset($s["state"])){fwrite(STDERR,"Application-password REST response was invalid\n");exit(1);}echo "PASS Application-password REST access\n";'
+          UNAUTH=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: localhost' 'http://127.0.0.1:8080/index.php?rest_route=/harborcache/v1/status'); test "$UNAUTH" = "401" || test "$UNAUTH" = "403"
           curl -fsS -H 'Host: localhost' 'http://127.0.0.1:8080/wp-content/hc-http.php?init=1'
           export HTTP_EVIDENCE="$GITHUB_WORKSPACE/evidence"
           seq 1 160 | xargs -P8 -I{} sh -c 'curl -fsS -H "Host: localhost" -w "\n%{time_total}\n" http://127.0.0.1:8080/wp-content/hc-http.php > "$HTTP_EVIDENCE/http-{}.txt"'

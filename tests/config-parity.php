@@ -39,5 +39,17 @@ $tls['scheme'] = 'tls';
 $tls = HarborCache\Config::validate( $tls );
 hc_config_gate( 'A plain host does not downgrade an existing TLS connection', 'tls' === HarborCache\Config::apply_host( $tls, 'redis2.example.com' )['scheme'] );
 
+$loop = HarborCache\Config::defaults();
+hc_config_gate( 'A loopback endpoint needs no trust warning', array() === HarborCache\Config::endpoint_warnings( $loop ) );
+$remote = HarborCache\Config::defaults();
+$remote['host'] = 'redis.example.com';
+hc_config_gate( 'A remote endpoint reports missing TLS and password', array( 'tls', 'password' ) === HarborCache\Config::endpoint_warnings( $remote ) );
+$remote['scheme']   = 'tls';
+$remote['password'] = 'secret';
+hc_config_gate( 'A remote TLS endpoint with a password is trusted', array() === HarborCache\Config::endpoint_warnings( $remote ) );
+$socket = HarborCache\Config::defaults();
+$socket['scheme'] = 'unix';
+hc_config_gate( 'A Unix socket needs no trust warning', array() === HarborCache\Config::endpoint_warnings( $socket ) );
+
 echo 'RESULT ' . ( $failures ? 'FAILED' : 'PASSED' ) . ' with ' . $failures . " failure(s)\n";
 exit( $failures ? 1 : 0 );

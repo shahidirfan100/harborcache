@@ -24,6 +24,7 @@ final class Console {
 		return apply_filters( 'harborcache_manager_capability', $capability );
 	}
 	public static function allowed() { return current_user_can( self::capability() ); }
+	public static function can_manage_network() { return ! is_multisite() || is_super_admin() || current_user_can( 'manage_network_options' ); }
 	public static function cache() { return isset( $GLOBALS['wp_object_cache'] ) && $GLOBALS['wp_object_cache'] instanceof \HarborCache_Advanced_Cache ? $GLOBALS['wp_object_cache'] : null; }
 
 	public static function boot() {
@@ -39,6 +40,8 @@ final class Console {
 		add_action( 'network_admin_notices', array( __CLASS__, 'dropin_notice' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'runtime_notice' ) );
 		add_action( 'network_admin_notices', array( __CLASS__, 'runtime_notice' ) );
+		add_action( 'admin_notices', array( __CLASS__, 'endpoint_notice' ) );
+		add_action( 'network_admin_notices', array( __CLASS__, 'endpoint_notice' ) );
 		add_action( 'plugins_loaded', array( __CLASS__, 'integrations' ), 30 );
 		add_action( 'deactivate_plugin', array( __CLASS__, 'deactivate' ) );
 		add_action( 'plugins_loaded', array( __CLASS__, 'migrate_legacy_metrics_cron' ), 20 );
@@ -177,6 +180,17 @@ final class Console {
 		$status = self::status();
 		if ( ! in_array( $status['state'], array( 'degraded', 'unreachable' ), true ) ) { return; }
 		echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'HarborCache:', 'harborcache-object-cache-with-redis' ) . '</strong> ' . esc_html( self::state_label( $status ) . '. ' . self::state_explanation( $status ) ) . ' <a href="' . esc_url( self::url( 'overview' ) ) . '">' . esc_html__( 'Open diagnostics', 'harborcache-object-cache-with-redis' ) . '</a></p></div>';
+	}
+
+	/** Warn when a remote Redis endpoint is unencrypted or unauthenticated. */
+	public static function endpoint_notice() {
+		if ( ! self::allowed() ) { return; }
+		$gaps = Config::endpoint_warnings( Config::load() );
+		if ( ! $gaps ) { return; }
+		$parts = array();
+		if ( in_array( 'tls', $gaps, true ) ) { $parts[] = __( 'the connection is not encrypted with TLS', 'harborcache-object-cache-with-redis' ); }
+		if ( in_array( 'password', $gaps, true ) ) { $parts[] = __( 'no password is set', 'harborcache-object-cache-with-redis' ); }
+		echo '<div class="notice notice-warning"><p><strong>' . esc_html__( 'HarborCache:', 'harborcache-object-cache-with-redis' ) . '</strong> ' . esc_html( sprintf( /* translators: %s: list of trust gaps. */ __( 'This remote Redis endpoint is not fully trusted: %s. Cached object values are unserialized, so use TLS and authentication or keep Redis on a private, trusted network.', 'harborcache-object-cache-with-redis' ), implode( ', ', $parts ) ) ) . '</p></div>';
 	}
 
 	public static function is_console_screen( $screen_id = null ) {
@@ -473,8 +487,13 @@ final class Console {
 			case 'query-maintenance': return $cache->maintain_queries();
 			case 'flush-group': return $cache->flush_group( $args['group'] ?? 'default' );
 			case 'flush-pattern': return $cache->flush_pattern( $args['group'] ?? '*' );
-			case 'flush-site': return $cache->flush_scope( 'site-' . ( ! empty( $args['site'] ) ? absint( $args['site'] ) : get_current_blog_id() ) );
-			case 'flush-global': return $cache->flush_scope( 'global' );
+			case 'flush-site':
+				$site = ! empty( $args['site'] ) ? absint( $args['site'] ) : get_current_blog_id();
+				if ( $site !== get_current_blog_id() && ! self::can_manage_network() ) { throw new \InvalidArgumentException( esc_html__( 'Only a network administrator can flush another site.', 'harborcache-object-cache-with-redis' ) ); }
+				return $cache->flush_scope( 'site-' . $site );
+			case 'flush-global':
+				if ( ! self::can_manage_network() ) { throw new \InvalidArgumentException( esc_html__( 'Only a network administrator can flush global cache groups.', 'harborcache-object-cache-with-redis' ) ); }
+				return $cache->flush_scope( 'global' );
 			case 'reset-slowlog':
 			case 'reset-commands':
 				if ( empty( $cache->ch_config['allow_server_controls'] ) ) { throw new \RuntimeException( esc_html__( 'Server-wide reset controls require allow_server_controls in configuration.', 'harborcache-object-cache-with-redis' ) ); }

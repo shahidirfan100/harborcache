@@ -13,7 +13,7 @@ final class Config {
 	public static function defaults() {
 		static $defaults;
 		if ( null !== $defaults ) { return $defaults; }
-		// Match the free plugin's behaviour: use the C extension when the server has it.
+		// Use the C extension when the server has it.
 		$defaults = array(
 			'client' => class_exists( '\Redis' ) ? 'phpredis' : 'predis', 'host' => '127.0.0.1', 'port' => 6379,
 			'database' => 0, 'username' => '', 'password' => '', 'prefix' => '', 'scheme' => 'tcp', 'path' => '',
@@ -165,6 +165,22 @@ final class Config {
 		if ( ! is_numeric( $config['analytics']['sample_rate'] ) || $config['analytics']['sample_rate'] < 0 || $config['analytics']['sample_rate'] > 100 || ! is_int( $config['analytics']['retention'] ) || $config['analytics']['retention'] < 60 || $config['analytics']['retention'] > 86400 ) { throw new \InvalidArgumentException( 'Invalid analytics sample rate or retention.' ); }
 		$config['tls_options'] = self::tls_options( $config['tls_options'], $config['client'] );
 		return $config;
+	}
+
+	/**
+	 * Return the trust gaps of a remote endpoint: no TLS and no password.
+	 * Unix sockets and loopback hosts are local and produce no warnings.
+	 *
+	 * @return string[] tls, password
+	 */
+	public static function endpoint_warnings( array $config ) {
+		if ( 'unix' === ( $config['scheme'] ?? 'tcp' ) ) { return array(); }
+		$host = strtolower( trim( (string) ( $config['host'] ?? '' ), '[]' ) );
+		if ( 'localhost' === $host || '::1' === $host || 0 === strpos( $host, '127.' ) ) { return array(); }
+		$warnings = array();
+		if ( 'tls' !== ( $config['scheme'] ?? 'tcp' ) ) { $warnings[] = 'tls'; }
+		if ( '' === (string) ( $config['password'] ?? '' ) ) { $warnings[] = 'password'; }
+		return $warnings;
 	}
 
 	public static function apply() {
