@@ -1,6 +1,7 @@
 # HarborCache 1.6.2 validation
 
 Validated code commit: `be277c8`. PR: #15. Release archive: `dist/harborcache-1.6.2.zip`, 604 files, SHA256 `238d4895037ec8414775b89af03efbd7f2288fe2a3a7be1bf514adffa762e660`. The build verifier passed source and ZIP parity.
+Screenshots: `media/` recaptured from this ZIP in run 43013356895 (version 1.6.2).
 
 ## What changed
 
@@ -28,5 +29,5 @@ Run [43011066274](https://github.com/shahidirfan100/harborcache/actions/runs/430
 ## Limits
 
 - The both-order test simulates a second manager with its constants and drop-in marker. It does not bundle the other plugin or prove its activation sequence; that remains a live compatibility check.
-- The dashboard and screenshots are unchanged. `media/` still shows the 1.6.1 capture; recapture only when the dashboard changes.
+- The dashboard layout is unchanged; the 1.6.2 screenshots only refresh the version footer. Recapture again only when the dashboard changes.
 - The limiter is per user per site. On multisite, user meta is site-scoped, so a network administrator receives a separate budget on each site.
