@@ -1,6 +1,6 @@
 # HarborCache 1.6.3 validation
 
-Validated code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.6.3.zip`, 604 files, SHA256 `0255d0258771e265dcd1bfd678ebc9197678971ee56a317c9794f316097ee00d`. The build verifier passed source and ZIP parity.
+Validated code commit: `0086a5e`. PR: #16. Release archive: `dist/harborcache-1.6.3.zip`, 604 files, SHA256 `0255d0258771e265dcd1bfd678ebc9197678971ee56a317c9794f316097ee00d`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -21,10 +21,10 @@ Validated code commit: this PR head. PR: pending. Release archive: `dist/harborc
 
 ## CI
 
-Pending. The matrix also exercises the live REST limiter and cache reads with signed values.
+Run [43163620395](https://github.com/shahidirfan100/harborcache/actions/runs/43163620395) passed all 14 jobs on `0086a5e`, including the live REST limiter, multisite scope, application-password access and cache reads with signed values.
 
 ## Limits
 
 - The HMAC protects integrity and object injection; it does not make a compromised Redis confidential. An attacker with Redis read access still sees cached values.
 - Sites without `AUTH_KEY` and without `wp_salt()` fall back to a non-secret integrity key. Define WordPress salts on those sites.
-- The dashboard is unchanged; screenshots still show the 1.6.2 capture until recaptured for 1.6.3.
+- Screenshots: `media/` recaptured from this ZIP in run 43163654793 (version 1.6.3).
