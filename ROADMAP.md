@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.6.2 (safety follow-up). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.6.3 (security follow-up). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -12,8 +12,10 @@ Current release: 1.6.2 (safety follow-up). Source of truth for behavior: `docs/F
 
 ## 1.6.x — close the current line
 
-1.6.1 shipped the REST hardening. 1.6.2 ships the safety follow-up:
+1.6.1 shipped the REST hardening; 1.6.2 shipped the safety follow-up. 1.6.3 ships the audit fixes:
 
+- Cache values are signed with an HMAC; unsigned `V1` values are rejected instead of deserialized.
+- REST flushes reserve their slot atomically in Redis, so parallel requests cannot exceed the budget.
 - Arbitration guard: another manager's constants or drop-in stop HarborCache before it registers admin UI, REST routes or drop-in writes, in either activation order.
 - The REST network check now covers admin-post `flush-global` and cross-site `flush-site`.
 - HTTP application-password and multisite REST scope tests run in CI.
@@ -81,7 +83,7 @@ Acceptance: key-family inventory; mixed-version test; bounded cold-start hit-rat
 | REST app-password/multisite tests | Medium | Shipped in 1.6.2 |
 | Destructive-route rate limit | Medium | Shipped in 1.6.2 |
 | Legacy `keys` strategy | Medium | Document and deprecate |
-| `unserialize` trust boundary | Medium | Shipped warning in 1.6.2; docs remain |
+| `unserialize` trust boundary | Medium | Fixed by signed values in 1.6.3 |
 | Logged-in console cost | Medium | 1.7 measured deferral |
 | Unit-test breadth | Medium | 1.8 before 2.0 |
 

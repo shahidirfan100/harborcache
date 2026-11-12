@@ -101,7 +101,33 @@ final class Rest {
 		return Console::can_manage_network();
 	}
 
-	/** Per-user destructive-route budget: one per minute, ten per hour. */
+	/** Reserve one destructive-route slot atomically: one per minute, ten per hour. */
+	private static function reserve_flush( $cache ) {
+		$user = (int) get_current_user_id();
+		if ( ! $user ) { return null; }
+		$site  = (int) get_current_blog_id();
+		$base  = ( defined( 'WP_REDIS_PREFIX' ) ? WP_REDIS_PREFIX : 'harborcache:' ) . 'meta:limit:{' . $site . ':' . $user . '}';
+		$minute = $base . ':minute';
+		$hour   = $base . ':hour';
+		$script = "local m=redis.call('INCR',KEYS[1]); if m==1 then redis.call('EXPIRE',KEYS[1],60) end local h=redis.call('INCR',KEYS[2]); if h==1 then redis.call('EXPIRE',KEYS[2],3600) end local t=redis.call('TTL', m>1 and KEYS[1] or KEYS[2]); return {m,h,t}";
+		try {
+			$result = (array) $cache->ch_command( array( 'EVAL', $script, 2, $minute, $hour ) );
+			$minute = (int) ( $result[0] ?? 0 );
+			$hour   = (int) ( $result[1] ?? 0 );
+			if ( $minute > 1 || $hour > 10 ) {
+				return self::flush_limited( (int) ( $result[2] ?? ( $minute > 1 ? MINUTE_IN_SECONDS : HOUR_IN_SECONDS ) ) );
+			}
+			return null;
+		} catch ( \Throwable $error ) {
+			// Restricted Redis ACLs may deny EVAL; keep the older non-atomic fallback.
+			$limited = self::flush_limit();
+			if ( $limited ) { return $limited; }
+			self::record_flush();
+			return null;
+		}
+	}
+
+	/** Fallback used only when the Redis limiter cannot run. */
 	private static function flush_limit() {
 		$user = get_current_user_id();
 		if ( ! $user ) { return null; }
@@ -268,9 +294,8 @@ final class Rest {
 					return new \WP_Error( 'harborcache_flush_forbidden', __( 'Only a network administrator can flush a global group.', 'harborcache-object-cache-with-redis' ), array( 'status' => 403 ) );
 				}
 				$strategy = 'full' === ( $cache->ch_config['group_flush'] ?? 'atomic' ) ? 'atomic' : null;
-				$limited  = self::flush_limit();
+				$limited  = self::reserve_flush( $cache );
 				if ( $limited ) { return $limited; }
-				self::record_flush();
 				if ( ! $cache->flush_group( $group, $strategy ) ) {
 					return new \WP_Error( 'harborcache_flush_failed', __( 'The cache did not confirm the flush.', 'harborcache-object-cache-with-redis' ), array( 'status' => $cache->redis_status() ? 500 : 503 ) );
 				}
@@ -294,9 +319,8 @@ final class Rest {
 			} else {
 				return new \WP_Error( 'harborcache_invalid_scope', __( 'The flush scope must be site, global, all or a site id.', 'harborcache-object-cache-with-redis' ), array( 'status' => 400 ) );
 			}
-			$limited = self::flush_limit();
+			$limited = self::reserve_flush( $cache );
 			if ( $limited ) { return $limited; }
-			self::record_flush();
 			if ( ! $cache->flush_scope( $scope ) ) {
 				return new \WP_Error( 'harborcache_flush_failed', __( 'The cache did not confirm the flush.', 'harborcache-object-cache-with-redis' ), array( 'status' => $cache->redis_status() ? 500 : 503 ) );
 			}
