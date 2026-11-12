@@ -144,6 +144,7 @@ jobs:
           python3 tools/build-release.py --check
           php tests/conflict-notice.php
           php tests/conflict-arbitration.php
+          php tests/codec-signature.php
           wp core download --version="${{ matrix.wp || 'latest' }}" --path="$WP_ROOT"
           wp config create --path="$WP_ROOT" --dbname=harborcache --dbuser=root --dbpass=local-ci-only --dbhost=127.0.0.1:3306
           wp config set DISABLE_WP_CRON true --raw --path="$WP_ROOT"

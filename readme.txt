@@ -4,7 +4,7 @@ Tags: redis, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -76,6 +76,10 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.6.3 =
+* Sign serialized cache values with an HMAC and reject unsigned `V1` values, closing the object-injection path from writable Redis data.
+* Enforce the REST flush limiter atomically with Redis `INCR`/`EXPIRE` (1/minute, 10/hour); the user-meta check remains only as a restricted-ACL fallback.
 
 = 1.6.2 =
 * Stand down before registering admin UI, REST routes or drop-in writes when another object-cache manager is active, in either activation order.
@@ -297,6 +301,9 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.6.3 =
+Unsigned cached values are no longer read, so the first requests after upgrading rebuild the cache. Cache keys, settings and stored data outside the cache are unchanged.
 
 = 1.2.10 =
 Interface spacing fixes and a refreshed translation template. Cache behavior, key format and settings are unchanged.

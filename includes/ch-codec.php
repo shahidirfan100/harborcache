@@ -38,7 +38,7 @@ final class Codec {
 		if ( ! is_string( $data ) ) {
 			throw new \RuntimeException( 'Value encoding failed.' );
 		}
-		return 'V1' . $data;
+		return 'V2' . hash_hmac( 'sha256', $data, self::secret() ) . $data;
 	}
 
 	public function decode( $raw ) {
@@ -49,10 +49,14 @@ final class Codec {
 			return (int) substr( $raw, 1 );
 		}
 		if ( 'S' === $raw[0] && is_numeric( substr( $raw, 1 ) ) ) { return substr( $raw, 1 ); }
-		if ( 'V1' !== substr( $raw, 0, 2 ) ) {
-			throw new \RuntimeException( 'Unknown cache value format.' );
+		if ( 'V2' !== substr( $raw, 0, 2 ) || strlen( $raw ) < 66 ) {
+			throw new \RuntimeException( 'Unsigned or unknown cache value.' );
 		}
-		$data = substr( $raw, 2 );
+		$mac  = substr( $raw, 2, 64 );
+		$data = substr( $raw, 66 );
+		if ( ! hash_equals( hash_hmac( 'sha256', $data, self::secret() ), $mac ) ) {
+			throw new \RuntimeException( 'Cache value signature mismatch.' );
+		}
 		if ( 'none' !== $this->compression ) {
 			$data = call_user_func( $this->decoder, $data );
 		}
@@ -76,5 +80,17 @@ final class Codec {
 		} finally {
 			restore_error_handler();
 		}
+	}
+
+	/** A per-installation integrity key; salt rotation intentionally cools the cache. */
+	private static function secret() {
+		static $secret = null;
+		if ( null !== $secret ) { return $secret; }
+		if ( defined( 'AUTH_KEY' ) && is_string( AUTH_KEY ) && '' !== AUTH_KEY ) { return $secret = AUTH_KEY; }
+		if ( function_exists( 'wp_salt' ) ) {
+			$salt = wp_salt( 'auth' );
+			if ( is_string( $salt ) && '' !== $salt ) { return $secret = $salt; }
+		}
+		return $secret = hash( 'sha256', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . '|' . ( defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR : '' ) );
 	}
 }
