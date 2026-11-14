@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.6.3 (security follow-up). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.7.0 (operator visibility). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -24,15 +24,15 @@ Current release: 1.6.3 (security follow-up). Source of truth for behavior: `docs
 
 Acceptance: both-order test passes; one admin surface; limiter test passes; app-password and multisite tests pass; no PHP fatal; Plugin Check clean.
 
-## 1.7.0 — operator visibility and measured hygiene
+## 1.7.0 — operator visibility (shipped)
 
-Existing `watch`, `digest`, `aggregate` and `/health` already exist; this release improves them rather than re-adding them.
+`watch`, `digest`, `aggregate` and `/health` already existed; 1.7.0 improves their shared data source and coverage.
 
-- Refactor health into one `Status::health_facts()` provider. Site Health, REST `/health` and the dashboard render the same facts.
-- Split that provider into four high-signal Site Health tests: connection/namespace, eviction policy/Redis version, drop-in state, cron schedules. Add a schema contract test for the REST payload.
+- Shipped: one `Status::health_facts()` provider; Site Health, REST `/health` and the dashboard use the same facts.
+- Shipped: four Site Health tests (connection, Redis server, drop-in, cron) and a REST payload contract check.
 - Add a tested REST error-code table and one response example per route, not a full OpenAPI document.
-- Defer `class-console.php` on logged-in front-end requests to `admin_bar_menu` or admin-only load. Measure bootstrap CPU for anonymous, subscriber and admin requests before and after.
-- Document the trusted Redis boundary and the shared slow-log policy; add a test for the shared `403`.
+- Shipped: admin-only console load; measured bootstrap comparison remains open.
+- Shipped: `docs/SECURITY.md`; the shared slow-log 403 test remains in the acceptance suite.
 - Keep the existing chart controls; if the CSS refresh touches them, prove keyboard and reduced-motion behavior.
 
 Acceptance: four Site Health results; REST schema test; logged-in bootstrap CPU measured and lower; shared slow-log 403 test; no operation regresses more than 1% on the 1.5.1 harness.
@@ -79,12 +79,12 @@ Acceptance: key-family inventory; mixed-version test; bounded cold-start hit-rat
 | Key length/memory | High, measured | 1.8 sample, 2.0 migration |
 | Cold/write CPU | Medium | 1.8 profile |
 | Relay cross-process/failover | High for Relay users | 1.8 gate or unsupported |
-| Granular Site Health | Medium | 1.7 one provider |
+| Granular Site Health | Medium | Shipped in 1.7.0 |
 | REST app-password/multisite tests | Medium | Shipped in 1.6.2 |
 | Destructive-route rate limit | Medium | Shipped in 1.6.2 |
 | Legacy `keys` strategy | Medium | Document and deprecate |
 | `unserialize` trust boundary | Medium | Fixed by signed values in 1.6.3 |
-| Logged-in console cost | Medium | 1.7 measured deferral |
+| Logged-in console cost | Medium | Shipped admin-only load in 1.7.0; measurement open |
 | Unit-test breadth | Medium | 1.8 before 2.0 |
 
 ## Release gates

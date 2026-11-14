@@ -663,44 +663,48 @@ final class Console {
 	}
 
 	public static function health( $tests ) {
-		$tests['direct']['harborcache'] = array( 'label' => __( 'HarborCache health', 'harborcache-object-cache-with-redis' ), 'test' => array( __CLASS__, 'health_result' ) );
+		$areas = array(
+			'connection' => __( 'HarborCache connection', 'harborcache-object-cache-with-redis' ),
+			'server'     => __( 'HarborCache Redis server', 'harborcache-object-cache-with-redis' ),
+			'dropin'     => __( 'HarborCache drop-in', 'harborcache-object-cache-with-redis' ),
+			'cron'       => __( 'HarborCache cron schedules', 'harborcache-object-cache-with-redis' ),
+		);
+		foreach ( $areas as $area => $label ) {
+			$tests['direct'][ 'harborcache_' . $area ] = array(
+				'label' => $label,
+				'test'  => array( __CLASS__, 'health_' . $area ),
+			);
+		}
 		return $tests;
 	}
 
+	public static function health_connection() { return self::health_test( 'connection' ); }
+	public static function health_server() { return self::health_test( 'server' ); }
+	public static function health_dropin() { return self::health_test( 'dropin' ); }
+	public static function health_cron() { return self::health_test( 'cron' ); }
+
+	private static function health_test( $area ) {
+		$health = Status::health_facts();
+		$check  = $health['checks'][ $area ] ?? array( 'label' => __( 'HarborCache health', 'harborcache-object-cache-with-redis' ), 'status' => 'recommended', 'description' => __( 'The health result is unavailable.', 'harborcache-object-cache-with-redis' ) );
+		return array(
+			'label'       => $check['label'],
+			'status'      => $check['status'],
+			'badge'       => array( 'label' => __( 'Performance', 'harborcache-object-cache-with-redis' ), 'color' => 'blue' ),
+			'description' => '<p>' . esc_html( $check['description'] ) . '</p>',
+			'actions'     => '<p><a href="' . esc_url( self::url( 'overview' ) ) . '">' . esc_html__( 'Open HarborCache readiness', 'harborcache-object-cache-with-redis' ) . '</a></p>',
+			'test'        => 'harborcache_' . $area,
+		);
+	}
+
+	/** Combined result kept for integrations that call the old single test. */
 	public static function health_result() {
-		$status = self::status();
-		$cache  = self::cache();
-		$issues = array();
-		$critical = 'connected' !== ( $status['state'] ?? '' );
-		if ( $critical ) {
-			$issues[] = self::state_label( $status ) . ': ' . self::state_explanation( $status );
-		}
-		if ( $cache && ! empty( $status['ready'] ) ) {
-			try {
-				$health = $cache->operational_health();
-				if ( 'noeviction' === ( $health['maxmemory_policy'] ?? '' ) && (int) ( $health['maxmemory'] ?? 0 ) > 0 ) { $issues[] = __( 'Redis uses noeviction; exhausted memory can reject cache writes. Review the server policy.', 'harborcache-object-cache-with-redis' ); $critical = true; }
-			} catch ( \Throwable $ignored ) {
-				// Optional server information must not fail the Site Health check.
-			}
-			if ( 'relay' === ( $cache->ch_config['client'] ?? '' ) ) {
-				try {
-					$relay = $cache->relay_diagnostics();
-					if ( empty( $relay['available'] ) ) { $issues[] = __( 'Relay diagnostics are unavailable; check the Relay extension version.', 'harborcache-object-cache-with-redis' ); }
-					// shortcut: Relay stats memory keys differ by release; check only when used/max are present, revisit if Relay stabilizes the schema.
-					$memory = $relay['stats']['memory'] ?? null;
-					if ( is_array( $memory ) && isset( $memory['used'], $memory['max'] ) && (int) $memory['max'] > 0 && (int) $memory['used'] >= (int) $memory['max'] * 0.9 ) { $issues[] = __( 'Relay memory is nearly full; its local cache is evicting entries. Raise the Relay cache memory limit.', 'harborcache-object-cache-with-redis' ); }
-				} catch ( \Throwable $ignored ) {
-					// Relay diagnostics are optional for the Site Health check.
-				}
-			}
-			if ( Config::load()['async_flush'] && ! wp_next_scheduled( 'harborcache_cleanup' ) ) { $issues[] = __( 'The cache cleanup schedule is missing.', 'harborcache-object-cache-with-redis' ); }
-			if ( Config::load()['query_maintenance'] && ! wp_next_scheduled( 'harborcache_queries' ) ) { $issues[] = __( 'The query maintenance schedule is missing.', 'harborcache-object-cache-with-redis' ); }
-		}
+		$health = Status::health_facts();
+		$issues = array_column( $health['issues'], 'message' );
 		return array(
 			'label'       => $issues ? __( 'HarborCache needs attention', 'harborcache-object-cache-with-redis' ) : __( 'HarborCache is connected and current', 'harborcache-object-cache-with-redis' ),
-			'status'      => $issues ? ( $critical ? 'critical' : 'recommended' ) : 'good',
+			'status'      => $health['status'],
 			'badge'       => array( 'label' => __( 'Performance', 'harborcache-object-cache-with-redis' ), 'color' => 'blue' ),
-			'description' => '<p>' . esc_html( $issues ? implode( ' ', $issues ) : __( 'The transport, namespace, codec and drop-in checks passed.', 'harborcache-object-cache-with-redis' ) ) . '</p>',
+			'description' => '<p>' . esc_html( $issues ? implode( ' ', $issues ) : __( 'The transport, namespace, codec, drop-in and schedule checks passed.', 'harborcache-object-cache-with-redis' ) ) . '</p>',
 			'actions'     => '<p><a href="' . esc_url( self::url( 'overview' ) ) . '">' . esc_html__( 'Open HarborCache readiness', 'harborcache-object-cache-with-redis' ) . '</a></p>',
 			'test'        => 'harborcache',
 		);

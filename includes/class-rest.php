@@ -175,9 +175,9 @@ final class Rest {
 	public static function health( \WP_REST_Request $request ) {
 		return self::safely( static function () {
 			$cache  = Console::cache();
-			$health = Console::health_result();
-			$health['description'] = html_entity_decode( wp_strip_all_tags( (string) ( $health['description'] ?? '' ) ), ENT_QUOTES, 'UTF-8' );
-			unset( $health['actions'] );
+			$health = Status::health_facts();
+			$issues = array_column( $health['issues'], 'message' );
+			$health['description'] = $issues ? implode( ' ', $issues ) : __( 'The transport, namespace, codec, drop-in and schedule checks passed.', 'harborcache-object-cache-with-redis' );
 			$health['operational'] = $cache && $cache->redis_status() ? $cache->operational_health() : array( 'connected' => false );
 			return rest_ensure_response( $health );
 		} );
