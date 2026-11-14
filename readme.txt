@@ -4,7 +4,7 @@ Tags: redis, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -76,6 +76,10 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.8.1 =
+* Cache raw key/group pairs so repeated forced reads and writes skip sanitizing and layout work.
+* Reuse one layout predicate across key build and refresh, with the same cold-start behavior.
 
 = 1.8.0 =
 * Add 10,000-key byte sampling (median, p95, maximum, Redis key count and estimated share of `used_memory`) to the benchmark output.

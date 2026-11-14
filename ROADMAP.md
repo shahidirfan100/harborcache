@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.8.0 (measured hot path). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.8.1 (hot-path patch). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -54,6 +54,8 @@ The gaps are distribution, key memory, cold/write CPU, Relay behaviour at scale,
 | Distribution | WordPress.org listing, host guide and support policy |
 
 ## 1.8.0 — prove the hot path (shipped)
+
+1.8.1 adds a raw-key fast path for repeated forced reads and writes; the benchmark result is recorded in the 1.8.1 validation.
 
 - Shipped: same-run benchmark job; key-byte and memory-share sampling added to every benchmark record.
 - Shipped: 10,000-key sampling with median/p95/max bytes, Redis key count and estimated memory share.
