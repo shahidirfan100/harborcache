@@ -4,7 +4,7 @@
 
 Cached object values are application data, not user input. A compromised Redis server, a shared database with untrusted tenants, or an exposed endpoint can read cached values and attempt cache poisoning.
 
-Serialized values use a `V2` HMAC and are verified before `unserialize()`. Unsigned `V1` values are rejected. The signature prevents object injection, but it does not make Redis confidential and does not stop an attacker from replaying a valid signed value into another cache key.
+Serialized object payloads use a `V2` HMAC and are verified before `unserialize()`. Plain arrays and scalars use the cheaper `V1` envelope and are accepted only when no object token is present; unsigned object payloads are rejected. The signature prevents object injection, but it does not make Redis confidential and does not stop an attacker from replaying a valid signed value into another cache key.
 
 Use TLS and a password for any non-loopback endpoint. HarborCache warns when either is missing. Diagnostic exports leave out passwords, endpoints and cached values.
 

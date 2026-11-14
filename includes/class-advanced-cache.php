@@ -48,6 +48,8 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_derived_count = 0;
 	private $ch_ids = array();
 	private $ch_ids_count = 0;
+	private $ch_raw = array();
+	private $ch_raw_count = 0;
 	private $ch_single;
 	private $ch_observe;
 	private $ch_readonly = array( 'get' => true, 'mget' => true, 'pttl' => true );
@@ -361,14 +363,46 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 
 	public function add_global_groups( $groups ) {
 		$this->ch_contexts = array();
-		$this->ch_ids = array(); $this->ch_ids_count = 0;
+		$this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0;
 		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
 		parent::add_global_groups( $groups );
 	}
 
 	public function add_non_persistent_groups( $groups ) {
 		parent::add_non_persistent_groups( $groups );
-		$this->ch_ids = array(); $this->ch_ids_count = 0;
+		$this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0;
+	}
+
+	/** True while the serializer, compression, split, client and WordPress version match the cached layout. */
+	private function ch_layout_current() {
+		return null !== $this->ch_layout_state &&
+			$this->ch_layout_state[0] === $this->ch_config['serializer'] &&
+			$this->ch_layout_state[1] === $this->ch_config['compression'] &&
+			$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
+			$this->ch_layout_state[3] === $this->ch_config['client'] &&
+			$this->ch_layout_state[4] === ( $GLOBALS['wp_version'] ?? '' );
+	}
+
+	/** Cache the raw key/group pair so repeated forced reads and writes skip sanitizing and layout work. */
+	public function build_key( $key, $group = 'default' ) {
+		if ( ! $this->ch_ready || ( ! is_int( $key ) && ! is_string( $key ) ) ) { return parent::build_key( $key, $group ); }
+		if ( ! $this->ch_layout_current() ) { $this->ch_raw = array(); $this->ch_raw_count = 0; }
+		$group = $group ?: 'default';
+		$raw   = (string) $key;
+		$bucket = $this->blog_prefix;
+		if ( isset( $this->ch_raw[ $bucket ][ $group ][ $raw ] ) ) { return $this->ch_raw[ $bucket ][ $group ][ $raw ]; }
+		if ( $this->ch_default_sanitizer ) {
+			$san_key   = is_string( $key ) ? str_replace( ':', '-', $key ) : $key;
+			$san_group = is_string( $group ) ? str_replace( ':', '-', $group ) : $group;
+		} else {
+			$san_key   = $this->sanitize_key_part( $key );
+			$san_group = $this->sanitize_key_part( $group );
+		}
+		$id = $this->fast_build_key( $san_key, $san_group );
+		if ( $this->ch_raw_count >= 4096 ) { $this->ch_raw = array(); $this->ch_raw_count = 0; }
+		$this->ch_raw[ $bucket ][ $group ][ $raw ] = $id;
+		++$this->ch_raw_count;
+		return $id;
 	}
 
 	public function fast_build_key( $key, $group = 'default' ) {
@@ -376,19 +410,14 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		try {
 		if ( 'harborcache' === $group && 'metrics' === $key ) { return $this->ch_base . ( $this->ch_config['analytics']['persist'] ? '' : ':' . $this->ch_root ) . ':analytics:metrics'; }
 		$group  = $group ?: 'default';
-		if (
-			null === $this->ch_layout_state ||
-			$this->ch_layout_state[0] !== $this->ch_config['serializer'] ||
-			$this->ch_layout_state[1] !== $this->ch_config['compression'] ||
-			$this->ch_layout_state[2] !== $this->ch_config['split_alloptions'] ||
-			$this->ch_layout_state[3] !== $this->ch_config['client'] ||
-			$this->ch_layout_state[4] !== ( $GLOBALS['wp_version'] ?? '' )
-		) {
+		if ( ! $this->ch_layout_current() ) {
 			$this->ch_derived = array();
 			$this->ch_prefixes = array();
 			$this->ch_derived_count = 0;
 			$this->ch_ids = array();
 			$this->ch_ids_count = 0;
+			$this->ch_raw = array();
+			$this->ch_raw_count = 0;
 			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'], ( $GLOBALS['wp_version'] ?? '' ) );
 		}
 		$bucket = $this->blog_prefix;
@@ -430,7 +459,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	/** Memoize one request-local cache id per blog, group and key. */
 	private function ch_id( $bucket, $group, $key, $id ) {
 		if ( ! is_string( $key ) && ! is_int( $key ) ) { return $id; }
-		if ( $this->ch_ids_count >= 4096 ) { $this->ch_ids = array(); $this->ch_ids_count = 0; }
+		if ( $this->ch_ids_count >= 4096 ) { $this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0; }
 		$this->ch_ids[ $bucket ][ $group ][ $key ] = $id;
 		++$this->ch_ids_count;
 		return $id;
@@ -479,7 +508,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		}
 		$this->ch_tokens[ $key ] = $value;
 		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
-		$this->ch_ids = array(); $this->ch_ids_count = 0;
+		$this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0;
 		return $value;
 	}
 
@@ -616,7 +645,7 @@ LUA;
 	/** Drop memoized ids after an external namespace change. */
 	private function ch_reset_layout() {
 		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
-		$this->ch_ids = array(); $this->ch_ids_count = 0;
+		$this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0;
 		$this->ch_tokens = array(); $this->ch_epochs = null; $this->ch_epochs_key = null; $this->ch_registry = null; $this->ch_touched = array();
 		if ( $this->ch_ready ) {
 			try { $this->ch_root = $this->ch_token( $this->ch_base . ':root' ); }
