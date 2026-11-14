@@ -33,13 +33,19 @@ final class Codec {
 		}
 		if ( is_string( $value ) && is_numeric( $value ) ) { return 'S' . $value; }
 		$data = 'php' === $this->serializer ? serialize( $value ) : igbinary_serialize( $value ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
+		if ( ! is_string( $data ) ) {
+			throw new \RuntimeException( 'Value encoding failed.' );
+		}
+		// Only object-bearing payloads can instantiate a class during unserialize.
+		// igbinary has no text token to inspect, so every igbinary payload is signed.
+		$signed = 'php' !== $this->serializer || (bool) preg_match( '/(?:^|[;{}])(?:O|C):[0-9]+:/', $data );
 		if ( 'none' !== $this->compression ) {
 			$data = call_user_func( $this->compression . '_compress', $data );
 		}
 		if ( ! is_string( $data ) ) {
 			throw new \RuntimeException( 'Value encoding failed.' );
 		}
-		return 'V2' . hash_hmac( 'sha256', $data, self::secret() ) . $data;
+		return ( $signed ? 'V2' . hash_hmac( 'sha256', $data, self::secret() ) : 'V1' ) . $data;
 	}
 
 	public function decode( $raw ) {
@@ -50,23 +56,36 @@ final class Codec {
 			return (int) substr( $raw, 1 );
 		}
 		if ( 'S' === $raw[0] && is_numeric( substr( $raw, 1 ) ) ) { return substr( $raw, 1 ); }
-		if ( 'V2' !== substr( $raw, 0, 2 ) || strlen( $raw ) < 66 ) {
-			throw new \RuntimeException( 'Unsigned or unknown cache value.' );
-		}
-		$mac  = substr( $raw, 2, 64 );
-		$data = substr( $raw, 66 );
-		if ( ! isset( $this->verified[ $raw ] ) ) {
-			if ( ! hash_equals( hash_hmac( 'sha256', $data, self::secret() ), $mac ) ) {
-				throw new \RuntimeException( 'Cache value signature mismatch.' );
+		$version = substr( $raw, 0, 2 );
+		if ( 'V2' === $version ) {
+			if ( strlen( $raw ) < 66 ) { throw new \RuntimeException( 'Truncated signed cache value.' ); }
+			$mac  = substr( $raw, 2, 64 );
+			$data = substr( $raw, 66 );
+			if ( ! isset( $this->verified[ $raw ] ) ) {
+				if ( ! hash_equals( hash_hmac( 'sha256', $data, self::secret() ), $mac ) ) {
+					throw new \RuntimeException( 'Cache value signature mismatch.' );
+				}
+				if ( count( $this->verified ) >= 256 ) { $this->verified = array(); }
+				$this->verified[ $raw ] = true;
 			}
-			if ( count( $this->verified ) >= 256 ) { $this->verified = array(); }
-			$this->verified[ $raw ] = true;
+		} elseif ( 'V1' === $version ) {
+			if ( 'php' !== $this->serializer ) { throw new \RuntimeException( 'Unsigned igbinary cache value.' ); }
+			$data = substr( $raw, 2 );
+			if ( preg_match( '/(?:^|[;{}])(?:O|C):[0-9]+:/', $data ) ) {
+				throw new \RuntimeException( 'Unsigned cache value contains an object.' );
+			}
+		} else {
+			throw new \RuntimeException( 'Unknown cache value format.' );
 		}
 		if ( 'none' !== $this->compression ) {
 			$data = call_user_func( $this->decoder, $data );
 		}
 		if ( ! is_string( $data ) ) {
 			throw new \RuntimeException( 'Value decoding failed.' );
+		}
+		// An old V1 payload may only be deserialized when it is object-free.
+		if ( 'V1' === $version && preg_match( '/(?:^|[;{}])(?:O|C):[0-9]+:/', $data ) ) {
+			throw new \RuntimeException( 'Unsigned cache value contains an object.' );
 		}
 		if ( 'php' === $this->serializer ) {
 			// Suppression avoids installing and restoring an error handler for

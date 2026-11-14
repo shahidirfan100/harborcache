@@ -1,6 +1,6 @@
 # HarborCache 1.8.1 validation
 
-Validated code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.8.1.zip`, 606 files, SHA256 `5619cdba83e295cd04260853358ec866b7b7745424ac99173a1a9d2c9f4e870b`. The build verifier passed source and ZIP parity.
+Validated code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.8.1.zip`, 606 files, SHA256 `8b6ac9e00cc2f97a1084a6ace95fb36652703ba12864636b604c6659b3ed7290`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -8,7 +8,7 @@ Validated code commit: this PR head. PR: pending. Release archive: `dist/harborc
 
 - A raw key/group map now returns the derived key for repeated forced reads and writes without sanitizing, hashing and rebuilding it again.
 - The layout predicate is shared by `build_key()` and `fast_build_key()`, and the raw map clears with every existing namespace/layout reset.
-- The security signature path is unchanged: values remain signed `V2`, and unsigned values are still rejected.
+- Object-bearing payloads remain signed `V2`; plain arrays and scalars use `V1` and are accepted only when they contain no object. Unsigned object payloads are rejected.
 
 ## Local checks
 
