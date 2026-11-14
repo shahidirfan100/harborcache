@@ -10,6 +10,7 @@ final class Codec {
 	private $decoder;
 	private $decode_error;
 	private $verified = array();
+	private $plain = array();
 
 	public function __construct( array $config ) {
 		$this->serializer = $config['serializer'];
