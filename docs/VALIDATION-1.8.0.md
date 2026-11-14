@@ -22,11 +22,23 @@ Validated code commit: this PR head. PR: pending. Release archive: `dist/harborc
 
 ## CI
 
-Pending. The Linux performance job publishes key-byte records; the integrations job runs the cross-process Relay gate.
+Run [43586443485](https://github.com/shahidirfan100/harborcache/actions/runs/43586443485) passed. The Linux performance job published 30-run medians; the integrations job passed the cross-process Relay gate (`{"ok":true,"first":"v1","second":"v2"}`).
+
+## Measured results
+
+| 30-run median | Free baseline | HarborCache |
+| --- | --- | --- |
+| Key bytes (full lane) | 46 | 199 |
+| Estimated key share of used_memory | 2.33% | 10.24% |
+| PHP CPU for the workload | 209.25 ms | 268.44 ms |
+| Forced-read p95 | 2.332 ms | 2.616 ms |
+| Write p95 | 2.572 ms | 2.954 ms |
+
+Key format v2 is not justified by this sample: the key share is about 10%, below the 20% gate. The cold/write CPU gap remains and moves to 1.9, where the profile points at the Codec HMAC path and key build.
 
 ## Limits
 
-- The key-byte sample is synthetic (10,000 built keys), not a live production key dump. The memory share is an estimate.
+- The key-byte sample is synthetic (10,000 built keys), not a live production key dump. The memory share is an estimate and the free/Harbor comparison is not a production key census.
 - The Relay gate proves cross-process invalidation, not node stop/restart. Failover certification remains 2.0.
 - Cold/write CPU is measured by the existing benchmark, but no optimization is claimed until the same-run numbers show a reproducible gap.
-- The dashboard layout is unchanged; screenshots still show the 1.7.0 capture until recaptured for 1.8.0.
+- Screenshots: `media/` recaptured from this ZIP in run 43585848472 (version 1.8.0).

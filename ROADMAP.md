@@ -64,14 +64,17 @@ The gaps are distribution, key memory, cold/write CPU, Relay behaviour at scale,
 
 Acceptance: key-memory sample published; cold/write CPU within 2%; no p95 regression; cross-process Relay gate passes or is explicitly unsupported; migration dependencies covered.
 
-## 1.9.0 — memory and concurrency
+## 1.9.0 — CPU, prefetch and concurrency
 
-- Ship key format v2 only when the sample shows keys are a material share of memory and v2 saves more than 50 bytes per key. Use a versioned migration, a mixed-version test and rollback that produces cold misses, not errors.
+The 1.8 benchmark sampled 30 runs: free keys were 46–48 bytes, HarborCache keys 199–201 bytes, and the estimated key share of `used_memory` was about 10%. That is below the 20% migration gate, so key format v2 is deferred until a production sample justifies it.
+
+- Close the measured cold/write gap: free 209 ms vs HarborCache 268 ms PHP CPU; forced-read p95 2.33 vs 2.62 ms; write p95 2.57 vs 2.95 ms. Profile the Codec HMAC path and key build, then fix only the measured top cost without weakening signatures.
 - Batch prefetch and priming so repeated reads use fewer Redis round trips; prove it with command counts, not claims.
 - Add race tests for concurrent options, counters, WooCommerce stock/orders and invalidation. Fix the shared helpers, not each call site.
+- Revisit key format only if a 10,000-key production sample shows a >20% key share; otherwise keep the 199-byte keys and spend the work on CPU.
 - Measure the encoding matrix and publish the best default for latency and memory.
 
-Acceptance: median object key below 120 bytes or a measured key share below 20%; key memory reduced by at least 25%; no stale read in race tests; prefetch saves measured round trips.
+Acceptance: cold/write CPU within 2% of the free baseline or a documented, security-required exception; no p95 regression; no stale read in race tests; prefetch saves measured round trips; key format decision recorded.
 
 ## 2.0.0 — scale and launch
 
@@ -100,8 +103,8 @@ Acceptance: no behavior change; full matrix green; Plugin Check clean; screensho
 | Item | Severity | Plan |
 | --- | --- | --- |
 | Reverse order boots two managers | High | Shipped in 1.6.2 |
-| Key length/memory | High, measured | Sample shipped in 1.8; migration in 1.9 |
-| Cold/write CPU | High, measured | 1.8 profile; fix only measured regressions |
+| Key length/memory | Medium, measured | 1.8 sample: ~10% key share; not justified at the 20% gate |
+| Cold/write CPU | High, measured | 1.8 measured +28% PHP CPU; 1.9 fix |
 | Relay cross-process/failover | High for Relay users | Gate in 1.8; failover certification in 2.0 |
 | Granular Site Health | Medium | Shipped in 1.7.0 |
 | REST app-password/multisite tests | Medium | Shipped in 1.6.2 |
