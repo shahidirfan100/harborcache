@@ -4,7 +4,7 @@ Tags: redis, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -76,6 +76,11 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.8.0 =
+* Add 10,000-key byte sampling (median, p95, maximum, Redis key count and estimated share of `used_memory`) to the benchmark output.
+* Add a cross-process Relay invalidation gate; Relay remains unclaimed until the gate passes.
+* Report unavailable Redis server details as a recommended Site Health issue instead of a false pass.
 
 = 1.7.0 =
 * Replace the single Site Health result with four checks (connection, Redis server, drop-in, cron) backed by one `Status::health_facts()` provider; REST `/health` returns the same checks and facts.

@@ -75,11 +75,28 @@ if ( 'free' !== $engine && 'full' === $lane ) {
 $after = $probe->info( 'cpu' );
 $afterstats = $probe->info( 'stats' );
 $memory = $probe->info( 'memory' );
+$key_lengths = array();
+for ( $i = 0; $i < 10000; ++$i ) {
+    $key_lengths[] = strlen( $cache->build_key( 'bench-' . $i, 'hc-bench' ) );
+}
+sort( $key_lengths );
+$key_count  = (int) $probe->dbSize();
+$used_bytes = (int) ( $memory['used_memory'] ?? 0 );
+$key_bytes  = array(
+    'samples'               => count( $key_lengths ),
+    'median_bytes'          => $key_lengths[4999],
+    'p95_bytes'             => $key_lengths[9499],
+    'max_bytes'             => $key_lengths[9999],
+    'redis_keys'            => $key_count,
+    'estimated_total_bytes' => $key_lengths[4999] * $key_count,
+    'share_of_used_memory'  => $used_bytes > 0 ? round( 100 * $key_lengths[4999] * $key_count / $used_bytes, 2 ) : null,
+);
 echo json_encode( array(
     'engine' => $engine, 'lane' => $lane, 'round' => $round, 'sampling' => $sampling, 'php' => PHP_VERSION, 'wordpress' => get_bloginfo( 'version' ),
     'timings' => $times, 'bootstrap_wall_ms' => $bootstrap_ms, 'bootstrap_php_cpu_ms' => $bootstrap_cpu_ms,
     'metrics_record_ms' => $metrics, 'php_cpu_ms' => $operation_cpu,
     'redis_cpu_ms' => ( ( $after['used_cpu_sys'] + $after['used_cpu_user'] ) - ( $before['used_cpu_sys'] + $before['used_cpu_user'] ) ) * 1000,
     'redis_commands' => $afterstats['total_commands_processed'] - $stats['total_commands_processed'], 'php_peak_bytes' => memory_get_peak_usage( true ), 'redis_rss_bytes' => $memory['used_memory_rss'],
-    'limitations' => 'Sequential checked operations, not HTTP percentiles; Redis CPU covers the isolated daemon; bootstrap and explicit metrics call are separate; full lane loads both main plugins during WordPress bootstrap.'
+    'key_bytes' => $key_bytes,
+    'limitations' => 'Sequential checked operations, not HTTP percentiles; Redis CPU covers the isolated daemon; bootstrap and explicit metrics call are separate; full lane loads both main plugins during WordPress bootstrap. Key bytes are synthetic 10,000-key samples and the memory share is an estimate.'
 ) ) . "\n";

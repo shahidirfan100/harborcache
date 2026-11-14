@@ -421,6 +421,7 @@ jobs:
           export HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-adaptive-ci","database":15,"relay":{"listeners":true,"adaptive":{"width":512,"depth":1}}}'
           php tests/acceptance.php | tee evidence/relay-adaptive.txt
           HC_SAFETY_CLIENT=relay php tests/safety-live.php reconnect | tee evidence/reconnect-relay.txt
+          HC_TEST_CONFIG='{"client":"relay","prefix":"hc-relay-cross-ci","database":15,"relay":{"listeners":true}}' php tests/relay-cross-process.php | tee evidence/relay-cross-process.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

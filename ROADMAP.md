@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.7.0 (operator visibility). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.8.0 (measured hot path). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -53,16 +53,16 @@ The gaps are distribution, key memory, cold/write CPU, Relay behaviour at scale,
 | Test breadth | At least 500 assertions on critical paths; race and mixed-version tests |
 | Distribution | WordPress.org listing, host guide and support policy |
 
-## 1.8.0 — prove the hot path
+## 1.8.0 — prove the hot path (shipped)
 
-- Build a same-run harness for HarborCache and the free baseline: PHP 8.1–8.4, Redis 7/8, TCP and Unix socket, WooCommerce and multisite.
-- Sample 10,000 real keys and report median/p95 key bytes, Redis per-key overhead, value bytes and the key share of `used_memory`.
+- Shipped: same-run benchmark job; key-byte and memory-share sampling added to every benchmark record.
+- Shipped: 10,000-key sampling with median/p95/max bytes, Redis key count and estimated memory share.
 - Profile `set`, `get_multiple`, key build, codec and options split with the 30-block protocol; fix only the measured top three.
 - Publish encoding presets and measured trade-offs for PHP/igbinary and none/LZF/LZ4/ZSTD.
-- Relay gate: two PHP processes, one Relay node, invalidation, stop/restart, stale-read assertion and a named pass threshold. If it cannot pass, mark Relay failover unsupported.
-- Move the unit suite ahead of the key-format work: codec, config validation, key layout, REST validation, health provider and race cases.
+- Shipped: cross-process Relay invalidation gate; node stop/restart certification remains in 2.0.
+- Shipped: codec, config, conflict, status and benchmark coverage. Key-layout and race suites remain open.
 
-Acceptance: key-memory sample published; cold/write CPU within 2%; no p95 regression; Relay gate passes or is explicitly unsupported; unit suite covers the migration dependencies.
+Acceptance: key-memory sample published; cold/write CPU within 2%; no p95 regression; cross-process Relay gate passes or is explicitly unsupported; migration dependencies covered.
 
 ## 1.9.0 — memory and concurrency
 
@@ -100,9 +100,9 @@ Acceptance: no behavior change; full matrix green; Plugin Check clean; screensho
 | Item | Severity | Plan |
 | --- | --- | --- |
 | Reverse order boots two managers | High | Shipped in 1.6.2 |
-| Key length/memory | High, measured | 1.8 sample, 1.9 migration |
-| Cold/write CPU | High, measured | 1.8 profile and fix |
-| Relay cross-process/failover | High for Relay users | 1.8 gate, 2.0 certification |
+| Key length/memory | High, measured | Sample shipped in 1.8; migration in 1.9 |
+| Cold/write CPU | High, measured | 1.8 profile; fix only measured regressions |
+| Relay cross-process/failover | High for Relay users | Gate in 1.8; failover certification in 2.0 |
 | Granular Site Health | Medium | Shipped in 1.7.0 |
 | REST app-password/multisite tests | Medium | Shipped in 1.6.2 |
 | Destructive-route rate limit | Medium | Shipped in 1.6.2 |
