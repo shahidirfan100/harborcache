@@ -1,6 +1,6 @@
 # HarborCache 1.7.0 validation
 
-Validated code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.7.0.zip`, 606 files, SHA256 `32a036870611ac8ed6ec80d084b78d266e6ceeee79f64ff57fbf99edf2ec0b22`. The build verifier passed source and ZIP parity.
+Validated code commit: `0c8c5f9`. PR: #17. Release archive: `dist/harborcache-1.7.0.zip`, 606 files, SHA256 `32a036870611ac8ed6ec80d084b78d266e6ceeee79f64ff57fbf99edf2ec0b22`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -24,10 +24,10 @@ Validated code commit: this PR head. PR: pending. Release archive: `dist/harborc
 
 ## CI
 
-Pending. The acceptance job checks the four Site Health tests, the REST health payload and the existing REST, multisite and application-password paths.
+Run [43583775339](https://github.com/shahidirfan100/harborcache/actions/runs/43583775339) passed all 14 jobs on `0c8c5f9`, including the four Site Health tests, the REST health payload, multisite scope and application-password access.
 
 ## Limits
 
 - Front-end bootstrap was not benchmarked before and after. The code no longer loads the console for logged-in front-end requests; a CPU comparison remains open.
 - The front-end admin-bar item is no longer registered because the console is admin-only. The dashboard widget, settings screens and REST remain.
-- Screenshots still show the 1.6.3 capture until the 1.7.0 capture runs.
+- Screenshots: `media/` is recaptured from this ZIP in run 43583800109 (version 1.7.0).
