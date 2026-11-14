@@ -68,9 +68,9 @@ Acceptance: key-memory sample published; cold/write CPU within 2%; no p95 regres
 
 ## 1.9.0 — CPU, prefetch and concurrency
 
-The 1.8 benchmark sampled 30 runs: free keys were 46–48 bytes, HarborCache keys 199–201 bytes, and the estimated key share of `used_memory` was about 10%. That is below the 20% migration gate, so key format v2 is deferred until a production sample justifies it.
+The 1.8 benchmark sampled 30 runs: free keys were 46–48 bytes, HarborCache keys 199–201 bytes, and the estimated key share of `used_memory` was about 10%. That is below the 20% migration gate, so key format v2 is deferred until a production sample justifies it. 1.8.1 cut the CPU ratio from 1.28 to 1.15 and brought cold/write within 6%; bulk reads remain 1.64x.
 
-- Close the measured cold/write gap: free 209 ms vs HarborCache 268 ms PHP CPU; forced-read p95 2.33 vs 2.62 ms; write p95 2.57 vs 2.95 ms. Profile the Codec HMAC path and key build, then fix only the measured top cost without weakening signatures.
+- Close the remaining bulk-read gap: 1.8.1 is 1.149 CPU, 1.038 forced-read and 1.058 write; bulk-100 is 1.641. Profile `get_multiple` key build and decode, then fix only the measured top cost without weakening object signing.
 - Batch prefetch and priming so repeated reads use fewer Redis round trips; prove it with command counts, not claims.
 - Add race tests for concurrent options, counters, WooCommerce stock/orders and invalidation. Fix the shared helpers, not each call site.
 - Revisit key format only if a 10,000-key production sample shows a >20% key share; otherwise keep the 199-byte keys and spend the work on CPU.

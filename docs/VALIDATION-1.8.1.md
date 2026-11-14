@@ -1,6 +1,6 @@
 # HarborCache 1.8.1 validation
 
-Validated code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.8.1.zip`, 606 files, SHA256 `cf062a0386e83274cfd9d8bd797823e555a8580fe6f5d437ccd72fa47d12a4d2`. The build verifier passed source and ZIP parity.
+Validated code commit: `227184b`. PR: #19. Release archive: `dist/harborcache-1.8.1.zip`, 606 files, SHA256 `cf062a0386e83274cfd9d8bd797823e555a8580fe6f5d437ccd72fa47d12a4d2`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -21,7 +21,19 @@ Validated code commit: this PR head. PR: pending. Release archive: `dist/harborc
 
 ## CI
 
-Pending. The performance job will report whether the raw-key fast path changes the 30-run PHP CPU and cold/write medians.
+Run [43592044967](https://github.com/shahidirfan100/harborcache/actions/runs/43592044967) passed all 14 jobs on `227184b`, including the cross-process Relay gate (`{"ok":true,"first":"v1","second":"v2"}`).
+
+## Measured results (30-run medians, full lane)
+
+| Metric | Free baseline | HarborCache 1.8.1 | Ratio |
+| --- | ---: | ---: | ---: |
+| PHP CPU | 92.18 ms | 105.94 ms | 1.149 |
+| Forced-read p95 | 1.122 ms | 1.165 ms | 1.038 |
+| Write p95 | 1.188 ms | 1.257 ms | 1.058 |
+| Bulk-100 p95 | 0.249 ms | 0.408 ms | 1.641 |
+| Median object key | 46 bytes | 199 bytes | 4.3x |
+
+The 1.8.0 run was 1.283 CPU, 1.122 cold and 1.148 write ratios. The 1.8.1 raw-key, verified-payload and decoded-value caches cut CPU to 1.149 and bring cold/write within 6%. Bulk reads remain the outlier at 1.641 and move to 1.9.
 
 ## Limits
 
