@@ -9,6 +9,7 @@ final class Codec {
 	private $compression;
 	private $decoder;
 	private $decode_error;
+	private $verified = array();
 
 	public function __construct( array $config ) {
 		$this->serializer = $config['serializer'];
@@ -54,8 +55,12 @@ final class Codec {
 		}
 		$mac  = substr( $raw, 2, 64 );
 		$data = substr( $raw, 66 );
-		if ( ! hash_equals( hash_hmac( 'sha256', $data, self::secret() ), $mac ) ) {
-			throw new \RuntimeException( 'Cache value signature mismatch.' );
+		if ( ! isset( $this->verified[ $raw ] ) ) {
+			if ( ! hash_equals( hash_hmac( 'sha256', $data, self::secret() ), $mac ) ) {
+				throw new \RuntimeException( 'Cache value signature mismatch.' );
+			}
+			if ( count( $this->verified ) >= 256 ) { $this->verified = array(); }
+			$this->verified[ $raw ] = true;
 		}
 		if ( 'none' !== $this->compression ) {
 			$data = call_user_func( $this->decoder, $data );
