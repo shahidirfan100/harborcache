@@ -20,11 +20,13 @@ final class Status {
 	private static $owned;
 	private static $current;
 	private static $installed;
+	private static $health;
 
 	public static function reset() {
 		self::$owned    = null;
 		self::$current  = null;
 		self::$installed = null;
+		self::$health   = null;
 	}
 
 	/** The live drop-in instance, or null when WordPress is using request memory. */
@@ -141,6 +143,103 @@ final class Status {
 		// Legacy keys kept for integrations that still read them.
 		$snapshot['connected'] = ! empty( $details['connected'] );
 		return $snapshot;
+	}
+
+	/**
+	 * One provider for connection, server, drop-in and cron facts.
+	 * Site Health, REST /health and the dashboard read the same facts.
+	 *
+	 * @return array
+	 */
+	public static function health_facts() {
+		if ( null !== self::$health ) { return self::$health; }
+		$status  = self::read();
+		$cache   = self::cache();
+		$state   = (string) ( $status['state'] ?? 'unknown' );
+		$ready   = ! empty( $status['ready'] );
+		$dropin  = (string) ( $status['dropin'] ?? 'missing' );
+		$issues  = array();
+		$checks  = array();
+		$server  = array( 'available' => false );
+
+		$connection_ok = 'connected' === $state;
+		$checks['connection'] = array(
+			'label'       => __( 'HarborCache connection', 'harborcache-object-cache-with-redis' ),
+			'status'      => $connection_ok ? 'good' : 'critical',
+			'description' => $connection_ok ? __( 'Transport, namespace, codec and drop-in are current.', 'harborcache-object-cache-with-redis' ) : self::label( $status ) . ': ' . self::explain( $status ),
+		);
+		if ( ! $connection_ok ) {
+			$issues[] = array( 'area' => 'connection', 'severity' => 'critical', 'message' => $checks['connection']['description'] );
+		}
+
+		$dropin_ok = 'current' === $dropin;
+		$checks['dropin'] = array(
+			'label'       => __( 'HarborCache drop-in', 'harborcache-object-cache-with-redis' ),
+			'status'      => $dropin_ok ? 'good' : 'recommended',
+			'description' => $dropin_ok
+				? __( 'The owned drop-in matches this plugin version.', 'harborcache-object-cache-with-redis' )
+				/* translators: %s: drop-in state. */
+				: sprintf( __( 'The drop-in is %s. Install or update the owned drop-in.', 'harborcache-object-cache-with-redis' ), $dropin ),
+		);
+		if ( ! $dropin_ok ) {
+			$issues[] = array( 'area' => 'dropin', 'severity' => 'recommended', 'message' => $checks['dropin']['description'] );
+		}
+
+		if ( $cache && $ready ) {
+			try { $server = (array) $cache->operational_health() + array( 'available' => true ); } catch ( \Throwable $error ) { $server = array( 'available' => false ); }
+		}
+		$server_issues = array();
+		if ( 'noeviction' === ( $server['maxmemory_policy'] ?? '' ) && (int) ( $server['maxmemory'] ?? 0 ) > 0 ) {
+			$server_issues[] = __( 'Redis uses noeviction; exhausted memory can reject cache writes.', 'harborcache-object-cache-with-redis' );
+		}
+		if ( 'relay' === ( $cache ? ( $cache->ch_config['client'] ?? '' ) : '' ) && $cache ) {
+			try {
+				$relay  = $cache->relay_diagnostics();
+				$memory = $relay['stats']['memory'] ?? null;
+				if ( is_array( $memory ) && isset( $memory['used'], $memory['max'] ) && (int) $memory['max'] > 0 && (int) $memory['used'] >= (int) $memory['max'] * 0.9 ) {
+					$server_issues[] = __( 'Relay memory is nearly full; its local cache is evicting entries.', 'harborcache-object-cache-with-redis' );
+				}
+			} catch ( \Throwable $error ) { /* Optional Relay diagnostics. */ }
+		}
+		$checks['server'] = array(
+			'label'       => __( 'HarborCache Redis server', 'harborcache-object-cache-with-redis' ),
+			'status'      => $server_issues ? 'recommended' : 'good',
+			'description' => $server_issues ? implode( ' ', $server_issues ) : __( 'Redis policy and capacity checks reported no issue.', 'harborcache-object-cache-with-redis' ),
+		);
+		foreach ( $server_issues as $message ) {
+			$issues[] = array( 'area' => 'server', 'severity' => 'recommended', 'message' => $message );
+		}
+
+		$config  = Config::load();
+		$cleanup = ! $config['async_flush'] || (bool) wp_next_scheduled( 'harborcache_cleanup' );
+		$queries = ! $config['query_maintenance'] || (bool) wp_next_scheduled( 'harborcache_queries' );
+		$cron_issues = array();
+		if ( ! $cleanup ) { $cron_issues[] = __( 'The cache cleanup schedule is missing.', 'harborcache-object-cache-with-redis' ); }
+		if ( ! $queries ) { $cron_issues[] = __( 'The query maintenance schedule is missing.', 'harborcache-object-cache-with-redis' ); }
+		$checks['cron'] = array(
+			'label'       => __( 'HarborCache cron schedules', 'harborcache-object-cache-with-redis' ),
+			'status'      => $cron_issues ? 'recommended' : 'good',
+			'description' => $cron_issues ? implode( ' ', $cron_issues ) : __( 'Enabled cleanup and maintenance events are scheduled.', 'harborcache-object-cache-with-redis' ),
+		);
+		foreach ( $cron_issues as $message ) {
+			$issues[] = array( 'area' => 'cron', 'severity' => 'recommended', 'message' => $message );
+		}
+
+		$statuses = array_column( $checks, 'status' );
+		$overall  = in_array( 'critical', $statuses, true ) ? 'critical' : ( in_array( 'recommended', $statuses, true ) ? 'recommended' : 'good' );
+		self::$health = array(
+			'status'  => $overall,
+			'state'   => $state,
+			'issues'  => $issues,
+			'checks'  => $checks,
+			'facts'   => array(
+				'connection' => array( 'state' => $state, 'transport' => $status['transport'] ?? '', 'namespace' => $status['namespace'] ?? '', 'ready' => $ready ),
+				'dropin'     => $dropin,
+				'server'     => $server,
+				'cron'       => array( 'cleanup' => $cleanup, 'queries' => $queries ),
+			),
+		);
+		return self::$health;
 	}
 
 	/**

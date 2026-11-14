@@ -29,7 +29,7 @@ def main():
     patterns = [line.strip().lstrip("/") for line in (ROOT / ".distignore").read_text().splitlines() if line.strip() and not line.startswith("#")]
     runtime_roots = {"assets", "docs", "includes", "languages", "vendor"}
     root_files = {"harborcache.php", "uninstall.php", "readme.txt", "LICENSE.md", "composer.json"}
-    user_guides = {"ADVANCED.md", "CONFIGURATION.md", "DEPLOYMENT.md", "FEATURES.md", "SOURCE.md"}
+    user_guides = {"ADVANCED.md", "CONFIGURATION.md", "DEPLOYMENT.md", "FEATURES.md", "REST-API.md", "SECURITY.md", "SOURCE.md"}
     included = []
     for path in sorted(ROOT.rglob("*")):
         rel = path.relative_to(ROOT).as_posix()

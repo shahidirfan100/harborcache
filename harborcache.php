@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HarborCache – Object Cache with Redis
  * Description: Fast Redis object caching for WordPress with clear insights, analytics and safe cache controls.
- * Version: 1.6.3
+ * Version: 1.7.0
  * Text Domain: harborcache-object-cache-with-redis
  * Domain Path: /languages
  * Network: true
@@ -35,7 +35,7 @@ catch ( \Throwable $harborcache_error ) { error_log( 'HarborCache configuration 
 define( 'HARBORCACHE_BASENAME', plugin_basename( HARBORCACHE_FILE ) );
 define( 'HARBORCACHE_PLUGIN_DIR', plugin_dir_url( HARBORCACHE_FILE ) );
 
-define( 'HARBORCACHE_VERSION', '1.6.3' );
+define( 'HARBORCACHE_VERSION', '1.7.0' );
 
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-autoloader.php';
 
@@ -75,8 +75,10 @@ $harborcache_needs_management = is_admin()
     || ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() )
     || ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() )
     || ( defined( 'WP_CLI' ) && WP_CLI )
-    || 'cli' === PHP_SAPI
-    || ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() );
+    || 'cli' === PHP_SAPI;
+
+// Logged-in front-end requests keep only metrics; the console loads for admin,
+// AJAX, cron and CLI work instead of on every signed-in page view.
 
 // Wait until every active plugin has loaded, so a late second manager still stands HarborCache down.
 add_action( 'plugins_loaded', static function () use ( $harborcache_needs_management ) {

@@ -4,7 +4,7 @@ Tags: redis, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.6.3
+Stable tag: 1.7.0
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -30,7 +30,7 @@ Read routes: `/status`, `/health`, `/analytics?window=7200&interval=300`, `/grou
 
 The group route scope is `global` or `site-<id>`. The flush route accepts exactly one of `group=<name>` or `scope=site|site-<id>|global|all`. `scope=site` means the current site. `all` is accepted only when `network_flush` allows it and the caller is a network administrator on multisite; other cross-site scopes require the same. Sending both `group` and `scope` returns HTTP 400.
 
-Responses omit credentials and connection endpoints. Status codes are 400 for invalid or ambiguous input, 401/403 for authentication or scope refusal, 404 for an unknown registered group, 503 when Redis is unavailable, and 500 when a flush is not confirmed. All routes require the management capability; unauthenticated requests are rejected by WordPress REST authentication.
+Responses omit credentials and connection endpoints. Status codes are 400 for invalid or ambiguous input, 401/403 for authentication or scope refusal, 404 for an unknown registered group, 429 with `Retry-After` when the flush budget is exhausted, 503 when Redis is unavailable, and 500 when a flush is not confirmed. Flushes are limited to one per minute and ten per hour per user and site. `/health` returns four checks (connection, Redis server, drop-in, cron) and their facts. All routes require the management capability; unauthenticated requests are rejected by WordPress REST authentication. See `docs/REST-API.md` for the error table and examples.
 
 HarborCache connects to the Redis endpoint you configure. It does not contact the original plugin vendor. Optional tracing must be explicitly configured and uses your host application's New Relic or OpenTelemetry integration and destination. Plugin-provided spans contain command names, timings and bounded datastore metadata; they omit cached keys, values, credentials and endpoint details. Configure retention and privacy in your provider or collector. No tracing SDK, remote account or external destination is enabled by default.
 
@@ -76,6 +76,11 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.7.0 =
+* Replace the single Site Health result with four checks (connection, Redis server, drop-in, cron) backed by one `Status::health_facts()` provider; REST `/health` returns the same checks and facts.
+* Keep the administration console off logged-in front-end requests; admin, AJAX, cron and CLI requests still load it.
+* Document the REST error table and examples, the trusted-Redis boundary and the shared slow-log policy.
 
 = 1.6.3 =
 * Sign serialized cache values with an HMAC and reject unsigned `V1` values, closing the object-injection path from writable Redis data.
