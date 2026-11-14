@@ -11,6 +11,7 @@ final class Codec {
 	private $decode_error;
 	private $verified = array();
 	private $plain = array();
+	private $decoded = array();
 
 	public function __construct( array $config ) {
 		$this->serializer = $config['serializer'];
@@ -94,6 +95,11 @@ final class Codec {
 			$value = @unserialize( $data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize, WordPress.PHP.NoSilencedErrors.Discouraged
 			if ( false === $value && 'b:0;' !== $data ) {
 				throw new \RuntimeException( 'Corrupt serialized cache value.' );
+			}
+			// Plain, reference-free values are immutable cache data; reuse the decoded array for exact repeats.
+			if ( 'V1' === $version && ! is_object( $value ) && false === strpos( $data, 'R:' ) && false === strpos( $data, 'r:' ) ) {
+				if ( count( $this->decoded ) >= 128 ) { $this->decoded = array(); }
+				$this->decoded[ $raw ] = $value;
 			}
 			return $value;
 		}
