@@ -38,7 +38,7 @@ final class Codec {
 		}
 		// Only object-bearing payloads can instantiate a class during unserialize.
 		// igbinary has no text token to inspect, so every igbinary payload is signed.
-		$signed = 'php' !== $this->serializer || false !== strpos( $data, 'O:' ) || false !== strpos( $data, 'C:' );
+		$signed = 'php' !== $this->serializer || (bool) preg_match( '/(?:^|[;{}])(?:O|C|E):[0-9]+:/', $data );
 		if ( 'none' !== $this->compression ) {
 			$data = call_user_func( $this->compression . '_compress', $data );
 		}
@@ -71,7 +71,7 @@ final class Codec {
 		} elseif ( 'V1' === $version ) {
 			if ( 'php' !== $this->serializer ) { throw new \RuntimeException( 'Unsigned igbinary cache value.' ); }
 			$data = substr( $raw, 2 );
-			if ( false !== strpos( $data, 'O:' ) || false !== strpos( $data, 'C:' ) ) {
+			if ( preg_match( '/(?:^|[;{}])(?:O|C|E):[0-9]+:/', $data ) ) {
 				throw new \RuntimeException( 'Unsigned cache value contains an object.' );
 			}
 		} else {
@@ -84,7 +84,7 @@ final class Codec {
 			throw new \RuntimeException( 'Value decoding failed.' );
 		}
 		// An old V1 payload may only be deserialized when it is object-free.
-		if ( 'V1' === $version && ( false !== strpos( $data, 'O:' ) || false !== strpos( $data, 'C:' ) ) ) {
+		if ( 'V1' === $version && ( preg_match( '/(?:^|[;{}])(?:O|C|E):[0-9]+:/', $data ) ) ) {
 			throw new \RuntimeException( 'Unsigned cache value contains an object.' );
 		}
 		if ( 'php' === $this->serializer ) {
