@@ -30,7 +30,7 @@ if ( 'child' === $mode ) {
 		if ( microtime( true ) > $deadline ) { throw new RuntimeException( 'The parent did not release the child.' ); }
 		usleep( 5000 );
 	}
-	$second = $cache->get( 'cross', 'ci-relay', false, $found );
+	$second = $cache->get( 'cross', 'ci-relay', true, $found );
 	echo json_encode( array( 'first' => $first, 'second' => $second, 'found' => $found ) ) . "\n";
 	exit( 0 );
 }
