@@ -80,7 +80,8 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 = 1.8.1 =
 * Cache raw key/group pairs so repeated forced reads and writes skip sanitizing and layout work.
 * Reuse one layout predicate across key build and refresh, with the same cold-start behavior.
-* Sign only object-bearing payloads; plain arrays and scalars use the V1 envelope and are accepted only when they contain no object. Cache exact verified signatures per request.
+* Cache exact verified signatures and decoded plain payloads per request for repeated forced reads.
+* Sign only object-bearing payloads; plain arrays and scalars use the V1 envelope and are accepted only when they contain no object.
 
 = 1.8.0 =
 * Add 10,000-key byte sampling (median, p95, maximum, Redis key count and estimated share of `used_memory`) to the benchmark output.

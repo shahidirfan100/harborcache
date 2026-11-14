@@ -1,5 +1,5 @@
 <?php
-/** Original extensions to the GPL Redis Object Cache engine. */
+/** Original extensions to the GPL Redis object-cache engine. */
 defined( 'ABSPATH' ) || exit;
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-codec.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-observer.php';
