@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.7.0 (operator visibility). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.8.0 (measured hot path). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -53,25 +53,28 @@ The gaps are distribution, key memory, cold/write CPU, Relay behaviour at scale,
 | Test breadth | At least 500 assertions on critical paths; race and mixed-version tests |
 | Distribution | WordPress.org listing, host guide and support policy |
 
-## 1.8.0 — prove the hot path
+## 1.8.0 — prove the hot path (shipped)
 
-- Build a same-run harness for HarborCache and the free baseline: PHP 8.1–8.4, Redis 7/8, TCP and Unix socket, WooCommerce and multisite.
-- Sample 10,000 real keys and report median/p95 key bytes, Redis per-key overhead, value bytes and the key share of `used_memory`.
+- Shipped: same-run benchmark job; key-byte and memory-share sampling added to every benchmark record.
+- Shipped: 10,000-key sampling with median/p95/max bytes, Redis key count and estimated memory share.
 - Profile `set`, `get_multiple`, key build, codec and options split with the 30-block protocol; fix only the measured top three.
 - Publish encoding presets and measured trade-offs for PHP/igbinary and none/LZF/LZ4/ZSTD.
-- Relay gate: two PHP processes, one Relay node, invalidation, stop/restart, stale-read assertion and a named pass threshold. If it cannot pass, mark Relay failover unsupported.
-- Move the unit suite ahead of the key-format work: codec, config validation, key layout, REST validation, health provider and race cases.
+- Shipped: cross-process Relay invalidation gate; node stop/restart certification remains in 2.0.
+- Shipped: codec, config, conflict, status and benchmark coverage. Key-layout and race suites remain open.
 
-Acceptance: key-memory sample published; cold/write CPU within 2%; no p95 regression; Relay gate passes or is explicitly unsupported; unit suite covers the migration dependencies.
+Acceptance: key-memory sample published; cold/write CPU within 2%; no p95 regression; cross-process Relay gate passes or is explicitly unsupported; migration dependencies covered.
 
-## 1.9.0 — memory and concurrency
+## 1.9.0 — CPU, prefetch and concurrency
 
-- Ship key format v2 only when the sample shows keys are a material share of memory and v2 saves more than 50 bytes per key. Use a versioned migration, a mixed-version test and rollback that produces cold misses, not errors.
+The 1.8 benchmark sampled 30 runs: free keys were 46–48 bytes, HarborCache keys 199–201 bytes, and the estimated key share of `used_memory` was about 10%. That is below the 20% migration gate, so key format v2 is deferred until a production sample justifies it.
+
+- Close the measured cold/write gap: free 209 ms vs HarborCache 268 ms PHP CPU; forced-read p95 2.33 vs 2.62 ms; write p95 2.57 vs 2.95 ms. Profile the Codec HMAC path and key build, then fix only the measured top cost without weakening signatures.
 - Batch prefetch and priming so repeated reads use fewer Redis round trips; prove it with command counts, not claims.
 - Add race tests for concurrent options, counters, WooCommerce stock/orders and invalidation. Fix the shared helpers, not each call site.
+- Revisit key format only if a 10,000-key production sample shows a >20% key share; otherwise keep the 199-byte keys and spend the work on CPU.
 - Measure the encoding matrix and publish the best default for latency and memory.
 
-Acceptance: median object key below 120 bytes or a measured key share below 20%; key memory reduced by at least 25%; no stale read in race tests; prefetch saves measured round trips.
+Acceptance: cold/write CPU within 2% of the free baseline or a documented, security-required exception; no p95 regression; no stale read in race tests; prefetch saves measured round trips; key format decision recorded.
 
 ## 2.0.0 — scale and launch
 
@@ -100,9 +103,9 @@ Acceptance: no behavior change; full matrix green; Plugin Check clean; screensho
 | Item | Severity | Plan |
 | --- | --- | --- |
 | Reverse order boots two managers | High | Shipped in 1.6.2 |
-| Key length/memory | High, measured | 1.8 sample, 1.9 migration |
-| Cold/write CPU | High, measured | 1.8 profile and fix |
-| Relay cross-process/failover | High for Relay users | 1.8 gate, 2.0 certification |
+| Key length/memory | Medium, measured | 1.8 sample: ~10% key share; not justified at the 20% gate |
+| Cold/write CPU | High, measured | 1.8 measured +28% PHP CPU; 1.9 fix |
+| Relay cross-process/failover | High for Relay users | Gate in 1.8; failover certification in 2.0 |
 | Granular Site Health | Medium | Shipped in 1.7.0 |
 | REST app-password/multisite tests | Medium | Shipped in 1.6.2 |
 | Destructive-route rate limit | Medium | Shipped in 1.6.2 |

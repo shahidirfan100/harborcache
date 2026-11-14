@@ -203,8 +203,8 @@ final class Status {
 		}
 		$checks['server'] = array(
 			'label'       => __( 'HarborCache Redis server', 'harborcache-object-cache-with-redis' ),
-			'status'      => $server_issues ? 'recommended' : 'good',
-			'description' => $server_issues ? implode( ' ', $server_issues ) : __( 'Redis policy and capacity checks reported no issue.', 'harborcache-object-cache-with-redis' ),
+			'status'      => $server_issues ? 'recommended' : ( empty( $server['available'] ) ? 'recommended' : 'good' ),
+			'description' => $server_issues ? implode( ' ', $server_issues ) : ( empty( $server['available'] ) ? __( 'Redis server details are unavailable.', 'harborcache-object-cache-with-redis' ) : __( 'Redis policy and capacity checks reported no issue.', 'harborcache-object-cache-with-redis' ) ),
 		);
 		foreach ( $server_issues as $message ) {
 			$issues[] = array( 'area' => 'server', 'severity' => 'recommended', 'message' => $message );
