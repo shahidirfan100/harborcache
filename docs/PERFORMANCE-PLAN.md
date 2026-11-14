@@ -84,6 +84,12 @@ Every release must also pass:
 
 A noisy result, a failed correctness check or a material slowdown blocks the performance claim. Keep a patch only if it improves a measured workload or fixes a defined defect. Do not compensate for slower reads by highlighting a different fast flush benchmark.
 
+## Commercial comparison lane
+
+Do not claim a commercial comparison from public marketing or a different-version article. Run the same harness (PHP 8.1–8.4, Redis 7/8, TCP/socket, WooCommerce, 30 rotating blocks) with a licensed commercial artifact supplied through a CI secret. Skip the lane cleanly when the artifact is absent and say so in the report.
+
+Report paired p50/p95 TTFB, PHP CPU, Redis commands, memory per key/value, hit ratio and peak memory. Targets: within 10% TTFB/CPU, at most 1.2x memory, no p95 regression beyond 1%. If the lane cannot run, mark the comparison unavailable; never substitute a public number for the same-run result.
+
 ## Code quality and provenance
 
 Antislop does not certify code authorship and comment removal does not improve PHP execution speed. Keep comments that explain protocol, security, compatibility and concurrency; remove or correct misleading narration. Preserve legal notices, attributed source and public hook contracts.

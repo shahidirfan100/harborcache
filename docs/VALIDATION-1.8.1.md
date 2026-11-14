@@ -35,6 +35,10 @@ Run [43592044967](https://github.com/shahidirfan100/harborcache/actions/runs/435
 
 The 1.8.0 run was 1.283 CPU, 1.122 cold and 1.148 write ratios. The 1.8.1 raw-key, verified-payload and decoded-value caches cut CPU to 1.149 and bring cold/write within 6%. Bulk reads remain the outlier at 1.641 and move to 1.9.
 
+## Commercial comparison
+
+No licensed commercial artifact is available in the repository or CI, so no same-run commercial comparison was run. Public third-party results are directional and are not a substitute for the licensed lane defined in the roadmap.
+
 ## Limits
 
 - A raw-key map saves repeated builds; unique cold keys still build once.
