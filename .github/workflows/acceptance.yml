@@ -307,9 +307,10 @@ jobs:
           wp plugin deactivate harborcache --path="$WP_ROOT"
           wp plugin install redis-cache --version=3.0.0 --path="$WP_ROOT"
           export XDEBUG_MODE=off
-          git fetch --depth=1 origin 6d235793ec8ad5bcbd9885b35c8043d6915fcea9
-          git show 6d235793ec8ad5bcbd9885b35c8043d6915fcea9:dist/harborcache-1.2.6.zip > /tmp/hc-baseline.zip
-          echo '44c4483c357cfb0260c23e3e3005385c2c4a50daecbcf395128082a7984fe2e9  /tmp/hc-baseline.zip' | sha256sum -c -
+          # The baseline lane is the previous release, so the paired gate measures this release, not runner drift.
+          git fetch --depth=1 origin 3f9dcb2
+          git show 3f9dcb2:dist/harborcache-1.8.1.zip > /tmp/hc-baseline.zip
+          echo 'fa4d07fc79c3743bf87108a74c2779f871d236e6cebc0850451478a2c9a02793  /tmp/hc-baseline.zip' | sha256sum -c -
           unzip -q /tmp/hc-baseline.zip -d /tmp/hc-baseline
           mkdir -p "$WP_ROOT/wp-content/mu-plugins" evidence/profiles
           cp tests/benchmark-loader.php "$WP_ROOT/wp-content/mu-plugins/hc-benchmark.php"
@@ -350,6 +351,24 @@ jobs:
           rm "$WP_ROOT/wp-content/object-cache.php"
           wp plugin activate harborcache --path="$WP_ROOT"
           php tests/install-dropin.php "$WP_ROOT/wp-content/plugins/harborcache"
+      - name: Performance gate against the previous release
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/compare-benchmarks.py evidence > evidence/performance-compare.json
+          python3 - <<'PY'
+          import json
+          lanes = json.load(open('evidence/performance-compare.json'))[0]['lanes']['full']
+          limits = {'php_cpu_ms': 2.0, 'cold_20.p95_ms': 2.0, 'writes_20.p95_ms': 2.0, 'bulk_100.p95_ms': 10.0}
+          failed = []
+          for metric, limit in limits.items():
+              change = lanes[metric]['paired_change_vs_baseline_pct']
+              print(f'{metric}: {change:+.2f}% vs the previous release (limit {limit:+.0f}%)')
+              if change > limit:
+                  failed.append(metric)
+          if failed:
+              raise SystemExit('Performance gate failed: ' + ', '.join(failed))
+          PY
       - name: Critical options with a controlled stale read node
         shell: bash
         run: |
