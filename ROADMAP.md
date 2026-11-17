@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.8.1 (hot-path patch). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.9.0 (architecture foundation). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -55,7 +55,12 @@ Targets for the next releases:
 | Test breadth | 500+ assertions; race, mixed-version, WooCommerce and failover tests |
 | Distribution | WordPress.org listing, host guide and support policy |
 
-## 1.9.0 — close bulk and harden the matrix
+## 1.9.0 — architecture foundation (shipped)
+
+- Shipped: `Key_Builder`; `HarborCache_Advanced_Cache` delegates layout, prefixes, cached ids and resets.
+- Shipped: `build_keys()` seam; advanced cache uses `Key_Builder::build_many()`.
+- Shipped: key-builder regression tests.
+- Remaining: `Bulk_Reader`, `Value_Envelope` and the bulk performance target move to 1.9.1.
 
 - Expand the same-harness matrix to current main, the pinned 1.8.1 reference and the prior release. No external artifact is required.
 - Close the remaining bulk-read gap: 1.8.1 is 105.94 ms CPU, 1.165 ms forced read, 1.257 ms write and 0.408 ms bulk-100. Profile `get_multiple`, key build and decode; target 1.1x the current HarborCache bulk median.

@@ -3,7 +3,7 @@
  * Drop-In Name: HarborCache Drop-In
  * Plugin URI: https://github.com/shahidirfan100/harborcache
  * Description: A persistent object cache backend powered by Redis. Supports Predis, PhpRedis, Relay, replication, sentinels, clustering and WP-CLI.
- * Version: 1.8.1
+ * Version: 1.9.0
  * Author: Shahid Irfan
  * Author URI: https://profiles.wordpress.org/shahidirfan100/
  * License: GPL-3.0-only
@@ -2113,6 +2113,22 @@ class WP_Object_Cache {
      *                      from the persistent cache. Default false.
      * @return array|false Array of values organized into groups.
      */
+    /**
+     * Build derived keys for a batch of keys.
+     *
+     * @param  array  $keys  Keys to resolve.
+     * @param  string $group Group name.
+     * @return array  Map of original key to derived key.
+     */
+    protected function build_keys( array $keys, $group = 'default' ) {
+        $san_group = $this->sanitize_key_part( $group ?: 'default' );
+        $derived   = array();
+        foreach ( $keys as $key ) {
+            $derived[ $key ] = $this->fast_build_key( $this->sanitize_key_part( $key ), $san_group );
+        }
+        return $derived;
+    }
+
     public function get_multiple( $keys, $group = 'default', $force = false ) {
         if ( ! is_array( $keys ) ) {
             return false;
@@ -2122,12 +2138,7 @@ class WP_Object_Cache {
         $derived_keys = [];
         $start_time = microtime( true );
 
-        $san_group = $this->sanitize_key_part( $group );
-
-        foreach ( $keys as $key ) {
-            $san_key = $this->sanitize_key_part( $key );
-            $derived_keys[ $key ] = $this->fast_build_key( $san_key, $san_group );
-        }
+        $derived_keys = $this->build_keys( $keys, $group );
 
         if ( $this->is_ignored_group( $group ) || ! $this->redis_status() ) {
             foreach ( $keys as $key ) {

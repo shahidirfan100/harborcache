@@ -20,6 +20,7 @@
 /docs/VALIDATION-*.md
 /docs/COMPARISON-*.md
 /docs/DESIGN-REVIEW-*.md
+/docs/ARCHITECTURE-*.md
 /docs/PERFORMANCE-*.md
 /docs/*.json
 /docs/*.jsonl

@@ -2,6 +2,7 @@
 /** Original extensions to the GPL Redis object-cache engine. */
 defined( 'ABSPATH' ) || exit;
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-codec.php';
+require_once HARBORCACHE_PLUGIN_PATH . '/includes/class-key-builder.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-observer.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-cleanup.php';
 require_once HARBORCACHE_PLUGIN_PATH . '/includes/ch-routing.php';
@@ -43,6 +44,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_option_snapshots = array();
 	private $ch_reconnecting = false;
 	private $ch_initializing = true;
+	private $ch_key_builder;
 	private $ch_derived = array();
 	private $ch_prefixes = array();
 	private $ch_derived_count = 0;
@@ -79,6 +81,16 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		$this->ch_transport_ok = (bool) $this->redis_status();
 		if ( $codec_error ) { $this->handle_exception( $codec_error ); }
 		$this->ch_base = WP_REDIS_PREFIX . 'meta';
+		$this->ch_key_builder = new \HarborCache\Key_Builder(
+			$this->ch_config,
+			$this->ch_base,
+			function ( $key ) { return $this->ch_token( $key ); },
+			function ( $group ) { return $this->ch_scope( $group ); },
+			function ( $scope, $group_key, $group ) { $this->ch_register_group( $scope, $group_key, $group ); },
+			function ( $group ) { return $this->is_ignored_group( $group ); },
+			function ( $key, $group ) { return $this->ch_key_fallback( $key, $group ); },
+			function ( $key ) { return $this->ch_sanitize_key( $key ); }
+		);
 		if ( $this->redis_status() ) {
 			try {
 				if ( $this->ch_config['strict'] ) {
@@ -87,6 +99,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 					}, $this->ch_base );
 				}
 				$this->ch_root = $this->ch_token( $this->ch_base . ':root' );
+			$this->ch_key_builder->set_root( $this->ch_root );
 				$this->ch_ready = '' !== $this->ch_root && $this->redis_status();
 			}
 			catch ( Throwable $error ) { $this->handle_exception( $error ); }
@@ -329,16 +342,6 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 
 	private function ch_scope( $group ) { return $this->is_global_group( $group ) ? 'global' : 'site-' . ( is_numeric( $this->blog_prefix ) ? (int) $this->blog_prefix : 1 ); }
 
-	private function ch_context( $group ) {
-		if ( $this->ch_context_blog !== $this->blog_prefix ) {
-			$this->ch_context_blog = $this->blog_prefix;
-			$this->ch_contexts = array();
-		}
-		if ( isset( $this->ch_contexts[ $group ] ) ) { return $this->ch_contexts[ $group ]; }
-		if ( count( $this->ch_contexts ) >= 256 ) { $this->ch_contexts = array(); }
-		return $this->ch_contexts[ $group ] = $this->ch_scope( $group ) . ':' . $group;
-	}
-
 	private function ch_register_group( $scope, $group_key, $group ) {
 		// A read of a group creates only its epoch field. The first write registers it and refreshes metadata TTLs.
 		if ( ! $this->ch_writing ) { return; }
@@ -362,107 +365,48 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	}
 
 	public function add_global_groups( $groups ) {
-		$this->ch_contexts = array();
-		$this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0;
-		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
 		parent::add_global_groups( $groups );
+		if ( $this->ch_key_builder ) { $this->ch_key_builder->reset(); }
 	}
 
 	public function add_non_persistent_groups( $groups ) {
 		parent::add_non_persistent_groups( $groups );
-		$this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0;
+		if ( $this->ch_key_builder ) { $this->ch_key_builder->reset(); }
 	}
 
 	/** True while the serializer, compression, split, client and WordPress version match the cached layout. */
 	private function ch_layout_current() {
-		return null !== $this->ch_layout_state &&
-			$this->ch_layout_state[0] === $this->ch_config['serializer'] &&
-			$this->ch_layout_state[1] === $this->ch_config['compression'] &&
-			$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
-			$this->ch_layout_state[3] === $this->ch_config['client'] &&
-			$this->ch_layout_state[4] === ( $GLOBALS['wp_version'] ?? '' );
+		return null !== $this->ch_key_builder && $this->ch_key_builder->layout_current();
 	}
 
-	/** Cache the raw key/group pair so repeated forced reads and writes skip sanitizing and layout work. */
+	/** Fallback for ignored groups: the inherited key format, still prefixed by the active drop-in. */
+	private function ch_key_fallback( $key, $group ) {
+		return parent::fast_build_key( $key, $group );
+	}
+
+	/** The active cache class uses the fast default sanitizer; subclasses keep their override. */
+	private function ch_sanitize_key( $key ) {
+		return $this->ch_default_sanitizer ? ( is_string( $key ) ? str_replace( ':', '-', $key ) : $key ) : $this->sanitize_key_part( $key );
+	}
+
+	protected function build_keys( array $keys, $group = 'default' ) {
+		if ( ! $this->ch_ready || ! $this->ch_key_builder ) { return parent::build_keys( $keys, $group ); }
+		try { return $this->ch_key_builder->build_many( $keys, $group, $this->blog_prefix ); }
+		catch ( Throwable $error ) { $this->handle_exception( $error ); return parent::build_keys( $keys, $group ); }
+	}
+
 	public function build_key( $key, $group = 'default' ) {
-		if ( ! $this->ch_ready || ( ! is_int( $key ) && ! is_string( $key ) ) ) { return parent::build_key( $key, $group ); }
-		if ( ! $this->ch_layout_current() ) { $this->ch_raw = array(); $this->ch_raw_count = 0; }
-		$group = $group ?: 'default';
-		$raw   = (string) $key;
-		$bucket = $this->blog_prefix;
-		if ( isset( $this->ch_raw[ $bucket ][ $group ][ $raw ] ) ) { return $this->ch_raw[ $bucket ][ $group ][ $raw ]; }
-		if ( $this->ch_default_sanitizer ) {
-			$san_key   = is_string( $key ) ? str_replace( ':', '-', $key ) : $key;
-			$san_group = is_string( $group ) ? str_replace( ':', '-', $group ) : $group;
-		} else {
-			$san_key   = $this->sanitize_key_part( $key );
-			$san_group = $this->sanitize_key_part( $group );
-		}
-		$id = $this->fast_build_key( $san_key, $san_group );
-		if ( $this->ch_raw_count >= 4096 ) { $this->ch_raw = array(); $this->ch_raw_count = 0; }
-		$this->ch_raw[ $bucket ][ $group ][ $raw ] = $id;
-		++$this->ch_raw_count;
-		return $id;
+		if ( ! $this->ch_ready || ! $this->ch_key_builder || ( ! is_int( $key ) && ! is_string( $key ) ) ) { return parent::build_key( $key, $group ); }
+		try { return $this->ch_key_builder->build( $key, $group, $this->blog_prefix ); }
+		catch ( Throwable $error ) { $this->handle_exception( $error ); return parent::build_key( $key, $group ); }
 	}
 
 	public function fast_build_key( $key, $group = 'default' ) {
-		if ( ! $this->ch_ready ) { return parent::fast_build_key( $key, $group ); }
+		if ( ! $this->ch_ready || ! $this->ch_key_builder ) { return parent::fast_build_key( $key, $group ); }
 		try {
-		if ( 'harborcache' === $group && 'metrics' === $key ) { return $this->ch_base . ( $this->ch_config['analytics']['persist'] ? '' : ':' . $this->ch_root ) . ':analytics:metrics'; }
-		$group  = $group ?: 'default';
-		if ( ! $this->ch_layout_current() ) {
-			$this->ch_derived = array();
-			$this->ch_prefixes = array();
-			$this->ch_derived_count = 0;
-			$this->ch_ids = array();
-			$this->ch_ids_count = 0;
-			$this->ch_raw = array();
-			$this->ch_raw_count = 0;
-			$this->ch_layout_state = array( $this->ch_config['serializer'], $this->ch_config['compression'], $this->ch_config['split_alloptions'], $this->ch_config['client'], ( $GLOBALS['wp_version'] ?? '' ) );
-		}
-		$bucket = $this->blog_prefix;
-		if ( isset( $this->ch_ids[ $bucket ][ $group ][ $key ] ) ) { return $this->ch_ids[ $bucket ][ $group ][ $key ]; }
-		if ( $this->is_ignored_group( $group ) ) { return $this->ch_id( $bucket, $group, $key, parent::fast_build_key( $key, $group ) ); }
-		$layout = $this->ch_config['split_alloptions'] && 'relay' === $this->ch_config['client'] ? ':relay-options-v1' : '';
-		$context = $this->ch_context( $group );
-		$cacheable = is_string( $key ) || is_int( $key );
-		if ( $cacheable && isset( $this->ch_derived[ $context ][ $key ] ) ) { return $this->ch_id( $bucket, $group, $key, $this->ch_derived[ $context ][ $key ] ); }
-		if ( isset( $this->ch_prefixes[ $context ] ) ) { $prefix = $this->ch_prefixes[ $context ]; }
-		else {
-		$format = $this->ch_config['serializer'] . ':' . $this->ch_config['compression'] . ':' . (int) $this->ch_config['split_alloptions'] . $layout . ':wp-' . ( $GLOBALS['wp_version'] ?? '' );
-		$scope = $this->ch_base . ':' . $this->ch_root . ':' . $this->ch_scope( $group );
-		$epoch = $this->ch_token( $scope . ':epoch' );
-		if ( ! $this->ch_ready ) { return parent::fast_build_key( $key, $group ); }
-		$group_key = $scope . ':' . $epoch . ':g:' . rawurlencode( $group );
-		$version = $this->ch_token( $group_key . ':epoch' );
-		if ( ! $this->ch_ready ) { return parent::fast_build_key( $key, $group ); }
-		if ( ! isset( $this->ch_registered[ $group_key ] ) ) {
-			$this->ch_register_group( $scope, $group_key, $group );
-			$this->ch_registered[ $group_key ] = true;
-		}
-		$signature = substr( hash( 'sha256', $format ), 0, 8 );
-		// Keep one group's bulk operations in one Redis Cluster hash slot.
-		$slot = defined( 'WP_REDIS_CLUSTER' ) ? ':{hc-' . substr( hash( 'sha256', $group_key ), 0, 24 ) . '}' : '';
-		$prefix = $group_key . ':' . $version . $slot . ':v:' . $signature . ':';
-		if ( count( $this->ch_prefixes ) >= 256 ) { $this->ch_prefixes = array(); }
-		$this->ch_prefixes[ $context ] = $prefix;
-		}
-		$derived = $prefix . hash( 'sha256', (string) $key );
-		if ( $cacheable ) {
-			if ( $this->ch_derived_count >= 1024 ) { $this->ch_derived = array(); $this->ch_derived_count = 0; }
-			$this->ch_derived[ $context ][ $key ] = $derived; ++$this->ch_derived_count;
-		}
-		return $this->ch_id( $bucket, $group, $key, $derived );
+			if ( 'harborcache' === $group && 'metrics' === $key ) { return $this->ch_base . ( $this->ch_config['analytics']['persist'] ? '' : ':' . $this->ch_root ) . ':analytics:metrics'; }
+			return $this->ch_key_builder->build_sanitized( $key, $group ?: 'default', $this->blog_prefix );
 		} catch ( Throwable $error ) { $this->handle_exception( $error ); return parent::fast_build_key( $key, $group ); }
-	}
-
-	/** Memoize one request-local cache id per blog, group and key. */
-	private function ch_id( $bucket, $group, $key, $id ) {
-		if ( ! is_string( $key ) && ! is_int( $key ) ) { return $id; }
-		if ( $this->ch_ids_count >= 4096 ) { $this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0; }
-		$this->ch_ids[ $bucket ][ $group ][ $key ] = $id;
-		++$this->ch_ids_count;
-		return $id;
 	}
 
 	protected function maybe_serialize( $data ) { return $this->ch_codec->encode( $data ); }
@@ -507,8 +451,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 			}
 		}
 		$this->ch_tokens[ $key ] = $value;
-		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
-		$this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0;
+		if ( $this->ch_key_builder ) { $this->ch_key_builder->reset(); }
 		return $value;
 	}
 
@@ -644,8 +587,7 @@ LUA;
 
 	/** Drop memoized ids after an external namespace change. */
 	private function ch_reset_layout() {
-		$this->ch_derived = array(); $this->ch_prefixes = array(); $this->ch_derived_count = 0;
-		$this->ch_ids = array(); $this->ch_ids_count = 0; $this->ch_raw = array(); $this->ch_raw_count = 0;
+		if ( $this->ch_key_builder ) { $this->ch_key_builder->reset(); }
 		$this->ch_tokens = array(); $this->ch_epochs = null; $this->ch_epochs_key = null; $this->ch_registry = null; $this->ch_touched = array();
 		if ( $this->ch_ready ) {
 			try { $this->ch_root = $this->ch_token( $this->ch_base . ':root' ); }
@@ -790,14 +732,10 @@ LUA;
 				$san_key = $this->sanitize_key_part( $key );
 				$san_group = $this->sanitize_key_part( $group ?: 'default' );
 			}
-			$id = $this->ch_ids[ $this->blog_prefix ][ $san_group ][ $san_key ] ?? null;
+			$id = $this->ch_key_builder ? $this->ch_key_builder->cached_id( $this->blog_prefix, $san_group, $san_key ) : null;
 			if (
 				null !== $id &&
-				isset( $this->ch_layout_state[0] ) &&
-				$this->ch_layout_state[0] === $this->ch_config['serializer'] &&
-				$this->ch_layout_state[1] === $this->ch_config['compression'] &&
-				$this->ch_layout_state[2] === $this->ch_config['split_alloptions'] &&
-				$this->ch_layout_state[3] === $this->ch_config['client'] &&
+				$this->ch_key_builder->layout_current() &&
 				array_key_exists( $id, $this->cache )
 			) {
 				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $id ] ) ? clone $this->cache[ $id ] : $this->cache[ $id ];
