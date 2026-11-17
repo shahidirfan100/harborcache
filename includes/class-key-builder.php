@@ -92,6 +92,12 @@ final class Key_Builder {
 		return $this->ids[ $bucket ][ $group ][ $key ] ?? null;
 	}
 
+	/** Return a runtime id only when the layout is still current; reset stale caches first. */
+	public function runtime_id( $bucket, $group, $key ) {
+		if ( ! $this->layout_current() ) { $this->reset_layout_caches(); return null; }
+		return $this->ids[ $bucket ][ $group ][ $key ] ?? null;
+	}
+
 	public function build( $key, $group, $bucket ) {
 		$group = $group ?: 'default';
 		if ( ! $this->layout_current() ) { $this->reset_layout_caches(); }

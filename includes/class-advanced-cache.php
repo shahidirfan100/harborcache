@@ -721,12 +721,8 @@ LUA;
 				$san_key = $this->sanitize_key_part( $key );
 				$san_group = $this->sanitize_key_part( $group ?: 'default' );
 			}
-			$id = $this->ch_key_builder ? $this->ch_key_builder->cached_id( $this->blog_prefix, $san_group, $san_key ) : null;
-			if (
-				null !== $id &&
-				$this->ch_key_builder->layout_current() &&
-				array_key_exists( $id, $this->cache )
-			) {
+			$id = $this->ch_key_builder ? $this->ch_key_builder->runtime_id( $this->blog_prefix, $san_group, $san_key ) : null;
+			if ( null !== $id && array_key_exists( $id, $this->cache ) ) {
 				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $id ] ) ? clone $this->cache[ $id ] : $this->cache[ $id ];
 			}
 		}
