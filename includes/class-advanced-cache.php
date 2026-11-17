@@ -722,14 +722,15 @@ LUA;
 				$san_group = $this->sanitize_key_part( $group ?: 'default' );
 			}
 			$builder = $this->ch_key_builder;
+			$state   = $builder ? $builder->layout_state : null;
 			$id      = $builder ? ( $builder->ids[ $this->blog_prefix ][ $san_group ][ $san_key ] ?? null ) : null;
 			if (
 				null !== $id &&
-				null !== $builder->layout_state &&
-				$builder->layout_state[0] === $this->ch_config['serializer'] &&
-				$builder->layout_state[1] === $this->ch_config['compression'] &&
-				$builder->layout_state[2] === $this->ch_config['split_alloptions'] &&
-				$builder->layout_state[3] === $this->ch_config['client'] &&
+				null !== $state &&
+				$state[0] === $this->ch_config['serializer'] &&
+				$state[1] === $this->ch_config['compression'] &&
+				$state[2] === $this->ch_config['split_alloptions'] &&
+				$state[3] === $this->ch_config['client'] &&
 				array_key_exists( $id, $this->cache )
 			) {
 				$found = true; ++$this->cache_hits; ++$this->runtime_hits; return is_object( $this->cache[ $id ] ) ? clone $this->cache[ $id ] : $this->cache[ $id ];

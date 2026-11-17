@@ -361,9 +361,9 @@ jobs:
           python3 - <<'PY'
           import json
           lanes = json.load(open('evidence/performance-compare.json'))[0]['lanes']['full']
-          # Identical code has measured 3.1 points apart on this shared runner, so a 2% CPU band would flap.
-          # This gate catches a material regression; parity inside the noise band is read from the artifacts.
-          limits = {'php_cpu_ms': 5.0, 'cold_20.p95_ms': 5.0, 'writes_20.p95_ms': 5.0, 'bulk_100.p95_ms': 10.0}
+          # Bands come from four runs of identical code. The averaged loop timings hold to about 1 point;
+          # whole-process CPU moved 7.4 points, so it is a gross-regression check only.
+          limits = {'runtime_1000.p50_ms': 2.0, 'bulk_100.p50_ms': 2.0, 'cold_20.p95_ms': 5.0, 'writes_20.p95_ms': 5.0, 'php_cpu_ms': 10.0}
           failed = []
           for metric, limit in limits.items():
               change = lanes[metric]['paired_change_vs_baseline_pct']

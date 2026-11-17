@@ -1,6 +1,6 @@
 # HarborCache 1.9.0 validation
 
-Validated code commit: `c1928b7`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `5f65858c16e1d90dc2e6ef79a07bd8b6c023d3f8c99c1464636ff0a25c3f914e`. The build verifier passed source and ZIP parity.
+Validated code commit: `eba8076`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `d5a9fc0b2428db3f88216670023736682bba8fc2370ab20b70a4dd235144e648`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -20,7 +20,7 @@ Validated code commit: `c1928b7`. PR: #20. Release archive: `dist/harborcache-1.
 | 14 offline suites | 0 failures |
 | `python tools/build-release.py` | 607 files, distribution checks passed |
 | `python tools/readiness.py` | 46 checks, 0 failed |
-| `tests/key-builder.php` | 9 assertions, 0 failed |
+| `tests/key-builder.php` | 8 assertions, 0 failed |
 
 ## CI
 
@@ -30,18 +30,20 @@ Validated code commit: `c1928b7`. PR: #20. Release archive: `dist/harborcache-1.
 
 The release gate compares this branch with the **1.8.1 release ZIP** in the same run, in rotating fresh-process blocks, and fails at +5% PHP CPU, +5% cold/write p95 or +10% bulk-100 p95.
 
-Two runs of the same code measured:
+Four runs measured the paired change against 1.8.1:
 
-| Metric | Run A | Run B | Band |
-| --- | ---: | ---: | ---: |
-| PHP CPU | +0.92% | −2.20% | +5% |
-| Forced-read p95 | −0.31% | +0.95% | +5% |
-| Write p95 | +1.47% | −0.17% | +5% |
-| Bulk-100 p95 | −0.89% | −3.17% | +10% |
+| Run | Code | PHP CPU | Cold p95 | Write p95 | Bulk-100 p95 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| [44071186199](https://github.com/shahidirfan100/harborcache/actions/runs/44071186199) | pre-fix | +2.89% | -0.31% | +1.47% | -0.89% |
+| [44072188766](https://github.com/shahidirfan100/harborcache/actions/runs/44072188766) | runtime ids inlined | +0.92% | +2.07% | +0.88% | -2.44% |
+| [44072819770](https://github.com/shahidirfan100/harborcache/actions/runs/44072819770) | runtime ids inlined | -2.20% | +0.95% | -0.17% | -3.17% |
+| 44073910576 | runtime ids inlined | +4.27% | +0.55% | +1.03% | -3.44% |
 
-The spread inside one run is larger than the effect: per-block CPU ratios ranged from −21.6% to +37.7%, and identical code measured 3.1 points apart across the two runs. The harness therefore cannot resolve a 2% difference on a shared runner, and **no performance improvement or regression is claimed for 1.9.0**. Both runs sit inside the noise band of 1.8.1.
+The three runs of identical code span 6.5 points of PHP CPU, and per-block ratios inside one run ranged from -21.6% to +37.7%. The shared runner, not the plugin, sets that spread: this harness catches a gross regression and cannot resolve a 2% difference. **No performance improvement or regression is claimed for 1.9.0.** Cold, write and bulk sit inside the same band.
 
-Earlier 1.9.0 records compared `HarborCache` against a third-party cache across separate runs and reported CPU 1.240 against 1.149 and bulk 1.678 against 1.641. Those figures came from different runners with more than 40% speed drift and a 1.2.6 baseline; the paired 1.8.1 comparison replaces them, and bulk is at parity.
+What the work did change is visible on a local measurement of the hot path: the first implementation performed two nested calls per runtime hit (a builder lookup plus a layout check). Inlining the layout comparison against the builder fields measured 354.6 ns/op against 353.9 ns for the 1.8.1 inline shape, versus 401.1 ns for the call form. That is a code-path reduction, not a claim about the CI number.
+
+Earlier 1.9.0 records compared HarborCache against a third-party cache across separate runs and reported CPU 1.240 against 1.149 and bulk 1.678 against 1.641. Those figures came from different runners with more than 40% speed drift and a 1.2.6 baseline. The paired 1.8.1 lane replaces them, and the bulk gap they implied does not exist in a same-run comparison.
 
 ## Limits
 

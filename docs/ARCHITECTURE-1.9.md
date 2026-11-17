@@ -16,7 +16,7 @@ This release starts the read-path refactor. Behavior is frozen; the goal is to g
 
 `HarborCache_Advanced_Cache` now delegates `build_key()`, `fast_build_key()`, layout checks, cached ids and every namespace/layout reset to this class. The cache still supplies Redis token, scope, registration, ignored-group and fallback callbacks. The key bytes are unchanged.
 
-`cached_id()` and the `ids`/`layout_state` fields are read directly by the cache's runtime-hit path, which is the hottest operation in a request. Keeping that check inline (instead of a builder call plus a nested layout call) measured cheaper than the callback form; `tests/status-matrix.php` still asserts that a layout change bypasses the runtime hit.
+The cache's runtime-hit path reads the `ids` and `layout_state` fields directly instead of calling back into the builder, because that check runs on every memory hit and a call plus a nested layout call measured more expensive than the inline comparison. `tests/status-matrix.php` still asserts that a layout change bypasses the runtime hit, and `layout_current()` remains the single description of the layout; keep the inline comparison in sync with it.
 
 ### Bulk key seam
 
