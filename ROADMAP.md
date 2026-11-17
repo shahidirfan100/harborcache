@@ -35,7 +35,7 @@ Current release: 1.9.0 (architecture foundation). Source of truth for behavior: 
 - 10,000-key sampling with median/p95/max bytes, Redis key count and estimated key share of `used_memory`.
 - Cross-process Relay invalidation gate.
 - Raw-key fast path, shared layout predicate, request-local verified and decoded payload caches.
-- 30-run full-lane medians for 1.8.1: PHP CPU 105.94 ms, forced-read p95 1.165 ms, write p95 1.257 ms, bulk-100 p95 0.408 ms.
+- 1.8.1 medians move with the runner. In the 1.9.0 paired lane (30 blocks, full plugin, PhpRedis) 1.8.1 measured 111.6 ms PHP CPU, 1.571 ms forced-read p95, 1.596 ms write p95 and 0.561 ms bulk-100 p95. Treat the paired run, not an archived absolute, as the reference.
 - Median key 199 bytes; estimated key share about 10.4%.
 - 1.8.0 recorded its own medians; the 1.8.1 validation records the current harness.
 
