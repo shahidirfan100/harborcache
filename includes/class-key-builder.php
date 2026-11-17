@@ -99,7 +99,7 @@ final class Key_Builder {
 		if ( isset( $this->raw[ $bucket ][ $group ][ $raw ] ) ) { return $this->raw[ $bucket ][ $group ][ $raw ]; }
 		$san_key   = call_user_func( $this->sanitize, $key );
 		$san_group = call_user_func( $this->sanitize, $group );
-		$id = $this->build_sanitized( $san_key, $san_group, $bucket );
+		$id = $this->build_sanitized_internal( $san_key, $san_group, $bucket, true );
 		if ( $this->raw_count >= 4096 ) { $this->raw = array(); $this->raw_count = 0; }
 		$this->raw[ $bucket ][ $group ][ $raw ] = $id;
 		++$this->raw_count;
@@ -108,15 +108,30 @@ final class Key_Builder {
 
 	public function build_many( array $keys, $group, $bucket ) {
 		$group = $group ?: 'default';
+		if ( ! $this->layout_current() ) { $this->reset_layout_caches(); }
+		$san_group = call_user_func( $this->sanitize, $group );
 		$result = array();
-		foreach ( $keys as $key ) { $result[ $key ] = $this->build( $key, $group, $bucket ); }
+		foreach ( $keys as $key ) {
+			$raw = (string) $key;
+			if ( isset( $this->raw[ $bucket ][ $group ][ $raw ] ) ) { $result[ $key ] = $this->raw[ $bucket ][ $group ][ $raw ]; continue; }
+			$san_key = call_user_func( $this->sanitize, $key );
+			$id = $this->build_sanitized_internal( $san_key, $san_group, $bucket, true );
+			if ( $this->raw_count >= 4096 ) { $this->raw = array(); $this->raw_count = 0; }
+			$this->raw[ $bucket ][ $group ][ $raw ] = $id;
+			++$this->raw_count;
+			$result[ $key ] = $id;
+		}
 		return $result;
 	}
 
 	/** Build from a key and group that are already sanitized for the cache path. */
 	public function build_sanitized( $key, $group, $bucket ) {
+		return $this->build_sanitized_internal( $key, $group, $bucket, false );
+	}
+
+	private function build_sanitized_internal( $key, $group, $bucket, $layout_checked ) {
 		$group = $group ?: 'default';
-		if ( ! $this->layout_current() ) { $this->reset_layout_caches(); }
+		if ( ! $layout_checked && ! $this->layout_current() ) { $this->reset_layout_caches(); }
 		if ( isset( $this->ids[ $bucket ][ $group ][ $key ] ) ) { return $this->ids[ $bucket ][ $group ][ $key ]; }
 		if ( call_user_func( $this->ignored, $group ) ) {
 			return $this->remember( $bucket, $group, $key, call_user_func( $this->fallback, $key, $group ) );
