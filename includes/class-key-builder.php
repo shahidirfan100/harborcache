@@ -32,16 +32,21 @@ final class Key_Builder {
 	private $fallback;
 	/** @var callable */
 	private $sanitize;
-	/** @var array|null */
-	private $layout_state;
 	/** @var array */
 	private $derived = array();
 	/** @var array */
 	private $prefixes = array();
 	/** @var int */
 	private $derived_count = 0;
-	/** @var array */
-	private $ids = array();
+	/**
+	 * Request-local id map and layout snapshot. The cache's runtime-hit path reads both directly to
+	 * avoid two method calls per hit; keep the layout comparison in sync with layout_current().
+	 *
+	 * @var array
+	 */
+	public $ids = array();
+	/** @var array|null */
+	public $layout_state;
 	/** @var int */
 	private $ids_count = 0;
 	/** @var array */
@@ -89,12 +94,6 @@ final class Key_Builder {
 	}
 
 	public function cached_id( $bucket, $group, $key ) {
-		return $this->ids[ $bucket ][ $group ][ $key ] ?? null;
-	}
-
-	/** Return a runtime id only when the layout is still current; reset stale caches first. */
-	public function runtime_id( $bucket, $group, $key ) {
-		if ( ! $this->layout_current() ) { $this->reset_layout_caches(); return null; }
 		return $this->ids[ $bucket ][ $group ][ $key ] ?? null;
 	}
 
