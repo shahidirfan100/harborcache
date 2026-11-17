@@ -1,6 +1,6 @@
 # HarborCache 1.9.0 validation
 
-Validated code commit: `eba8076`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `d5a9fc0b2428db3f88216670023736682bba8fc2370ab20b70a4dd235144e648`. The build verifier passed source and ZIP parity.
+Validated code commit: `eba8076`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `9aab315d2a7170cdf18e9c1493c5dcb99564892b0f1c743d4bcdf4f401706023`. The build verifier passed source and ZIP parity.
 
 ## What changed
 

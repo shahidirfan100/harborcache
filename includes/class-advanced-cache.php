@@ -721,9 +721,8 @@ LUA;
 				$san_key = $this->sanitize_key_part( $key );
 				$san_group = $this->sanitize_key_part( $group ?: 'default' );
 			}
-			$builder = $this->ch_key_builder;
-			$state   = $builder ? $builder->layout_state : null;
-			$id      = $builder ? ( $builder->ids[ $this->blog_prefix ][ $san_group ][ $san_key ] ?? null ) : null;
+			$state = $this->ch_key_builder->layout_state ?? null;
+			$id    = $this->ch_key_builder->ids[ $this->blog_prefix ][ $san_group ][ $san_key ] ?? null;
 			if (
 				null !== $id &&
 				null !== $state &&
