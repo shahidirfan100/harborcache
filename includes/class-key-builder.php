@@ -97,8 +97,8 @@ final class Key_Builder {
 		if ( ! $this->layout_current() ) { $this->reset_layout_caches(); }
 		$raw   = (string) $key;
 		if ( isset( $this->raw[ $bucket ][ $group ][ $raw ] ) ) { return $this->raw[ $bucket ][ $group ][ $raw ]; }
-		$san_key   = call_user_func( $this->sanitize, $key );
-		$san_group = call_user_func( $this->sanitize, $group );
+		$san_key   = ( $this->sanitize )( $key );
+		$san_group = ( $this->sanitize )( $group );
 		$id = $this->build_sanitized_internal( $san_key, $san_group, $bucket, true );
 		if ( $this->raw_count >= 4096 ) { $this->raw = array(); $this->raw_count = 0; }
 		$this->raw[ $bucket ][ $group ][ $raw ] = $id;
@@ -109,12 +109,12 @@ final class Key_Builder {
 	public function build_many( array $keys, $group, $bucket ) {
 		$group = $group ?: 'default';
 		if ( ! $this->layout_current() ) { $this->reset_layout_caches(); }
-		$san_group = call_user_func( $this->sanitize, $group );
+		$san_group = ( $this->sanitize )( $group );
 		$result = array();
 		foreach ( $keys as $key ) {
 			$raw = (string) $key;
 			if ( isset( $this->raw[ $bucket ][ $group ][ $raw ] ) ) { $result[ $key ] = $this->raw[ $bucket ][ $group ][ $raw ]; continue; }
-			$san_key = call_user_func( $this->sanitize, $key );
+			$san_key = ( $this->sanitize )( $key );
 			$id = $this->build_sanitized_internal( $san_key, $san_group, $bucket, true );
 			if ( $this->raw_count >= 4096 ) { $this->raw = array(); $this->raw_count = 0; }
 			$this->raw[ $bucket ][ $group ][ $raw ] = $id;
@@ -133,8 +133,8 @@ final class Key_Builder {
 		$group = $group ?: 'default';
 		if ( ! $layout_checked && ! $this->layout_current() ) { $this->reset_layout_caches(); }
 		if ( isset( $this->ids[ $bucket ][ $group ][ $key ] ) ) { return $this->ids[ $bucket ][ $group ][ $key ]; }
-		if ( call_user_func( $this->ignored, $group ) ) {
-			return $this->remember( $bucket, $group, $key, call_user_func( $this->fallback, $key, $group ) );
+		if ( ( $this->ignored )( $group ) ) {
+			return $this->remember( $bucket, $group, $key, ( $this->fallback )( $key, $group ) );
 		}
 		$context = $this->context( $group, $bucket );
 		if ( isset( $this->derived[ $context ][ $key ] ) ) { return $this->remember( $bucket, $group, $key, $this->derived[ $context ][ $key ] ); }
@@ -142,7 +142,7 @@ final class Key_Builder {
 			$prefix = $this->prefixes[ $context ];
 		} else {
 			$prefix = $this->make_prefix( $group );
-			if ( null === $prefix ) { return $this->remember( $bucket, $group, $key, call_user_func( $this->fallback, $key, $group ) ); }
+			if ( null === $prefix ) { return $this->remember( $bucket, $group, $key, ( $this->fallback )( $key, $group ) ); }
 			if ( count( $this->prefixes ) >= 256 ) { $this->prefixes = array(); }
 			$this->prefixes[ $context ] = $prefix;
 		}
@@ -156,14 +156,14 @@ final class Key_Builder {
 	private function make_prefix( $group ) {
 		$layout = $this->config['split_alloptions'] && 'relay' === $this->config['client'] ? ':relay-options-v1' : '';
 		$format = $this->config['serializer'] . ':' . $this->config['compression'] . ':' . (int) $this->config['split_alloptions'] . $layout . ':wp-' . ( $GLOBALS['wp_version'] ?? '' );
-		$scope  = $this->base . ':' . $this->root . ':' . call_user_func( $this->scope, $group );
-		$epoch  = call_user_func( $this->token, $scope . ':epoch' );
+		$scope  = $this->base . ':' . $this->root . ':' . ( $this->scope )( $group );
+		$epoch  = ( $this->token )( $scope . ':epoch' );
 		if ( '' === $epoch ) { return null; }
 		$group_key = $scope . ':' . $epoch . ':g:' . rawurlencode( $group );
-		$version   = call_user_func( $this->token, $group_key . ':epoch' );
+		$version   = ( $this->token )( $group_key . ':epoch' );
 		if ( '' === $version ) { return null; }
 		if ( ! isset( $this->registered[ $group_key ] ) ) {
-			call_user_func( $this->register, $scope, $group_key, $group );
+			( $this->register )( $scope, $group_key, $group );
 			$this->registered[ $group_key ] = true;
 		}
 		$signature = substr( hash( 'sha256', $format ), 0, 8 );
@@ -178,7 +178,7 @@ final class Key_Builder {
 		}
 		if ( isset( $this->contexts[ $group ] ) ) { return $this->contexts[ $group ]; }
 		if ( count( $this->contexts ) >= 256 ) { $this->contexts = array(); }
-		return $this->contexts[ $group ] = call_user_func( $this->scope, $group ) . ':' . $group;
+		return $this->contexts[ $group ] = ( $this->scope )( $group ) . ':' . $group;
 	}
 
 	private function remember( $bucket, $group, $key, $id ) {
