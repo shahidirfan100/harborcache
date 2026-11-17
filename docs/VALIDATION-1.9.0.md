@@ -1,6 +1,6 @@
 # HarborCache 1.9.0 validation
 
-Validated code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `af9c13ce57cea8cbf2ef913b9c34e5ccb55d2f9d6040147b168491834a92858b`. The build verifier passed source and ZIP parity.
+Validated code commit: this PR head. PR: pending. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `0d2e7afd84efc51706235fd89bb9fdb5d84b52c3b68517681623c80d34651a31`. The build verifier passed source and ZIP parity.
 
 ## What changed
 

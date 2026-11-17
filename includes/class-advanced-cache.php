@@ -36,7 +36,6 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_root;
 	private $ch_base;
 	private $ch_ready = false;
-	private $ch_registered = array();
 	public $ch_commands = array();
 	private $ch_prefetch_keys = array();
 	private $ch_prefetch_skip = array();
@@ -45,17 +44,9 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	private $ch_reconnecting = false;
 	private $ch_initializing = true;
 	private $ch_key_builder;
-	private $ch_derived = array();
-	private $ch_prefixes = array();
-	private $ch_derived_count = 0;
-	private $ch_ids = array();
-	private $ch_ids_count = 0;
-	private $ch_raw = array();
-	private $ch_raw_count = 0;
 	private $ch_single;
 	private $ch_observe;
 	private $ch_readonly = array( 'get' => true, 'mget' => true, 'pttl' => true );
-	private $ch_layout_state;
 	private $ch_relay_bypass = false;
 	private $ch_ignored_source;
 	private $ch_ignored_exact = array();
@@ -65,8 +56,6 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 	public $ch_transport_ok = false;
 	private $ch_codec_ok = true;
 	private $ch_failure_reason = '';
-	private $ch_contexts = array();
-	private $ch_context_blog;
 	private $ch_default_sanitizer = false;
 
 	public function __construct( $fail_gracefully = false ) {
@@ -466,7 +455,7 @@ class HarborCache_Advanced_Cache extends WP_Object_Cache {
 		try {
 			$this->flush_runtime();
 			if ( 'all' !== $scope && 'global' !== $scope && ! preg_match( '/^site-[1-9][0-9]*$/D', $scope ) ) { return false; }
-			if ( 'all' === $scope ) { $guard = $this->ch_base . ':root'; $old = $this->ch_root; $pattern = $this->ch_base . ':' . $old . ':*'; $this->ch_root = $this->ch_rotate( $guard ); }
+			if ( 'all' === $scope ) { $guard = $this->ch_base . ':root'; $old = $this->ch_root; $pattern = $this->ch_base . ':' . $old . ':*'; $this->ch_root = $this->ch_rotate( $guard ); $this->ch_key_builder->set_root( $this->ch_root ); }
 			else { $guard = $this->ch_base . ':' . $this->ch_root . ':' . $scope . ':epoch'; $old = $this->ch_token( $guard ); $pattern = $this->ch_base . ':' . $this->ch_root . ':' . $scope . ':' . $old . ':*'; $this->ch_rotate( $guard ); }
 			if ( $this->ch_config['async_flush'] ) { $this->ch_reclaim( $pattern, $guard, $old ); }
 			return true;
@@ -590,7 +579,7 @@ LUA;
 		if ( $this->ch_key_builder ) { $this->ch_key_builder->reset(); }
 		$this->ch_tokens = array(); $this->ch_epochs = null; $this->ch_epochs_key = null; $this->ch_registry = null; $this->ch_touched = array();
 		if ( $this->ch_ready ) {
-			try { $this->ch_root = $this->ch_token( $this->ch_base . ':root' ); }
+			try { $this->ch_root = $this->ch_token( $this->ch_base . ':root' ); $this->ch_key_builder->set_root( $this->ch_root ); }
 			catch ( Throwable $error ) { $this->handle_exception( $error ); }
 		}
 	}
