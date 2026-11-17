@@ -28,4 +28,4 @@ Pending. The acceptance matrix covers runtime-hit invalidation, Relay invalidati
 
 - This is the first extraction, not the completed bulk refactor. `Bulk_Reader` and `Value_Envelope` remain in 1.9.1.
 - No performance improvement is claimed until the same-harness results are in.
-- Screenshots remain 1.8.1 until the 1.9.0 capture runs.
+- Screenshots: `media/` recaptured from this ZIP in run 44061096834 (version 1.9.0).
