@@ -88,6 +88,8 @@ A noisy result, a failed correctness check or a material slowdown blocks the per
 
 Use only our own harness and our own pinned builds: current main, the 1.8.1 reference ZIP and the previous release. Run PHP 8.1–8.4, Redis 7/8, TCP/socket, WooCommerce and 30 rotating blocks. Report paired p50/p95 TTFB, PHP CPU, Redis commands, memory per key/value, hit ratio and peak memory.
 
+The `integrations` job runs that lane on every push. `harbor` is the branch under test and `baseline` is the previous release ZIP, installed from the pinned artifact, so both engines rotate in the same process blocks on the same runner. `tools/compare-benchmarks.py` computes paired per-block changes, and the job fails the release at more than +2% PHP CPU, +5% cold/write p95 or +10% bulk-100 p95. CPU is the deterministic signal; a single-run p95 carries a few percent of its own spread, so its band is wider than the 1% p95 claim target. Cross-run ratios are never a gate: runner speed has moved by more than 40% between runs, which is larger than any change this project ships.
+
 Targets: no regression beyond 2% on CPU or cold/write, bulk-100 within 1.1x the current HarborCache median, and no p95 regression beyond 1%. If a target is not measured, mark it unsupported; never substitute a vendor or article number for our own result.
 
 ## Code quality and provenance
