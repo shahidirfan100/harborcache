@@ -62,7 +62,7 @@ Targets for the next releases:
 - Shipped: key-builder regression tests.
 - Remaining: `Bulk_Reader`, `Value_Envelope` and the bulk performance target move to 1.9.1.
 
-- Expand the same-harness matrix to current main, the pinned 1.8.1 reference and the prior release. No external artifact is required.
+- Done: the CI baseline lane is the previous release ZIP (1.8.1 here), installed from the pinned artifact and rotated in the same blocks as the branch. `tools/compare-benchmarks.py` paired changes fail the job at +5% CPU, +5% cold/write p95 or +10% bulk. Those bands mark material regressions only: identical code measured 3.1 points apart on the shared runner, so parity inside the band is read from the artifacts. Cross-run ratios are no longer used for any decision.
 - Close the remaining bulk-read gap: 1.8.1 is 105.94 ms CPU, 1.165 ms forced read, 1.257 ms write and 0.408 ms bulk-100. Profile `get_multiple`, key build and decode; target 1.1x the current HarborCache bulk median.
 - Batch prefetch and priming so repeated reads use fewer Redis round trips; prove it with command counts.
 - Decide key format v2 from our own key/value memory sample. If it does not save at least 50 bytes per key or 20% of key memory, keep the 199-byte keys and spend the work on CPU.
@@ -77,7 +77,7 @@ Acceptance: bulk-100 within 1.1x the current HarborCache median; CPU/cold/write 
 - Publish the same-harness comparison against the pinned HarborCache reference and the previous release.
 - Meet the performance table above or mark the missing target unsupported.
 - Add cluster/Sentinel failover tests and a multi-server, mixed-version deployment runbook.
-- Add performance regression thresholds to CI and publish the benchmark artifacts.
+- Publish the benchmark artifacts (the thresholds and paired gate landed in 1.9.0).
 - Submit to WordPress.org, publish the host integration guide and support policy, and provide an importer for existing Redis cache installations.
 
 Acceptance: same-harness results published; targets met or explicitly unsupported; clean WordPress.org review; install-from-directory smoke test; no regression beyond 1% on the harness.
