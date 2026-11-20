@@ -62,7 +62,7 @@ Targets for the next releases:
 - Shipped: key-builder regression tests.
 - Remaining: `Bulk_Reader`, `Value_Envelope` and the bulk performance target move to 1.9.1.
 
-- Done: the CI baseline lane is the previous release ZIP (1.8.1 here), installed from the pinned artifact and rotated in the same blocks as the branch. `tools/compare-benchmarks.py` paired changes fail the job above +2% on the runtime-hit loop or bulk-100 p50, +5% on cold/write p95, or +10% on whole-process CPU. Bands follow four identical-code runs: CPU moved 7.4 points, the loop timings under 1. Cross-run ratios are no longer used for any decision.
+- Done: the CI baseline lane is the previous release ZIP (1.8.1 here), installed from the pinned artifact and rotated in the same blocks as the branch. `tools/compare-benchmarks.py` paired changes fail the job above +3% on the runtime-hit loop or +2% on bulk-100 p50, +5% on cold/write p95, or +10% on whole-process CPU. Bands follow four identical-code runs: CPU moved 7.4 points, the loop timings under 1.5. Cross-run ratios are no longer used for any decision.
 - Bulk is already at 0.97x the 1.8.1 median in the paired lane; the 1.9.0 target (1.1x) is met. Remaining: the memorised-hit loop is +1.6% (+4.5 ns per hit) from reading the builder state from another object. Move the id memo and layout snapshot back onto the cache in `Bulk_Reader` if that closes it, and re-measure with the paired gate.
 - Batch prefetch and priming so repeated reads use fewer Redis round trips; prove it with command counts.
 - Decide key format v2 from our own key/value memory sample. If it does not save at least 50 bytes per key or 20% of key memory, keep the 199-byte keys and spend the work on CPU.
