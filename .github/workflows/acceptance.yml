@@ -34,6 +34,20 @@ jobs:
           extensions: mysqli, redis
           coverage: none
           tools: wp-cli
+      - name: WP-CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v wp >/dev/null 2>&1; then
+            # setup-php intermittently reports "Could not setup wp-cli"; install it here instead.
+            for attempt in 1 2 3; do
+              curl -fsSL -o /tmp/wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && break
+              sleep 3
+            done
+            test -s /tmp/wp-cli.phar
+            sudo install -m 0755 /tmp/wp-cli.phar /usr/local/bin/wp
+          fi
+          wp --version
       - name: Exact ZIP in relocated content and plugin directories
         shell: bash
         run: |
@@ -129,6 +143,20 @@ jobs:
           extensions: mysqli, redis, igbinary, lzf, lz4, zstd
           coverage: none
           tools: wp-cli
+      - name: WP-CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v wp >/dev/null 2>&1; then
+            # setup-php intermittently reports "Could not setup wp-cli"; install it here instead.
+            for attempt in 1 2 3; do
+              curl -fsSL -o /tmp/wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && break
+              sleep 3
+            done
+            test -s /tmp/wp-cli.phar
+            sudo install -m 0755 /tmp/wp-cli.phar /usr/local/bin/wp
+          fi
+          wp --version
       - name: Syntax and isolated MySQL installation
         shell: bash
         run: |
@@ -286,6 +314,20 @@ jobs:
           ini-values: relay.maxmemory=32M, xdebug.mode=off
           coverage: xdebug
           tools: wp-cli
+      - name: WP-CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v wp >/dev/null 2>&1; then
+            # setup-php intermittently reports "Could not setup wp-cli"; install it here instead.
+            for attempt in 1 2 3; do
+              curl -fsSL -o /tmp/wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && break
+              sleep 3
+            done
+            test -s /tmp/wp-cli.phar
+            sudo install -m 0755 /tmp/wp-cli.phar /usr/local/bin/wp
+          fi
+          wp --version
       - name: Syntax and isolated MySQL installation
         shell: bash
         run: |
