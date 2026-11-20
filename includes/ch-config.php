@@ -183,6 +183,17 @@ final class Config {
 		return $warnings;
 	}
 
+	/**
+	 * Accept a cache-namespace candidate only when it is a safe slug. The prefix is a
+	 * trust boundary, and this value can arrive in a request header.
+	 *
+	 * @param mixed $value Candidate namespace.
+	 * @return string The candidate, or an empty string when it is not a slug.
+	 */
+	public static function prefix_candidate( $value ) {
+		return is_string( $value ) && preg_match( '/^[A-Za-z0-9_-]{1,64}$/D', $value ) ? $value : '';
+	}
+
 	public static function apply() {
 		static $applied = false;
 		if ( $applied ) { return; }

@@ -1,6 +1,6 @@
 # HarborCache 1.9.0 validation
 
-Validated code commit: `8db4043`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `9aab315d2a7170cdf18e9c1493c5dcb99564892b0f1c743d4bcdf4f401706023`. The build verifier passed source and ZIP parity.
+Validated code commit: `8db4043`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `7e1834287f47e8d898a0c1961f73af2be86a07570e8d7c2e88d1a453d2fbb0bc`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
@@ -12,15 +12,26 @@ Validated code commit: `8db4043`. PR: #20. Release archive: `dist/harborcache-1.
 - `get()` reads the builder id map and layout snapshot inline, and returns no differently than 1.8.1.
 - Added `tests/key-builder.php` and the architecture note `docs/ARCHITECTURE-1.9.md` (excluded from the ZIP).
 
+## Security review
+
+Three hardening changes came out of a source review of the trust boundaries:
+
+1. **Cache namespace from a request header.** `wp_cache_init()` accepted `X-App-User` as `WP_REDIS_PREFIX` on Cloudways-style hosts. `Config::apply()` already defines the prefix from the settings file before that branch runs, so it was not reachable in a normal install, but the value is inbound. It now passes `Config::prefix_candidate()`, which accepts only `[A-Za-z0-9_-]{1,64}`.
+2. **Unbounded prefetch manifests.** With `prefetch` enabled, every cacheable GET wrote a manifest keyed by user, host and URI. Anonymous requests could create one key per distinct URL for 24 hours. Manifests are now written only for signed-in visitors, expire after 3600 seconds and track at most 250 entries.
+3. **Metrics growth without cron.** Retention and count trimming run on the `harborcache_metrics_discard` event. One sampled write in a hundred now calls `discard()` directly, so the sorted set stays bounded on hosts where WP-Cron never runs.
+
+`tests/security-guards.php` covers the slug rules, the anonymous gate, the signed-in path, the manifest lifetime and the on-write trim. `tests/status-matrix.php` asserts the prefetch gate rather than the old blanket GET rule.
+
 ## Local checks
 
 | Check | Result |
 | --- | --- |
 | PHP lint | 0 failures |
-| 14 offline suites | 0 failures |
+| 15 offline suites | 0 failures |
 | `python tools/build-release.py` | 607 files, distribution checks passed |
 | `python tools/readiness.py` | 46 checks, 0 failed |
 | `tests/key-builder.php` | 8 assertions, 0 failed |
+| `tests/security-guards.php` | 11 assertions, 0 failed |
 
 ## CI
 

@@ -259,13 +259,13 @@ function wp_cache_init() {
     }
 
     // Set a unique prefix for sites hosted on Cloudways, after validating both server-provided values.
+    // Config::apply() above already defines WP_REDIS_PREFIX from the settings file, so this branch only
+    // runs when neither wp-config nor the settings supplied a prefix. The app name still arrives in a
+    // request header, so it is accepted only as a slug: the prefix is a namespace trust boundary.
     $harborcache_cloudways_ip = isset( $_SERVER['cw_allowed_ip'] ) && is_scalar( $_SERVER['cw_allowed_ip'] )
         ? sanitize_text_field( wp_unslash( (string) $_SERVER['cw_allowed_ip'] ) )
         : '';
-    $harborcache_cloudways_user = getenv( 'HTTP_X_APP_USER' );
-    $harborcache_cloudways_user = is_string( $harborcache_cloudways_user )
-        ? sanitize_text_field( $harborcache_cloudways_user )
-        : '';
+    $harborcache_cloudways_user = \HarborCache\Config::prefix_candidate( getenv( 'HTTP_X_APP_USER' ) );
     if ( ! defined( 'WP_REDIS_PREFIX' ) && '' !== $harborcache_cloudways_ip && '' !== $harborcache_cloudways_user ) {
         define( 'WP_REDIS_PREFIX', $harborcache_cloudways_user );
     }

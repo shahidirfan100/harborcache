@@ -271,6 +271,8 @@ class Metrics {
                 $saved = $client->zadd( $key, $this->timestamp, serialize( $this ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
             }
             if ( false === $saved ) { throw new \RuntimeException( 'Metrics write failed.' ); }
+            // Cron may never run on hardened hosts, so trim one sampled write in a hundred instead of relying on it.
+            if ( 0 === random_int( 0, 99 ) ) { self::discard(); }
         } catch ( \Throwable $exception ) {
             self::log_failure( $exception );
         }

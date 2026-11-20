@@ -81,6 +81,9 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Extract key derivation into a dedicated `Key_Builder`; layout, prefix and request-local key caches now have one owner.
 * Add a `build_keys()` seam so bulk key preparation can be replaced without another branch in the inherited cache class.
 * Add key-builder regression coverage for stable keys, batch maps, layout rotation and root changes.
+* Accept a request-header namespace only when it is a slug, so a cache prefix cannot carry glob or separator characters.
+* Write prefetch manifests only for signed-in visitors, expire them within the hour and cap each manifest.
+* Trim sampled metrics on a periodic write, so retention holds when WP-Cron is not running.
 
 = 1.8.1 =
 * Cache raw key/group pairs so repeated forced reads and writes skip sanitizing and layout work.

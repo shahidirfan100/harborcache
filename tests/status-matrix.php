@@ -172,7 +172,7 @@ $prefetchable = new ReflectionMethod( $write, 'ch_prefetchable_request' );
 $incomplete = new ReflectionMethod( $write, 'ch_prefetch_incomplete' );
 if ( PHP_VERSION_ID < 80100 ) { $prefetchable->setAccessible( true ); $incomplete->setAccessible( true ); }
 $_SERVER['REQUEST_METHOD'] = 'GET'; $_SERVER['REQUEST_URI'] = '/prefetch-fixture';
-hc_status_gate( 'Prefetch accepts GET', true === $prefetchable->invoke( $write ) );
+hc_status_gate( 'Prefetch skips a visitor with no user', false === $prefetchable->invoke( $write ) );
 $_SERVER['REQUEST_METHOD'] = 'POST';
 hc_status_gate( 'Prefetch skips POST', false === $prefetchable->invoke( $write ) );
 $missing = @unserialize( 'O:22:"Missing_Prefetch_Class":0:{}' );

@@ -546,9 +546,14 @@ LUA;
 		}
 	}
 
-	/** A prefetch manifest is useful only for cacheable page views. */
+	/**
+	 * A prefetch manifest is useful only for a signed-in visitor on a cacheable page view.
+	 * Anonymous requests are excluded so that arbitrary URLs cannot create manifests.
+	 * shortcut: signed-in users can still create one manifest per URL; revisit if anonymous warming is needed.
+	 */
 	private function ch_prefetchable_request() {
 		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) ) { return false; }
+		if ( ! function_exists( 'get_current_user_id' ) || 0 === (int) get_current_user_id() ) { return false; }
 		$method = isset( $_SERVER['REQUEST_METHOD'] ) && is_string( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : '';
 		return ( 'GET' === $method || 'HEAD' === $method ) && ! empty( $_SERVER['REQUEST_URI'] );
 	}
@@ -603,7 +608,7 @@ LUA;
 	}
 	public function track_prefetch( $key, $value, $group, $force, $found, $time ) {
 		if ( $this->ch_prefetching || ! $found || in_array( $group, $this->ch_config['non_prefetchable_groups'], true ) || $this->is_ignored_group( $group ) || isset( $this->ch_prefetch_skip[ $group ][ (string) $key ] ) ) { return; }
-		if ( count( $this->ch_prefetch_keys, COUNT_RECURSIVE ) < 1000 ) { $this->ch_prefetch_keys[ $group ][ (string) $key ] = $key; }
+		if ( count( $this->ch_prefetch_keys, COUNT_RECURSIVE ) < 250 ) { $this->ch_prefetch_keys[ $group ][ (string) $key ] = $key; }
 	}
 	public function prefetch_request() {
 		if ( ! $this->redis_status() || ! $this->ch_prefetchable_request() ) { return; }
@@ -619,7 +624,7 @@ LUA;
 		foreach ( $this->ch_prefetch_skip as $group => $keys ) { foreach ( array_keys( $keys ) as $key ) { unset( $this->ch_prefetch_keys[ $group ][ $key ] ); } }
 		if ( $this->ch_config['split_alloptions'] ) { unset( $this->ch_prefetch_keys['options']['alloptions'] ); }
 		if ( ! $this->ch_prefetch_keys ) { return; }
-		try { $this->ch_command( array( 'SET', $this->ch_prefetch_id(), json_encode( array_map( 'array_values', $this->ch_prefetch_keys ) ), 'EX', 86400 ) ); }
+		try { $this->ch_command( array( 'SET', $this->ch_prefetch_id(), json_encode( array_map( 'array_values', $this->ch_prefetch_keys ) ), 'EX', 3600 ) ); }
 		catch ( Throwable $error ) { /* A failed prefetch manifest must not break the response. */ }
 	}
 
