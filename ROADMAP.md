@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.9.0 (architecture foundation). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.9.1 (architecture foundation plus security hardening). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -55,7 +55,7 @@ Targets for the next releases:
 | Test breadth | 500+ assertions; race, mixed-version, WooCommerce and failover tests |
 | Distribution | WordPress.org listing, host guide and support policy |
 
-## 1.9.0 — architecture foundation (shipped)
+## 1.9.0 / 1.9.1 — architecture foundation and hardening (shipped)
 
 - Shipped: `Key_Builder`; `HarborCache_Advanced_Cache` delegates layout, prefixes, cached ids and resets.
 - Shipped: `build_keys()` seam; advanced cache uses `Key_Builder::build_many()`.

@@ -2,7 +2,7 @@
 
 This release starts the read-path refactor. Behavior is frozen; the goal is to give bulk reads one owner instead of adding another branch to the inherited cache class.
 
-## Shipped in 1.9.0
+## Shipped in 1.9.0, hardened in 1.9.1
 
 ### `HarborCache\Key_Builder`
 
@@ -28,7 +28,7 @@ The cache's runtime-hit path reads the `ids` and `layout_state` fields directly 
 
 ## Next extractions
 
-These are deliberately not bolted into 1.9.0:
+These are deliberately not bolted into 1.9.0 or 1.9.1:
 
 1. `Bulk_Reader`
    - owns runtime-hit selection, `MGET`, decode, metrics and backend failure mapping;

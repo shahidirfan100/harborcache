@@ -1,10 +1,10 @@
-# HarborCache 1.9.0 validation
+# HarborCache 1.9.1 validation
 
-Validated code commit: `507055b`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `e8c0dfe0b5c9247cbb6a23d370faeb3fe7102d4540d438b26a5fff9e67c0ee69`. The build verifier passed source and ZIP parity.
+Validated code commit: `PENDING`. PR: #20. Release archive: `dist/harborcache-1.9.1.zip`, 607 files, SHA256 `ab5572da49cb2ec0ec34e243f2ec3e86834507ccb8cb33446a492690790ef104`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
-1.9.0 begins the read-path refactor. No key format, setting, route or dashboard layout changed.
+1.9.1 is the first release of the 1.9 line. It ships the read-path refactor and hardens three trust boundaries. No key format, setting, route or dashboard layout changed.
 
 - `HarborCache\Key_Builder` now owns layout signatures, group/scope prefixes, request-local derived/prefix/raw/id caches and layout resets.
 - `HarborCache_Advanced_Cache` delegates `build_key()`, `fast_build_key()`, cached ids, layout checks and resets to it.
@@ -41,7 +41,7 @@ Run [44743438543](https://github.com/shahidirfan100/harborcache/actions/runs/447
 
 The gate compares this branch with the **1.8.1 release ZIP** in the same run, in rotating fresh-process blocks on the same runner, and fails above the listed band. The 1.8.1 artifact is pinned by SHA256 in the workflow. Validated run [44743438543](https://github.com/shahidirfan100/harborcache/actions/runs/44743438543) on `507055b`:
 
-| Metric | 1.9.0 | 1.8.1 | Paired change | Band |
+| Metric | 1.9.1 | 1.8.1 | Paired change | Band |
 | --- | ---: | ---: | ---: | ---: |
 | Memorised-hit loop p50 | 355.2 us | 359.9 us | -0.12% | +3% |
 | Memorised-hit loop p95 | 378.5 us | 379.7 us | 0.00% | - |
@@ -57,7 +57,7 @@ The memory-hit loop was the regression that mattered. The first cut called a bui
 
 Whole-request PHP CPU is not precise enough for a small decision on a shared runner: across five runs of identical code it moved 7.4 points, so the gate uses it only to catch a gross regression. The averaged loop timings hold to about two points, which is why they carry the gate.
 
-Earlier 1.9.0 records compared HarborCache with a third-party cache across separate runs and reported CPU 1.240 against 1.149 and bulk 1.678 against 1.641. Those figures came from different runners with more than 40% speed drift and a 1.2.6 baseline. The paired 1.8.1 lane replaces them, and the bulk gap they implied does not exist.
+Earlier 1.9.x records compared HarborCache with a third-party cache across separate runs and reported CPU 1.240 against 1.149 and bulk 1.678 against 1.641. Those figures came from different runners with more than 40% speed drift and a 1.2.6 baseline. The paired 1.8.1 lane replaces them, and the bulk gap they implied does not exist.
 
 ## Limits
 
