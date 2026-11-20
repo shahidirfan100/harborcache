@@ -1,6 +1,6 @@
 # HarborCache 1.9.0 validation
 
-Validated code commit: `8db4043`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `7e1834287f47e8d898a0c1961f73af2be86a07570e8d7c2e88d1a453d2fbb0bc`. The build verifier passed source and ZIP parity.
+Validated code commit: `8db4043`. PR: #20. Release archive: `dist/harborcache-1.9.0.zip`, 607 files, SHA256 `e8c0dfe0b5c9247cbb6a23d370faeb3fe7102d4540d438b26a5fff9e67c0ee69`. The build verifier passed source and ZIP parity.
 
 ## What changed
 
