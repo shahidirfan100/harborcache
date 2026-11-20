@@ -4,7 +4,7 @@ Tags: redis, caching, performance, diagnostics
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.8.1
+Stable tag: 1.9.1
 License: GPL-3.0-only
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -76,6 +76,16 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 7. WordPress dashboard widget.
 
 == Changelog ==
+
+= 1.9.1 =
+* Accept a request-header namespace only when it is a slug, so a cache prefix cannot carry glob or separator characters.
+* Write prefetch manifests only for signed-in visitors, expire them within the hour and cap each manifest.
+* Trim sampled metrics on a periodic write, so retention holds when WP-Cron is not running.
+
+= 1.9.0 =
+* Extract key derivation into a dedicated `Key_Builder`; layout, prefix and request-local key caches now have one owner.
+* Add a `build_keys()` seam so bulk key preparation can be replaced without another branch in the inherited cache class.
+* Add key-builder regression coverage for stable keys, batch maps, layout rotation and root changes.
 
 = 1.8.1 =
 * Cache raw key/group pairs so repeated forced reads and writes skip sanitizing and layout work.
@@ -317,6 +327,9 @@ Configure a distinct prefix and retire the previous drop-in through its owning p
 * Original dashboard, scoped invalidation, typed cache values, configuration, diagnostics and REST controls.
 
 == Upgrade Notice ==
+
+= 1.9.1 =
+No cache format change. Namespace validation, prefetch lifetime and metrics trimming are tightened; existing cached values stay readable.
 
 = 1.6.3 =
 Unsigned cached values are no longer read, so the first requests after upgrading rebuild the cache. Cache keys, settings and stored data outside the cache are unchanged.

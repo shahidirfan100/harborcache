@@ -1,6 +1,6 @@
 # HarborCache roadmap
 
-Current release: 1.8.1 (hot-path patch). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
+Current release: 1.9.1 (architecture foundation plus security hardening). Source of truth for behavior: `docs/FEATURES.md`; design rules: `design.md`; audit record: `docs/DESIGN-REVIEW-1.6.1.md`; performance protocol: `docs/PERFORMANCE-PLAN.md`.
 
 ## Principles
 
@@ -35,7 +35,7 @@ Current release: 1.8.1 (hot-path patch). Source of truth for behavior: `docs/FEA
 - 10,000-key sampling with median/p95/max bytes, Redis key count and estimated key share of `used_memory`.
 - Cross-process Relay invalidation gate.
 - Raw-key fast path, shared layout predicate, request-local verified and decoded payload caches.
-- 30-run full-lane medians for 1.8.1: PHP CPU 105.94 ms, forced-read p95 1.165 ms, write p95 1.257 ms, bulk-100 p95 0.408 ms.
+- 1.8.1 medians move with the runner. In the 1.9.0 paired lane (30 blocks, full plugin, PhpRedis) 1.8.1 measured 111.6 ms PHP CPU, 1.571 ms forced-read p95, 1.596 ms write p95 and 0.561 ms bulk-100 p95. Treat the paired run, not an archived absolute, as the reference.
 - Median key 199 bytes; estimated key share about 10.4%.
 - 1.8.0 recorded its own medians; the 1.8.1 validation records the current harness.
 
@@ -55,10 +55,15 @@ Targets for the next releases:
 | Test breadth | 500+ assertions; race, mixed-version, WooCommerce and failover tests |
 | Distribution | WordPress.org listing, host guide and support policy |
 
-## 1.9.0 — close bulk and harden the matrix
+## 1.9.0 / 1.9.1 — architecture foundation and hardening (shipped)
 
-- Expand the same-harness matrix to current main, the pinned 1.8.1 reference and the prior release. No external artifact is required.
-- Close the remaining bulk-read gap: 1.8.1 is 105.94 ms CPU, 1.165 ms forced read, 1.257 ms write and 0.408 ms bulk-100. Profile `get_multiple`, key build and decode; target 1.1x the current HarborCache bulk median.
+- Shipped: `Key_Builder`; `HarborCache_Advanced_Cache` delegates layout, prefixes, cached ids and resets.
+- Shipped: `build_keys()` seam; advanced cache uses `Key_Builder::build_many()`.
+- Shipped: key-builder regression tests.
+- Remaining: `Bulk_Reader`, `Value_Envelope` and the bulk performance target move to 1.9.1.
+
+- Done: the CI baseline lane is the previous release ZIP (1.8.1 here), installed from the pinned artifact and rotated in the same blocks as the branch. `tools/compare-benchmarks.py` paired changes fail the job above +3% on the runtime-hit loop or +2% on bulk-100 p50, +5% on cold/write p95, or +10% on whole-process CPU. Bands follow four identical-code runs: CPU moved 7.4 points, the loop timings under 1.5. Cross-run ratios are no longer used for any decision.
+- Bulk is already at 0.97x the 1.8.1 median in the paired lane; the 1.9.0 target (1.1x) is met. Remaining: the memorised-hit loop is +1.6% (+4.5 ns per hit) from reading the builder state from another object. Move the id memo and layout snapshot back onto the cache in `Bulk_Reader` if that closes it, and re-measure with the paired gate.
 - Batch prefetch and priming so repeated reads use fewer Redis round trips; prove it with command counts.
 - Decide key format v2 from our own key/value memory sample. If it does not save at least 50 bytes per key or 20% of key memory, keep the 199-byte keys and spend the work on CPU.
 - Certify Relay cross-process invalidation and node restart, or state the unsupported combinations.
@@ -72,7 +77,7 @@ Acceptance: bulk-100 within 1.1x the current HarborCache median; CPU/cold/write 
 - Publish the same-harness comparison against the pinned HarborCache reference and the previous release.
 - Meet the performance table above or mark the missing target unsupported.
 - Add cluster/Sentinel failover tests and a multi-server, mixed-version deployment runbook.
-- Add performance regression thresholds to CI and publish the benchmark artifacts.
+- Publish the benchmark artifacts (the thresholds and paired gate landed in 1.9.0).
 - Submit to WordPress.org, publish the host integration guide and support policy, and provide an importer for existing Redis cache installations.
 
 Acceptance: same-harness results published; targets met or explicitly unsupported; clean WordPress.org review; install-from-directory smoke test; no regression beyond 1% on the harness.
